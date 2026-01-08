@@ -8,10 +8,10 @@ export default function CartSidebar({ open, onClose }) {
 
   const [toast, setToast] = useState("");
 
-  const subtotal = cart.reduce(
-    (sum, item) => sum + item.price * item.qty,
-    0
-  );
+const subtotal = cart.reduce(
+  (sum, item) => sum + Number(item.price) * item.qty,
+  0
+);
 
   const hasStockIssue = cart.some(
     item => !item.stock || item.qty >= item.stock
@@ -124,7 +124,8 @@ export default function CartSidebar({ open, onClose }) {
                   </div>
 
                   <div style={{ fontSize: 13, color: "#555" }}>
-                    ₹{item.price.toFixed(2)}
+                    ₹{Number(item.price).toFixed(2)}
+
                   </div>
 
                   {/* QTY */}
