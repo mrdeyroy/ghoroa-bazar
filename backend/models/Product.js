@@ -1,22 +1,26 @@
 const mongoose = require("mongoose");
 
 const productSchema = new mongoose.Schema({
-
   name: String,
   bnName: String,
   category: String,
 
-  price: Number,
+  // Base price (used if no weights exist)
+  price: {
+    type: Number,
+    required: true
+  },
 
-  // ⭐ Weight / Size Selectable Options
+  // Weight / Size variants
   weights: [
     {
-      label: String,   // e.g. "500g", "1kg", "250ml"
-      price: Number    // optional — if different price per weight
+      label: { type: String, required: true },   // "250g", "500g"
+      price: { type: Number, required: true }
     }
   ],
 
-  weight: String, // (fallback old field, still usable)
+  // Legacy field (optional)
+  weight: String,
 
   image: {
     type: String,
@@ -25,13 +29,11 @@ const productSchema = new mongoose.Schema({
 
   description: String,
 
-  // ⭐ Ingredients Section
   ingredients: {
     type: String,
     default: ""
   },
 
-  // ⭐ Nutrition Facts Section
   nutrition: {
     type: String,
     default: ""
@@ -46,7 +48,6 @@ const productSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
-
 });
 
 module.exports = mongoose.model("Product", productSchema);

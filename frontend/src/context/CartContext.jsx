@@ -5,7 +5,12 @@ const CartContext = createContext();
 export function CartProvider({ children }) {
   const [cart, setCart] = useState(() => {
     const saved = localStorage.getItem("cart");
-    return saved ? JSON.parse(saved) : [];
+    if (!saved) return [];
+
+    return JSON.parse(saved).map(item => ({
+      ...item,
+      selectedWeight: item.selectedWeight || "default"
+    }));
   });
 
   useEffect(() => {
@@ -14,36 +19,54 @@ export function CartProvider({ children }) {
 
   const addToCart = (product) => {
     setCart(prev => {
-      const found = prev.find(p => p.id === product.id);
-      if (found) {
-        return prev.map(p =>
-          p.id === product.id ? { ...p, qty: p.qty + 1 } : p
+      const existing = prev.find(
+        item =>
+          item.id === product.id &&
+          item.selectedWeight === product.selectedWeight
+      );
+
+      if (existing) {
+        return prev.map(item =>
+          item.id === product.id &&
+          item.selectedWeight === product.selectedWeight
+            ? { ...item, qty: item.qty + product.qty }
+            : item
         );
       }
-      return [...prev, { ...product, qty: 1 }];
+
+      return [...prev, product];
     });
   };
 
-  const increaseQty = (id) => {
+  const increaseQty = (id, weight) => {
     setCart(prev =>
-      prev.map(p =>
-        p.id === id ? { ...p, qty: p.qty + 1 } : p
+      prev.map(item =>
+        item.id === id && item.selectedWeight === weight
+          ? { ...item, qty: item.qty + 1 }
+          : item
       )
     );
   };
 
-  const decreaseQty = (id) => {
+  const decreaseQty = (id, weight) => {
     setCart(prev =>
       prev
-        .map(p =>
-          p.id === id ? { ...p, qty: p.qty - 1 } : p
+        .map(item =>
+          item.id === id && item.selectedWeight === weight
+            ? { ...item, qty: item.qty - 1 }
+            : item
         )
-        .filter(p => p.qty > 0)
+        .filter(item => item.qty > 0)
     );
   };
 
-  const removeItem = (id) => {
-    setCart(prev => prev.filter(p => p.id !== id));
+  const removeItem = (id, weight) => {
+    setCart(prev =>
+      prev.filter(
+        item =>
+          !(item.id === id && item.selectedWeight === weight)
+      )
+    );
   };
 
   const clearCart = () => {
@@ -53,7 +76,14 @@ export function CartProvider({ children }) {
 
   return (
     <CartContext.Provider
-      value={{ cart, addToCart, increaseQty, decreaseQty, removeItem, clearCart }}
+      value={{
+        cart,
+        addToCart,
+        increaseQty,
+        decreaseQty,
+        removeItem,
+        clearCart
+      }}
     >
       {children}
     </CartContext.Provider>

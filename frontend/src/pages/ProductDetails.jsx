@@ -12,12 +12,22 @@ export default function ProductDetails() {
   const [qty, setQty] = useState(1);
   const [toast, setToast] = useState("");
 
+  // ⭐ NEW: selected weight
+  const [selectedWeight, setSelectedWeight] = useState(null);
+
   useEffect(() => {
     fetch(`http://localhost:5000/api/products/${id}`)
       .then(res => res.json())
       .then(data => {
         setProduct(data);
         setQty(1);
+
+        // ⭐ auto select first weight
+        if (data.weights?.length > 0) {
+          setSelectedWeight(data.weights[0]);
+        } else {
+          setSelectedWeight(null);
+        }
 
         fetch(`http://localhost:5000/api/products?category=${data.category}`)
           .then(res => res.json())
@@ -27,12 +37,17 @@ export default function ProductDetails() {
 
   if (!product) return <p className="p-6">Loading...</p>;
 
+  const finalPrice = selectedWeight ? selectedWeight.price : product.price;
+
   const handleAddToCart = () => {
     addToCart({
-      ...product,
-      id: product._id,
-      qty
-    });
+  ...product,
+  id: product._id,
+  qty,
+  price: finalPrice,
+  selectedWeight: selectedWeight?.label || "default"
+});
+
 
     setToast(`${product.name} added to cart✅`);
     setTimeout(() => setToast(""), 2500);
@@ -67,9 +82,10 @@ export default function ProductDetails() {
                     src={img}
                     onClick={() => setActiveImage(i)}
                     className={`w-16 h-16 object-cover rounded-xl cursor-pointer border transition
-                      ${i === activeImage
-                        ? "border-emerald-700 ring-2 ring-emerald-300"
-                        : "border-gray-300 hover:border-gray-500"
+                      ${
+                        i === activeImage
+                          ? "border-emerald-700 ring-2 ring-emerald-300"
+                          : "border-gray-300 hover:border-gray-500"
                       }`}
                   />
                 ))}
@@ -96,15 +112,38 @@ export default function ProductDetails() {
                   ₹{product.oldPrice}
                 </span>
               )}
-              <span className="text-2xl font-bold">₹{product.price}</span>
+              <span className="text-2xl font-bold">₹{finalPrice}</span>
             </div>
+
+            {/* ⭐ WEIGHT SELECTION */}
+            {product.weights?.length > 0 && (
+              <div className="mt-6">
+                <p className="text-sm font-medium mb-2">Select Weight</p>
+                <div className="flex gap-3 flex-wrap">
+                  {product.weights.map((w, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setSelectedWeight(w)}
+                      className={`px-4 py-2 rounded-lg border text-sm transition
+                        ${
+                          selectedWeight?.label === w.label
+                            ? "bg-emerald-700 text-white border-emerald-700"
+                            : "border-gray-300 hover:border-gray-500"
+                        }`}
+                    >
+                      {w.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* ADD TO CART */}
             <button
               onClick={handleAddToCart}
               className="mt-6 px-6 py-3 rounded-md bg-emerald-700 hover:bg-emerald-800 text-white shadow-md hover:shadow-lg transition"
             >
-              Add to Cart 
+              Add to Cart
             </button>
 
             {/* ACCORDION */}
@@ -134,7 +173,6 @@ export default function ProductDetails() {
             {related.length > 0 && (
               <div className="mt-10">
                 <p className="font-medium mb-3">You may also like</p>
-
                 <div className="grid grid-cols-2 gap-6">
                   {related.slice(0, 2).map(p => (
                     <div

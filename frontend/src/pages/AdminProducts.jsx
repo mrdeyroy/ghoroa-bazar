@@ -15,7 +15,7 @@ export default function AdminProducts() {
     price: "",
     weight: "",
     weights: [],          // ⭐ NEW — selectable sizes
-    newWeight: "",        // temp input holder
+    newWeight: { label: "", price: "" },        // temp input holder
     image: "",
     stock: "",
     description: "",
@@ -119,21 +119,24 @@ export default function AdminProducts() {
   };
 
   const addWeight = () => {
-    if (!form.newWeight.trim()) return;
+  const { label, price } = form.newWeight;
+  if (!label || !price) return;
 
-    setForm(prev => ({
-      ...prev,
-      weights: [...prev.weights, prev.newWeight.trim()],
-      newWeight: ""
-    }));
-  };
+  setForm(prev => ({
+    ...prev,
+    weights: [...prev.weights, { label, price: Number(price) }],
+    newWeight: { label: "", price: "" }
+  }));
+};
 
-  const removeWeight = (w) => {
-    setForm(prev => ({
-      ...prev,
-      weights: prev.weights.filter(x => x !== w)
-    }));
-  };
+
+  const removeWeight = (label) => {
+  setForm(prev => ({
+    ...prev,
+    weights: prev.weights.filter(w => w.label !== label)
+  }));
+};
+
 
   const inputStyle = {
     width: "100%",
@@ -213,35 +216,61 @@ export default function AdminProducts() {
             />
           </div>
 
-          {/* ⭐ Weight / Gram Options */}
-          <div style={fieldWrapper}>
-            <input
-              placeholder="Add weight (ex: 250g, 500g, 1kg)"
-              value={form.newWeight}
-              onChange={e => setForm({ ...form, newWeight: e.target.value })}
-              style={inputStyle}
-            />
-            <button
-              type="button"
-              onClick={addWeight}
-              style={{ marginTop: "6px", padding: "6px 10px", borderRadius: "8px" }}
-            >
-            </button>
+          {/* ⭐ Weight / Pack Options */}
+<div style={fieldWrapper}>
+  <input
+    placeholder="Weight (ex: 250g, 1kg)"
+    value={form.newWeight.label}
+    onChange={e =>
+      setForm({
+        ...form,
+        newWeight: { ...form.newWeight, label: e.target.value }
+      })
+    }
+    style={inputStyle}
+  />
 
-            {form.weights.length > 0 && (
-              <div style={{ marginTop: "8px", display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                {form.weights.map(w => (
-                  <span
-                    key={w}
-                    style={{ padding: "6px 10px", borderRadius: "16px", background: "#eef", cursor: "pointer" }}
-                    onClick={() => removeWeight(w)}
-                  >
-                    {w} ✕
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
+  <input
+    type="number"
+    placeholder="Price for this weight"
+    value={form.newWeight.price}
+    onChange={e =>
+      setForm({
+        ...form,
+        newWeight: { ...form.newWeight, price: e.target.value }
+      })
+    }
+    style={{ ...inputStyle, marginTop: "6px" }}
+  />
+
+  <button
+    type="button"
+    onClick={addWeight}
+    style={{ marginTop: "6px", padding: "6px 10px", borderRadius: "8px" }}
+  >
+    Add Pack
+  </button>
+
+  {form.weights.length > 0 && (
+    <div style={{ marginTop: "8px", display: "flex", gap: "6px", flexWrap: "wrap" }}>
+      {form.weights.map((w, i) => (
+        <span
+          key={i}
+          style={{
+            padding: "6px 10px",
+            borderRadius: "16px",
+            background: "#eef",
+            cursor: "pointer"
+          }}
+          onClick={() => removeWeight(w.label)}
+        >
+          {w.label} – ₹{w.price} ✕
+        </span>
+      ))}
+    </div>
+  )}
+</div>
+
 
           <div style={fieldWrapper}>
             <input
@@ -363,7 +392,7 @@ export default function AdminProducts() {
       <strong>{p.name}</strong>
 
       <div style={{ fontSize: "13px", color: "#555" }}>
-        ₹{p.price} — {p.weights?.join(", ") || p.weight}
+        ₹{p.price} — {p.weights?.map(w => w.label).join(", ") || p.weight}
       </div>
 
       <div style={{ fontSize: "13px", color: p.stock === 0 ? "red" : "green" }}>

@@ -93,17 +93,18 @@ const subtotal = cart.reduce(
           )}
 
           {cart.map(item => {
-            const maxReached = item.qty >= item.stock;
+  const maxReached = item.qty >= item.stock;
 
-            return (
-              <div
-                key={item.id}
-                style={{
-                  display: "flex",
-                  gap: "12px",
-                  marginBottom: "18px"
-                }}
-              >
+  return (
+    <div
+      key={`${item.id}-${item.selectedWeight}`}
+      style={{
+        display: "flex",
+        gap: "12px",
+        marginBottom: "18px"
+      }}
+    >
+
                 {/* IMAGE */}
                 <img
                   src={item.image}
@@ -123,10 +124,15 @@ const subtotal = cart.reduce(
                     {item.name}
                   </div>
 
-                  <div style={{ fontSize: 13, color: "#555" }}>
-                    ₹{Number(item.price).toFixed(2)}
+        <div style={{ fontSize: 13, color: "#555" }}>
+          {item.selectedWeight !== "default" && (
+            <span style={{ marginRight: 6 }}>
+              {item.selectedWeight} •
+            </span>
+          )}
+          ₹{Number(item.price).toFixed(2)}
+        </div>
 
-                  </div>
 
                   {/* QTY */}
                   <div
@@ -160,30 +166,31 @@ const subtotal = cart.reduce(
                       <button
                         disabled={maxReached}
                         onClick={() => {
-                          if (!maxReached) increaseQty(item.id);
+                          if (!maxReached) increaseQty(item.id, item.selectedWeight)
                         }}
                         style={qtyBtn}
                       >
                         +
-                      </button>
-                    </div>
+            </button>
+          </div>
 
-                    <button
-                      onClick={() => {
-                        removeItem(item.id);
-                        triggerToast(`❌ ${item.name} removed`);
-                      }}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: "#888",
-                        fontSize: 13,
-                        textDecoration: "underline",
-                        cursor: "pointer"
-                      }}
-                    >
-                      Remove
-                    </button>
+          <button
+            onClick={() => {
+              removeItem(item.id, item.selectedWeight);
+              triggerToast(`❌ ${item.name} removed`);
+            }}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#888",
+              fontSize: 13,
+              textDecoration: "underline",
+              cursor: "pointer"
+            }}
+          >
+            Remove
+          </button>
+
                   </div>
 
                   {maxReached && (
