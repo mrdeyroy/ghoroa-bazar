@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
+import Payment from "./pages/Payment";
 import OrderSuccess from "./pages/OrderSuccess";
 import ProductDetails from "./pages/ProductDetails";
 import Wishlist from "./pages/Wishlist";
@@ -30,6 +31,7 @@ export default function App() {
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
+        <Route path="/payment" element={<Payment />} />
         <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/my-orders" element={<MyOrders />} />
         <Route path="/invoice/:orderId" element={<Invoice />} />

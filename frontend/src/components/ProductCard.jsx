@@ -31,7 +31,14 @@ export default function ProductCard({ product }) {
 
   const handleAddToCart = (e) => {
     e.stopPropagation();
-    addToCart({ ...product, id: product._id });
+    addToCart({
+      ...product,
+      id: product._id,
+      qty: 1,
+      selectedWeight: product.defaultWeight || product.weight,
+      price: product.price
+    });
+
 
     setShowToast(true);
     setTimeout(() => setShowToast(false), 2500);
@@ -144,7 +151,13 @@ export default function ProductCard({ product }) {
 
         <h4 style={{ margin: "8px 0 4px" }}>{product.name}</h4>
         <p style={{ fontSize: "13px", margin: "0" }}>{product.bnName}</p>
-        <p style={{ fontSize: "13px", margin: "0" }}>{product.weight}</p>
+        {(product.weight || product.weights?.length > 0) && (
+          <p style={{ fontSize: "12px", margin: "2px 0", color: "#666" }}>
+            Pack: {product.weight || product.weights[0].label}
+          </p>
+        )}
+
+
 
         <div
           style={{

@@ -3,14 +3,36 @@ import { createContext, useContext, useEffect, useState } from "react";
 const CartContext = createContext();
 
 export function CartProvider({ children }) {
+
+  // 🔹 Get real default weight from product schema
+  const getDefaultWeight = (item) => {
+    // Case 1: weights array (PRIMARY)
+    if (Array.isArray(item.weights) && item.weights.length > 0) {
+      return item.weights[0].label; // 👈 exact default
+    }
+
+    // Case 2: legacy single weight
+    if (item.weight) return item.weight;
+
+    return ""; // should rarely happen
+  };
+
+  // 🔹 Normalize cart item
+  const normalizeWeight = (item) => {
+    if (!item.selectedWeight || item.selectedWeight === "default") {
+      return {
+        ...item,
+        selectedWeight: getDefaultWeight(item)
+      };
+    }
+    return item;
+  };
+
   const [cart, setCart] = useState(() => {
     const saved = localStorage.getItem("cart");
     if (!saved) return [];
 
-    return JSON.parse(saved).map(item => ({
-      ...item,
-      selectedWeight: item.selectedWeight || "default"
-    }));
+    return JSON.parse(saved).map(item => normalizeWeight(item));
   });
 
   useEffect(() => {
@@ -18,23 +40,25 @@ export function CartProvider({ children }) {
   }, [cart]);
 
   const addToCart = (product) => {
+    const normalizedProduct = normalizeWeight(product);
+
     setCart(prev => {
       const existing = prev.find(
         item =>
-          item.id === product.id &&
-          item.selectedWeight === product.selectedWeight
+          item.id === normalizedProduct.id &&
+          item.selectedWeight === normalizedProduct.selectedWeight
       );
 
       if (existing) {
         return prev.map(item =>
-          item.id === product.id &&
-          item.selectedWeight === product.selectedWeight
-            ? { ...item, qty: item.qty + product.qty }
+          item.id === normalizedProduct.id &&
+          item.selectedWeight === normalizedProduct.selectedWeight
+            ? { ...item, qty: item.qty + normalizedProduct.qty }
             : item
         );
       }
 
-      return [...prev, product];
+      return [...prev, normalizedProduct];
     });
   };
 

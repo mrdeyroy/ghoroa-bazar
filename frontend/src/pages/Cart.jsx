@@ -79,11 +79,12 @@ export default function Cart() {
 
           {/* ITEMS */}
           {cart.map(item => {
-            const maxReached = item.qty >= item.stock;
+            const maxReached =
+              item.stock !== undefined && item.qty >= item.stock;
 
             return (
               <div
-                key={item.id}
+                key={`${item.id}-${item.selectedWeight}`}
                 style={{
                   display: "grid",
                   gridTemplateColumns: "2fr 1fr 1fr 1fr",
@@ -110,9 +111,16 @@ export default function Cart() {
                     <div style={{ fontWeight: 600 }}>
                       {item.name}
                     </div>
+
+                    {item.selectedWeight !== "default" && (
+                      <div style={{ fontSize: 12, color: "#777" }}>
+                        Pack: {item.selectedWeight}
+                      </div>
+                    )}
+
                     <button
                       onClick={() => {
-                        removeItem(item.id);
+                        removeItem(item.id, item.selectedWeight);
                         triggerToast(`❌ ${item.name} removed`);
                       }}
                       style={{
@@ -130,7 +138,10 @@ export default function Cart() {
                 </div>
 
                 {/* PRICE */}
-                <div>₹{item.price.toFixed(2)}</div>
+                <div>
+                  ₹{item.price.toFixed(2)}
+                </div>
+
 
                 {/* QTY */}
                 <div>
@@ -143,7 +154,7 @@ export default function Cart() {
                     }}
                   >
                     <button
-                      onClick={() => decreaseQty(item.id)}
+                      onClick={() => decreaseQty(item.id, item.selectedWeight)}
                       disabled={item.qty === 1}
                       style={qtyBtn}
                     >
@@ -156,7 +167,7 @@ export default function Cart() {
 
                     <button
                       onClick={() => {
-                        if (!maxReached) increaseQty(item.id);
+                        if (!maxReached) increaseQty(item.id, item.selectedWeight);
                       }}
                       disabled={maxReached}
                       style={qtyBtn}
@@ -246,7 +257,7 @@ export default function Cart() {
         >
           {cart.slice(0, 3).map(item => (
             <div
-              key={item.id}
+              key={`${item.id}-${item.selectedWeight}`}
               style={{
                 border: "1px solid #eee",
                 borderRadius: 8,
@@ -269,12 +280,18 @@ export default function Cart() {
                 {item.name}
               </div>
 
+              {item.selectedWeight !== "default" && (
+                <div style={{ fontSize: 12, color: "#777", marginTop: 2 }}>
+                  Pack: {item.selectedWeight}
+                </div>
+              )}
+
               <div style={{ fontWeight: 600 }}>
                 ₹{item.price}
               </div>
 
               <button
-                onClick={() => increaseQty(item.id)}
+                onClick={() => increaseQty(item.id, item.selectedWeight)}
                 style={{
                   marginTop: 8,
                   padding: "6px 10px",

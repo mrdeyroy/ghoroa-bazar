@@ -4,10 +4,15 @@ import AdminLayout from "../components/AdminLayout";
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
 
-  const fetchOrders = () => {
-    fetch("http://localhost:5000/api/orders")
-      .then(res => res.json())
-      .then(data => setOrders(data));
+  const fetchOrders = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/orders");
+      const data = await res.json();
+      setOrders(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Failed to fetch orders", err);
+      setOrders([]);
+    }
   };
 
   useEffect(() => {
@@ -15,25 +20,45 @@ export default function AdminOrders() {
   }, []);
 
   const updateStatus = async (id, newStatus) => {
-    await fetch(`http://localhost:5000/api/orders/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderStatus: newStatus })
-    });
+    const updateData = {
+      orderStatus: newStatus
+    };
 
-    fetchOrders();
+    // ✅ Auto mark payment as Paid when Delivered
+    if (newStatus === "Delivered") {
+      updateData.paymentStatus = "Paid";
+    }
+
+    try {
+      await fetch(`http://localhost:5000/api/orders/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updateData)
+      });
+
+      fetchOrders();
+    } catch (err) {
+      console.error("Failed to update order", err);
+    }
   };
 
-  const statusColor = (status) => {
+
+  const statusColor = status => {
     if (status === "Delivered") return "green";
     if (status === "Cancelled") return "red";
     if (status === "Packed") return "#ffa500";
     return "#006837";
   };
 
+  const paymentColor = status => {
+    if (status === "Paid") return "green";
+    if (status === "Pending") return "#ffa500";
+    return "#555";
+  };
+
   return (
     <AdminLayout>
-      <h2 style={{ marginBottom: "20px" }}>Orders</h2>
+      <h2 style={{ marginBottom: 20 }}>Orders</h2>
 
       {orders.length === 0 && <p>No orders found</p>}
 
@@ -41,10 +66,10 @@ export default function AdminOrders() {
         <div
           key={order._id}
           style={{
-            background: "#ffffff",
-            borderRadius: "12px",
-            padding: "18px",
-            marginBottom: "18px",
+            background: "#fff",
+            borderRadius: 12,
+            padding: 18,
+            marginBottom: 18,
             boxShadow: "0 4px 10px rgba(0,0,0,0.08)"
           }}
         >
@@ -57,12 +82,18 @@ export default function AdminOrders() {
             }}
           >
             <div>
-              <strong>₹{order.totalAmount}</strong>
-              <p style={{ fontSize: "12px", color: "#555" }}>
+              <strong style={{ fontSize: 18 }}>
+                ₹{Number(order.totalAmount || 0).toFixed(2)}
+              </strong>
+
+              <p style={{ fontSize: 12, color: "#555" }}>
                 Order ID: {order._id}
               </p>
-              <p style={{ fontSize: "12px", color: "#555" }}>
-                {new Date(order.createdAt).toLocaleString()}
+
+              <p style={{ fontSize: 12, color: "#555" }}>
+                {order.createdAt
+                  ? new Date(order.createdAt).toLocaleString()
+                  : "N/A"}
               </p>
             </div>
 
@@ -70,25 +101,31 @@ export default function AdminOrders() {
               style={{
                 color: statusColor(order.orderStatus),
                 fontWeight: "bold",
-                fontSize: "14px"
+                fontSize: 14
               }}
             >
-              {order.orderStatus}
+              {order.orderStatus || "Placed"}
             </span>
           </div>
 
-          {/* PAYMENT + ACTIONS */}
+          {/* PAYMENT INFO */}
           <div
             style={{
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              marginTop: "10px"
+              marginTop: 12
             }}
           >
-            <p style={{ fontSize: "14px" }}>
-              Payment: <strong>{order.paymentMethod}</strong>
-            </p>
+            <div style={{ fontSize: 14 }}>
+              Payment Method:{" "}
+              <strong>{order.paymentMethod || "N/A"}</strong>
+              <br />
+              Payment Status:{" "}
+              <strong style={{ color: paymentColor(order.paymentStatus) }}>
+                {order.paymentStatus || "Pending"}
+              </strong>
+            </div>
 
             <a
               href={`/invoice/${order._id}`}
@@ -97,11 +134,11 @@ export default function AdminOrders() {
               style={{
                 background: "#ffa500",
                 padding: "6px 12px",
-                borderRadius: "6px",
+                borderRadius: 6,
                 textDecoration: "none",
                 color: "#000",
                 fontWeight: "bold",
-                fontSize: "14px"
+                fontSize: 14
               }}
             >
               View Invoice
@@ -110,16 +147,16 @@ export default function AdminOrders() {
 
           <hr style={{ margin: "14px 0" }} />
 
-          {/* STATUS UPDATE */}
-          <label style={{ fontSize: "14px" }}>
+          {/* UPDATE STATUS */}
+          <label style={{ fontSize: 14 }}>
             Update Status:
             <select
-              value={order.orderStatus}
+              value={order.orderStatus || "Placed"}
               onChange={e => updateStatus(order._id, e.target.value)}
               style={{
-                marginLeft: "10px",
-                padding: "4px 6px",
-                borderRadius: "4px"
+                marginLeft: 10,
+                padding: "6px 8px",
+                borderRadius: 6
               }}
             >
               <option value="Placed">Placed</option>
@@ -130,28 +167,47 @@ export default function AdminOrders() {
           </label>
 
           {/* CUSTOMER DETAILS */}
-          <div style={{ marginTop: "16px" }}>
+          <div style={{ marginTop: 16 }}>
             <h4>Customer Details</h4>
-            <p><strong>Name:</strong> {order.customerDetails?.name}</p>
-            <p><strong>Phone:</strong> {order.customerDetails?.phone}</p>
+            <p>
+              <strong>Name:</strong>{" "}
+              {order.customerDetails?.firstName
+                ? `${order.customerDetails.firstName} ${order.customerDetails.lastName || ""}`
+                : order.customerDetails?.name || "N/A"}
+            </p>
+
+            <p>
+              <strong>Phone:</strong>{" "}
+              {order.customerDetails?.phone || "N/A"}
+            </p>
             <p>
               <strong>Address:</strong>{" "}
-              {order.customerDetails?.address},{" "}
-              {order.customerDetails?.city} –{" "}
-              {order.customerDetails?.pincode}
+              {order.customerDetails?.address || "N/A"},{" "}
+              {order.customerDetails?.city || ""},{" "}
+              {order.customerDetails?.state || ""}{" "}
+              {order.customerDetails?.pincode
+                ? `– ${order.customerDetails.pincode}`
+                : ""}
             </p>
           </div>
 
           {/* ITEMS */}
-          <div style={{ marginTop: "16px" }}>
+          <div style={{ marginTop: 16 }}>
             <h4>Items</h4>
-            <ul>
-              {order.items.map((item, index) => (
-                <li key={index}>
-                  {item.name} × {item.qty} (₹{item.price})
-                </li>
-              ))}
-            </ul>
+
+            {order.items && order.items.length > 0 ? (
+              <ul style={{ paddingLeft: 18 }}>
+                {order.items.map((item, index) => (
+                  <li key={index} style={{ fontSize: 14 }}>
+                    {item.name} × {item.qty} (₹{item.price})
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p style={{ fontSize: 14, color: "#555" }}>
+                No items found
+              </p>
+            )}
           </div>
         </div>
       ))}

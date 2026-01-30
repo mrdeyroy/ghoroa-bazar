@@ -58,22 +58,40 @@ router.get("/", async (req, res) => {
   }
 });
 
-// 3️⃣ UPDATE ORDER STATUS (ADMIN)
+// 3️⃣ UPDATE ORDER STATUS (ADMIN) + AUTO MARK PAID
 router.put("/:id", async (req, res) => {
   try {
-    const { orderStatus } = req.body;
+    const { orderStatus, paymentStatus } = req.body;
+
+    const updateData = {
+      orderStatus
+    };
+
+    // ✅ Auto mark payment as Paid when Delivered
+    if (orderStatus === "Delivered") {
+      updateData.paymentStatus = "Paid";
+    }
+
+    // ✅ Allow explicit paymentStatus updates if sent
+    if (paymentStatus) {
+      updateData.paymentStatus = paymentStatus;
+    }
 
     const updatedOrder = await Order.findByIdAndUpdate(
       req.params.id,
-      { orderStatus },
+      updateData,
       { new: true }
     );
 
     res.json(updatedOrder);
   } catch (err) {
-    res.status(500).json({ error: "Failed to update order status" });
+    console.error(err);
+    res.status(500).json({
+      error: "Failed to update order"
+    });
   }
 });
+
 
 // 4️⃣ GET ORDERS BY USER (CUSTOMER HISTORY)
 router.get("/user/:userId", async (req, res) => {

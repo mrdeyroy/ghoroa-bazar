@@ -41,12 +41,20 @@ export default function ProductDetails() {
 
   const handleAddToCart = () => {
     addToCart({
-  ...product,
   id: product._id,
-  qty,
-  price: finalPrice,
-  selectedWeight: selectedWeight?.label || "default"
+  name: product.name,
+  image: product.image,
+  qty: 1,
+
+  // 🔥 THESE TWO LINES FIX EVERYTHING
+  selectedWeight: selectedWeight.label,   // "250g"
+  price: selectedWeight.price,             // price for 250g
+
+  // optional (helps fallback)
+  weights: product.weights,
+  stock: product.stock
 });
+
 
 
     setToast(`${product.name} added to cart✅`);

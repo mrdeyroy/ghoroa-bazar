@@ -7,10 +7,12 @@ const orderSchema = new mongoose.Schema({
   },
 
   customerDetails: {
-    name: String,
+    firstName: String,
+    lastName: String,
     phone: String,
     address: String,
     city: String,
+    state: String,
     pincode: String
   },
 

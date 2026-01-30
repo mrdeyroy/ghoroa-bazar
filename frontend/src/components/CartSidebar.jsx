@@ -125,13 +125,9 @@ const subtotal = cart.reduce(
                   </div>
 
         <div style={{ fontSize: 13, color: "#555" }}>
-          {item.selectedWeight !== "default" && (
-            <span style={{ marginRight: 6 }}>
-              {item.selectedWeight} •
-            </span>
-          )}
-          ₹{Number(item.price).toFixed(2)}
+          {item.selectedWeight} • ₹{Number(item.price).toFixed(2)}
         </div>
+
 
 
                   {/* QTY */}
@@ -151,13 +147,14 @@ const subtotal = cart.reduce(
                         borderRadius: 8
                       }}
                     >
-                      <button
-                        disabled={item.qty === 1}
-                        onClick={() => decreaseQty(item.id)}
-                        style={qtyBtn}
-                      >
-                        −
-                      </button>
+            <button
+              disabled={item.qty <= 1}
+              onClick={() => decreaseQty(item.id, item.selectedWeight)}
+              style={qtyBtn}
+            >
+              −
+            </button>
+
 
                       <span style={{ padding: "0 10px" }}>
                         {item.qty}
