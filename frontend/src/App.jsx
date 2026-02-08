@@ -10,6 +10,7 @@ import ProductDetails from "./pages/ProductDetails";
 import Wishlist from "./pages/Wishlist";
 import MyOrders from "./pages/MyOrders";
 import Invoice from "./pages/Invoice";
+import NotFound from "./pages/NotFound";
 
 // ---------- AUTH ----------
 import Login from "./pages/Login";
@@ -36,6 +37,7 @@ export default function App() {
         <Route path="/my-orders" element={<MyOrders />} />
         <Route path="/invoice/:orderId" element={<Invoice />} />
         <Route path="/order-success" element={<OrderSuccess />} />
+        <Route path="*" element={<NotFound />} />
 
         {/* ---------- AUTH ---------- */}
         <Route path="/login" element={<Login />} />

@@ -2,7 +2,15 @@ import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import ProductCard from "../components/ProductCard";
 import CategoryFilter from "../components/CategoryFilter";
+import { Link, useLocation } from "react-router-dom";
 
+const linkStyle = {
+  display: "block",
+  color: "#333",
+  textDecoration: "none",
+  marginBottom: "6px",
+  cursor: "pointer"
+};
 
 export default function Home() {
   const categories = ["All", "Honey", "Ghee", "Nuts", "Others"];
@@ -58,6 +66,16 @@ export default function Home() {
     slider.removeEventListener("scroll", updateBar);
   };
 }, []);
+
+const location = useLocation();
+
+useEffect(() => {
+  if (location.hash) {
+    const el = document.querySelector(location.hash);
+    el?.scrollIntoView({ behavior: "smooth" });
+  }
+}, [location]);
+
 
 
   return (
@@ -200,84 +218,6 @@ export default function Home() {
       </section>
 
 
-{/* ================================
- ⭐ TESTIMONIAL SLIDER (SYNCED SCROLLBAR)
-================================== */}
-<section
-  style={{
-    padding: "60px 8%",
-    background: "#ffffff",
-    textAlign: "center"
-  }}
->
-  <h2
-    style={{
-      color: "#1f7a3b",
-      fontSize: "22px",
-      fontWeight: "700",
-      marginBottom: "6px"
-    }}
-  >
-    Let customers speak for us
-  </h2>
-
-  <p style={{ color: "#666", marginBottom: "26px" }}>
-    Explore our fresh and organic product collections
-  </p>
-
-  {/* SLIDER WRAPPER */}
-  <div
-    id="testimonial-slider"
-    style={{
-      display: "flex",
-      gap: "14px",
-      overflowX: "auto",
-      scrollBehavior: "smooth",
-      paddingBottom: "10px",
-      scrollbarWidth: "none"      // Firefox hide
-    }}
-    onMouseEnter={() => (window.pauseSlider = true)}
-    onMouseLeave={() => (window.pauseSlider = false)}
-  >
-    {[1,2,3,4,5,6,7, 1,2,3,4,5,6,7].map(i => (
-      <div
-        // eslint-disable-next-line react-hooks/purity
-        key={i + Math.random()}
-        style={{
-          minWidth: "180px",
-          height: "210px",
-          background: "#1a1a1a",
-          borderRadius: "14px"
-        }}
-      />
-    ))}
-  </div>
-
-  {/* CUSTOM SCROLLBAR */}
-  <div
-    style={{
-      marginTop: "6px",
-      height: "5px",
-      width: "100%",
-      background: "#ddd",
-      borderRadius: "10px",
-      position: "relative",
-      overflow: "hidden"
-    }}
-  >
-    <div
-      id="scroll-bar"
-      style={{
-        height: "100%",
-        width: "20%",
-        background: "#1f7a3b",
-        borderRadius: "10px",
-        transform: "translateX(0)",
-        transition: "transform .15s linear"
-      }}
-    />
-  </div>
-</section>
 
 
 
@@ -411,7 +351,7 @@ export default function Home() {
   {/* ================================
     🟢 BRAND STORY — EXACT DESIGN
 ================================= */}
-<section
+<section id="about-section"
   style={{
     padding: "70px 8%",
     background: "#ffffff",
@@ -447,7 +387,7 @@ export default function Home() {
       lineHeight: "1.6"
     }}
   >
-    <h3 style={{ marginBottom: "6px", fontWeight: "700" }}>Our Mission</h3>
+    <h3 style={{ marginBottom: "6px", fontWeight: "700", color: "#1f7a3b" }}>Our Mission</h3>
 
     <p>
       At <strong>Ghoroa Bazar</strong>, our mission is to bring safe, healthy, and organic food
@@ -627,30 +567,65 @@ export default function Home() {
     </button>
   </div>
 
-  {/* Stats Row */}
-  <div
-    style={{
-      display: "grid",
-      gridTemplateColumns: "repeat(4, 1fr)",
-      maxWidth: "900px",
-      margin: "0 auto 40px",
-      gap: "12px"
-    }}
-  >
-    {[
-      { icon: "/src/assets/vector.svg", num: "8+", label: "Year of Experience" },
-      { icon: "/src/assets/city.svg", num: "45+", label: "City" },
-      { icon: "/src/assets/happy.svg", num: "120+", label: "Happy Families" },
-      { icon: "/src/assets/export.svg", num: "8+", label: "Export Country" }
-    ].map((s, i) => (
-      <div key={i}>
-        <img src={s.icon} style={{ width: 34, marginBottom: 6 }} />
+        {/* Stats Row */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, 1fr)",
+            maxWidth: "900px",
+            margin: "0 auto 40px",
+            gap: "12px",
+            textAlign: "center"
+          }}
+        >
+          {[
+            { icon: "/src/assets/vector.svg", num: "8+", label: "Year of Experience" },
+            { icon: "/src/assets/city.svg", num: "45+", label: "City" },
+            { icon: "/src/assets/happy.svg", num: "120+", label: "Happy Families" },
+            { icon: "/src/assets/export.svg", num: "8+", label: "Export Country" }
+          ].map((s, i) => (
+            <div
+              key={i}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center"
+              }}
+            >
+              <img
+                src={s.icon}
+                alt={s.label}
+                style={{
+                  width: 36,
+                  height: 36,
+                  marginBottom: 8
+                }}
+              />
 
-        <h2 style={{ color: "#1f7a3b", marginBottom: 2 }}>{s.num}</h2>
-        <p style={{ color: "#666", fontSize: "13px" }}>{s.label}</p>
-      </div>
-    ))}
-  </div>
+              <h2
+                style={{
+                  color: "#1f7a3b",
+                  margin: "0 0 4px",
+                  fontSize: "22px"
+                }}
+              >
+                {s.num}
+              </h2>
+
+              <p
+                style={{
+                  color: "#666",
+                  fontSize: "13px",
+                  margin: 0
+                }}
+              >
+                {s.label}
+              </p>
+            </div>
+          ))}
+        </div>
+
 
   {/* Divider */}
   <hr
@@ -977,23 +952,26 @@ export default function Home() {
     </div>
 
     {/* Column 2 */}
-    <div>
-      <h4 style={{ color: "#1f7a3b" }}>Quick Links</h4>
-      <p>Home</p>
-      <p>Shop</p>
-      <p>Categories</p>
-      <p>Offers</p>
-      <p>Contact</p>
-    </div>
+          <div>
+            <h4 style={{ color: "#1f7a3b" }}>Quick Links</h4>
+
+            <Link to="/" style={linkStyle}>Home</Link>
+
+            <Link to="/#products-section" style={linkStyle}>Shop</Link>
+
+            <Link to="/contact" style={linkStyle}>Contact</Link>
+          </div>
 
     {/* Column 3 */}
-    <div>
-      <h4 style={{ color: "#1f7a3b" }}>Customer Service</h4>
-      <p>About Us</p>
-      <p>Return Policy</p>
-      <p>Refund Policy</p>
-      <p>Customer Care</p>
-    </div>
+          <div>
+            <h4 style={{ color: "#1f7a3b" }}>Customer Service</h4>
+
+            <Link to="/#about-section" style={linkStyle}>About Us</Link>
+            <Link to="/return-policy" style={linkStyle}>Return Policy</Link>
+            <Link to="/refund-policy" style={linkStyle}>Refund Policy</Link>
+            <Link to="/contact" style={linkStyle}>Customer Care</Link>
+          </div>
+
 
     {/* Column 4 */}
     <div>
