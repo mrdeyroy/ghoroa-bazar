@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 // ---------- CUSTOMER PAGES ----------
 import Home from "./pages/Home";
+import MainLayout from "./layouts/MainLayout";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Payment from "./pages/Payment";
@@ -11,6 +12,10 @@ import Wishlist from "./pages/Wishlist";
 import MyOrders from "./pages/MyOrders";
 import Invoice from "./pages/Invoice";
 import NotFound from "./pages/NotFound";
+import Faq from "./pages/Faq";
+import Contact from "./pages/Contact";
+
+
 
 // ---------- AUTH ----------
 import Login from "./pages/Login";
@@ -21,20 +26,31 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminOrders from "./pages/AdminOrders";
 import AdminProducts from "./pages/AdminProducts";
 import AdminRoute from "./components/AdminRoute";
+import AdminMessages from "./pages/AdminMessages";
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
 
-        {/* ---------- CUSTOMER ---------- */}
-        <Route path="/" element={<Home />} />
+        {/* ---------- Pages WITH Navbar + Footer ---------- */}
+        <Route element={<MainLayout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/my-orders" element={<MyOrders />} />
+          <Route path="/wishlist" element={<Wishlist />} />
+          <Route path="/faq" element={<Faq />} />
+          <Route path="/contact" element={<Contact />} />
+
+
+        </Route>
+
+        {/* Pages WITHOUT Navbar + Footer */}
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/payment" element={<Payment />} />
-        <Route path="/wishlist" element={<Wishlist />} />
-        <Route path="/my-orders" element={<MyOrders />} />
         <Route path="/invoice/:orderId" element={<Invoice />} />
         <Route path="/order-success" element={<OrderSuccess />} />
         <Route path="*" element={<NotFound />} />
@@ -45,6 +61,8 @@ export default function App() {
 
         {/* ---------- ADMIN ---------- */}
         <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/messages" element={<AdminMessages />} />
+
 
         <Route
           path="/admin/orders"

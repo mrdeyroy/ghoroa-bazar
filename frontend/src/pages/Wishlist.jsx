@@ -1,15 +1,24 @@
 import { useWishlist } from "../context/WishlistContext";
 import ProductCard from "../components/ProductCard";
-import Navbar from "../components/Navbar";
 
 export default function Wishlist() {
   const { wishlist } = useWishlist();
 
   return (
     <>
-      <Navbar />
-      <div style={{ padding: "20px" }}>
-        <h2>My Wishlist</h2>
+      <div style={{ padding: "40px" }}>
+        <h2
+          style={{
+            color: "#1f7a3b",
+            fontWeight: "700",
+            fontSize: "22px",
+            marginBottom: "12px",
+            textAlign: "center"
+          }}
+        >
+          My Wishlist
+        </h2>
+        
 
         {wishlist.length === 0 && <p>No items in wishlist</p>}
 
