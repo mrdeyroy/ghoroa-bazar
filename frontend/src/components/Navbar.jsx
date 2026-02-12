@@ -24,7 +24,6 @@ export default function Navbar() {
   const [prevCartCount, setPrevCartCount] = useState(cart.length);
   const [searchOpen, setSearchOpen] = useState(false);
 
-
   const userId = localStorage.getItem("userId");
   const userName = localStorage.getItem("userName");
 
@@ -62,7 +61,7 @@ export default function Navbar() {
       <nav
         style={{
           background: "#00ad5cff",
-          height: 72,                     // 🔒 fixed navbar height
+          height: 72,
           padding: "0 16px",
           position: "relative",
           zIndex: 1000,
@@ -70,22 +69,10 @@ export default function Navbar() {
           alignItems: "center"
         }}
       >
-        {/* MAIN ROW */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            width: "100%"
-          }}
-        >
-          {/* LEFT SECTION */}
-          <div
-            style={{
-              flex: 1,
-              display: "flex",
-              alignItems: "center"
-            }}
-          >
+        <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
+
+          {/* LEFT */}
+          <div style={{ flex: 1, display: "flex", alignItems: "center" }}>
             <div className="mobile-only">
               <Menu
                 size={24}
@@ -96,21 +83,14 @@ export default function Navbar() {
           </div>
 
           {/* CENTER LOGO */}
-          <div
-            style={{
-              flex: 1,
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center"
-            }}
-          >
+          <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
             <Link to="/" style={{ display: "flex", alignItems: "center" }}>
               <img
                 src="/gblogo.png"
                 alt="Ghoroa Bazar"
                 style={{
-                  height: 120,            // ✅ bigger logo
-                  maxHeight: "100%",     // ❌ never grows navbar
+                  height: 120,
+                  maxHeight: "100%",
                   width: "auto",
                   objectFit: "contain"
                 }}
@@ -118,24 +98,19 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* RIGHT ICONS */}
+          {/* RIGHT SECTION */}
           <div
             style={{
               flex: 1,
               display: "flex",
               justifyContent: "flex-end",
               alignItems: "center",
-              gap: 24
+              gap: 20
             }}
           >
-            <Search
-              size={20}
-              style={iconStyle}
-              onClick={() => setSearchOpen(true)}
-            />
+            <Search size={20} style={iconStyle} onClick={() => setSearchOpen(true)} />
 
-
-            {/* WISHLIST */}
+            {/* Wishlist */}
             <div style={{ position: "relative" }}>
               <Heart
                 size={20}
@@ -143,130 +118,77 @@ export default function Navbar() {
                 onClick={() => navigate("/wishlist")}
               />
               {wishlist.length > 0 && (
-                <span
-                  style={{
-                    position: "absolute",
-                    top: -6,
-                    right: -6,
-                    background: "orange",
-                    color: "#000",
-                    borderRadius: "50%",
-                    fontSize: 10,
-                    padding: "2px 6px",
-                    fontWeight: "bold"
-                  }}
-                >
-                  {wishlist.length}
-                </span>
+                <span style={badgeStyle}>{wishlist.length}</span>
               )}
             </div>
 
-            {/* CART */}
+            {/* Cart */}
             <div style={{ position: "relative" }}>
               <ShoppingCart
                 size={20}
                 style={iconStyle}
-                onClick={() => setCartOpen(true)}
+                onClick={() => {
+                  if (!userId) return navigate("/login");
+                  setCartOpen(true);
+                }}
               />
               {cart.length > 0 && (
-                <span
-                  style={{
-                    position: "absolute",
-                    top: -6,
-                    right: -6,
-                    background: "orange",
-                    color: "#000",
-                    borderRadius: "50%",
-                    fontSize: 10,
-                    padding: "2px 6px",
-                    fontWeight: "bold"
-                  }}
-                >
-                  {cart.length}
-                </span>
+                <span style={badgeStyle}>{cart.length}</span>
               )}
             </div>
 
-            {/* USER (DESKTOP) */}
-            {userId && (
-              <div
-                className="desktop-only"
-                ref={dropdownRef}
-                style={{ position: "relative" }}
-              >
-                <User
-                  size={20}
-                  style={iconStyle}
-                  onClick={() => setUserDropdown(!userDropdown)}
-                />
+            {/* DESKTOP AUTH AREA */}
+            <div className="desktop-only" ref={dropdownRef}>
+              {userId ? (
+                <div style={{ position: "relative" }}>
+                  <User
+                    size={20}
+                    style={iconStyle}
+                    onClick={() => setUserDropdown(!userDropdown)}
+                  />
 
-                {userDropdown && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      right: 0,
-                      top: 36,
-                      background: "#fff",
-                      color: "#000",
-                      borderRadius: 6,
-                      width: 170,
-                      boxShadow: "0 6px 15px rgba(0,0,0,0.2)",
-                      zIndex: 2000
-                    }}
-                  >
-                    <div
-                      style={{
-                        padding: 10,
-                        borderBottom: "1px solid #eee",
-                        fontSize: 13
-                      }}
-                    >
-                      Hello, <strong>{userName}</strong>
-                    </div>
+                  {userDropdown && (
+                    <div style={dropdownStyle}>
+                      <div style={dropdownHeader}>
+                        Hello, <strong>{userName}</strong>
+                      </div>
 
-                    <div
-                      style={{ padding: 10, cursor: "pointer" }}
-                      onClick={() => {
-                        navigate("/my-orders");
-                        setUserDropdown(false);
-                      }}
-                    >
-                      My Orders
-                    </div>
+                      <div
+                        style={dropdownItem}
+                        onClick={() => {
+                          navigate("/my-orders");
+                          setUserDropdown(false);
+                        }}
+                      >
+                        My Orders
+                      </div>
 
-                    <div
-                      style={{
-                        padding: 10,
-                        cursor: "pointer",
-                        color: "red"
-                      }}
-                      onClick={logout}
-                    >
-                      Logout
+                      <div
+                        style={{ ...dropdownItem, color: "red" }}
+                        onClick={logout}
+                      >
+                        Logout
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              ) : (
+                <div style={{ display: "flex", gap: 12 }}>
+                  <Link to="/login" style={loginBtn}>
+                    Login
+                  </Link>
+                  <Link to="/signup" style={signupBtn}>
+                    Signup
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         {/* MOBILE MENU */}
         {menuOpen && (
-          <div
-            style={{
-              position: "absolute",
-              top: 72,
-              left: 0,
-              width: "100%",
-              background: "#005a2f",
-              padding: 12,
-              display: "flex",
-              flexDirection: "column",
-              gap: 12,
-              textAlign: "center"
-            }}
-          >
+          <div style={mobileMenuStyle}>
             <Link to="/" style={{ color: "#fff" }} onClick={() => setMenuOpen(false)}>
               Home
             </Link>
@@ -282,31 +204,13 @@ export default function Navbar() {
             )}
 
             {userId ? (
-              <button
-                onClick={logout}
-                style={{
-                  background: "#ffa500",
-                  border: "none",
-                  padding: 8,
-                  borderRadius: 6,
-                  fontWeight: "bold"
-                }}
-              >
+              <button onClick={logout} style={mobileLogoutBtn}>
                 Logout
               </button>
             ) : (
               <>
                 <Link to="/login" style={{ color: "#fff" }}>Login</Link>
-                <Link
-                  to="/signup"
-                  style={{
-                    background: "#ffa500",
-                    color: "#000",
-                    padding: 8,
-                    borderRadius: 6,
-                    fontWeight: "bold"
-                  }}
-                >
+                <Link to="/signup" style={mobileSignupBtn}>
                   Signup
                 </Link>
               </>
@@ -327,16 +231,94 @@ export default function Navbar() {
         </style>
       </nav>
 
-      <SearchModal
-        open={searchOpen}
-        onClose={() => setSearchOpen(false)}
-      />
+      <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
 
       {userId && (
         <CartSidebar open={cartOpen} onClose={() => setCartOpen(false)} />
-      
-        
       )}
     </>
   );
 }
+
+/* Reusable styles */
+const badgeStyle = {
+  position: "absolute",
+  top: -6,
+  right: -6,
+  background: "orange",
+  color: "#000",
+  borderRadius: "50%",
+  fontSize: 10,
+  padding: "2px 6px",
+  fontWeight: "bold"
+};
+
+const dropdownStyle = {
+  position: "absolute",
+  right: 0,
+  top: 36,
+  background: "#fff",
+  color: "#000",
+  borderRadius: 6,
+  width: 170,
+  boxShadow: "0 6px 15px rgba(0,0,0,0.2)",
+  zIndex: 2000
+};
+
+const dropdownHeader = {
+  padding: 10,
+  borderBottom: "1px solid #eee",
+  fontSize: 13
+};
+
+const dropdownItem = {
+  padding: 10,
+  cursor: "pointer"
+};
+
+const loginBtn = {
+  padding: "6px 14px",
+  borderRadius: 6,
+  background: "#fff",
+  color: "#000",
+  fontWeight: "bold",
+  textDecoration: "none"
+};
+
+const signupBtn = {
+  padding: "6px 14px",
+  borderRadius: 6,
+  background: "#ffa500",
+  color: "#000",
+  fontWeight: "bold",
+  textDecoration: "none"
+};
+
+const mobileMenuStyle = {
+  position: "absolute",
+  top: 72,
+  left: 0,
+  width: "100%",
+  background: "#005a2f",
+  padding: 12,
+  display: "flex",
+  flexDirection: "column",
+  gap: 12,
+  textAlign: "center"
+};
+
+const mobileLogoutBtn = {
+  background: "#ffa500",
+  border: "none",
+  padding: 8,
+  borderRadius: 6,
+  fontWeight: "bold"
+};
+
+const mobileSignupBtn = {
+  background: "#ffa500",
+  color: "#000",
+  padding: 8,
+  borderRadius: 6,
+  fontWeight: "bold"
+};
