@@ -13,6 +13,14 @@ const subtotal = cart.reduce(
   0
 );
 
+const userId = localStorage.getItem("userId");
+
+if (!userId) {
+  navigate("/login");
+  return;
+}
+
+
   const hasStockIssue = cart.some(
     item => !item.stock || item.qty >= item.stock
   );

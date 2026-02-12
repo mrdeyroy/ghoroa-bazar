@@ -49,6 +49,7 @@ export default function Navbar() {
   const logout = () => {
     localStorage.removeItem("userId");
     localStorage.removeItem("userName");
+    window.dispatchEvent(new Event("authChanged"));
     navigate("/login");
     setUserDropdown(false);
     setMenuOpen(false);

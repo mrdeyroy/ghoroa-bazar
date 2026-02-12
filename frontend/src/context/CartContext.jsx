@@ -4,20 +4,33 @@ const CartContext = createContext();
 
 export function CartProvider({ children }) {
 
-  // 🔹 Get real default weight from product schema
+  // ✅ Make userId reactive
+  const [userId, setUserId] = useState(
+    localStorage.getItem("userId") || "guest"
+  );
+
+  // ✅ Listen for login/logout changes
+  useEffect(() => {
+    const handleAuthChange = () => {
+      setUserId(localStorage.getItem("userId") || "guest");
+    };
+
+    window.addEventListener("authChanged", handleAuthChange);
+    return () => window.removeEventListener("authChanged", handleAuthChange);
+  }, []);
+
+  // ✅ Generate key dynamically
+  const getCartKey = (id) => `cart_${id}`;
+
+  // 🔹 Get default weight
   const getDefaultWeight = (item) => {
-    // Case 1: weights array (PRIMARY)
     if (Array.isArray(item.weights) && item.weights.length > 0) {
-      return item.weights[0].label; // 👈 exact default
+      return item.weights[0].label;
     }
-
-    // Case 2: legacy single weight
     if (item.weight) return item.weight;
-
-    return ""; // should rarely happen
+    return "";
   };
 
-  // 🔹 Normalize cart item
   const normalizeWeight = (item) => {
     if (!item.selectedWeight || item.selectedWeight === "default") {
       return {
@@ -28,16 +41,27 @@ export function CartProvider({ children }) {
     return item;
   };
 
+  // ✅ Load cart initially
   const [cart, setCart] = useState(() => {
-    const saved = localStorage.getItem("cart");
+    const saved = localStorage.getItem(getCartKey(userId));
     if (!saved) return [];
-
     return JSON.parse(saved).map(item => normalizeWeight(item));
   });
 
+  // ✅ Reload cart when user changes
   useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cart));
-  }, [cart]);
+    const saved = localStorage.getItem(getCartKey(userId));
+    if (!saved) {
+      setCart([]);
+    } else {
+      setCart(JSON.parse(saved));
+    }
+  }, [userId]);
+
+  // ✅ Save cart when it updates
+  useEffect(() => {
+    localStorage.setItem(getCartKey(userId), JSON.stringify(cart));
+  }, [cart, userId]);
 
   const addToCart = (product) => {
     const normalizedProduct = normalizeWeight(product);
@@ -95,7 +119,7 @@ export function CartProvider({ children }) {
 
   const clearCart = () => {
     setCart([]);
-    localStorage.removeItem("cart");
+    localStorage.removeItem(getCartKey(userId));
   };
 
   return (

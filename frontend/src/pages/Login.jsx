@@ -21,6 +21,7 @@ export default function Login() {
     const data = await res.json();
     localStorage.setItem("userId", data.userId);
     localStorage.setItem("userName", data.name);
+    window.dispatchEvent(new Event("authChanged"));
     navigate("/");
   };
 
