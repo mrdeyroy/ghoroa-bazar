@@ -22,7 +22,6 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 
 // ---------- ADMIN ----------
-import AdminLogin from "./pages/AdminLogin";
 import AdminOrders from "./pages/AdminOrders";
 import AdminProducts from "./pages/AdminProducts";
 import AdminRoute from "./components/AdminRoute";
@@ -60,7 +59,6 @@ export default function App() {
         <Route path="/signup" element={<Signup />} />
 
         {/* ---------- ADMIN ---------- */}
-        <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/messages" element={<AdminMessages />} />
 
 

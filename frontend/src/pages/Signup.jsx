@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 
 export default function Signup() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const signup = async () => {
@@ -35,11 +36,28 @@ export default function Signup() {
           onChange={(e) => setForm({ ...form, email: e.target.value })}
         />
 
-        <input
-          type="password"
-          placeholder="Password"
-          onChange={(e) => setForm({ ...form, password: e.target.value })}
-        />
+        <div style={{ position: "relative" }}>
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            style={{ width: "100%", paddingRight: "40px" }}
+          />
+          <span
+            onClick={() => setShowPassword(!showPassword)}
+            style={{
+              position: "absolute",
+              right: "10px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              cursor: "pointer",
+              userSelect: "none",
+              color: "#555"
+            }}
+          >
+            {showPassword ? "👁️‍🗨️" : "👁️"}
+          </span>
+        </div>
 
         <button onClick={signup}>Create Account</button>
 

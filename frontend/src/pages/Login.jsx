@@ -4,10 +4,16 @@ import { useNavigate, Link } from "react-router-dom";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const login = async () => {
-    const res = await fetch("http://localhost:5000/api/users/login", {
+    const endpoint = isAdmin
+      ? "http://localhost:5000/api/admin/login"
+      : "http://localhost:5000/api/users/login";
+
+    const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password })
@@ -18,11 +24,16 @@ export default function Login() {
       return;
     }
 
-    const data = await res.json();
-    localStorage.setItem("userId", data.userId);
-    localStorage.setItem("userName", data.name);
-    window.dispatchEvent(new Event("authChanged"));
-    navigate("/");
+    if (isAdmin) {
+      localStorage.setItem("adminLoggedIn", "true");
+      navigate("/admin/orders");
+    } else {
+      const data = await res.json();
+      localStorage.setItem("userId", data.userId);
+      localStorage.setItem("userName", data.name);
+      window.dispatchEvent(new Event("authChanged"));
+      navigate("/");
+    }
   };
 
   return (
@@ -40,11 +51,39 @@ export default function Login() {
           onChange={(e) => setEmail(e.target.value)}
         />
 
-        <input
-          type="password"
-          placeholder="Password"
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <div style={{ position: "relative" }}>
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            onChange={(e) => setPassword(e.target.value)}
+            style={{ width: "100%", paddingRight: "40px" }}
+          />
+          <span
+            onClick={() => setShowPassword(!showPassword)}
+            style={{
+              position: "absolute",
+              right: "10px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              cursor: "pointer",
+              userSelect: "none",
+              color: "#555"
+            }}
+          >
+            {showPassword ? "👁️‍🗨️" : "👁️"}
+          </span>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", margin: "10px 0" }}>
+          <input
+            type="checkbox"
+            id="admin-login"
+            checked={isAdmin}
+            onChange={(e) => setIsAdmin(e.target.checked)}
+            style={{ width: "auto", margin: 0 }}
+          />
+          <label htmlFor="admin-login" style={{ fontSize: "14px", cursor: "pointer", color: "#555" }}>Login as Admin</label>
+        </div>
 
         <button onClick={login}>Login</button>
 
