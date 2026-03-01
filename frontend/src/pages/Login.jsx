@@ -26,7 +26,7 @@ export default function Login() {
 
     if (isAdmin) {
       localStorage.setItem("adminLoggedIn", "true");
-      navigate("/admin/orders");
+      navigate("/admin/dashboard");
     } else {
       const data = await res.json();
       localStorage.setItem("userId", data.userId);

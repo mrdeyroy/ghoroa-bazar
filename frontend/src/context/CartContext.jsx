@@ -76,8 +76,8 @@ export function CartProvider({ children }) {
       if (existing) {
         return prev.map(item =>
           item.id === normalizedProduct.id &&
-          item.selectedWeight === normalizedProduct.selectedWeight
-            ? { ...item, qty: item.qty + normalizedProduct.qty }
+            item.selectedWeight === normalizedProduct.selectedWeight
+            ? { ...normalizedProduct, ...item, image: normalizedProduct.image || item.image, qty: item.qty + normalizedProduct.qty }
             : item
         );
       }

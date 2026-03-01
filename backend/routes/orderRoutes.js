@@ -7,6 +7,7 @@ const Product = require("../models/Product");
 router.post("/", async (req, res) => {
   try {
     const { items } = req.body;
+    console.log("RECEIVED ITEMS:", JSON.stringify(items, null, 2));
 
     // 🔍 STEP 1: STOCK VALIDATION
     for (const item of items) {
@@ -26,7 +27,9 @@ router.post("/", async (req, res) => {
     }
 
     // 💾 STEP 2: SAVE ORDER
-    const order = new Order(req.body);
+    const orderData = { ...req.body };
+    orderData.orderHistory = [{ status: "Placed", date: Date.now() }];
+    const order = new Order(orderData);
     await order.save();
 
     // 🔻 STEP 3: REDUCE STOCK (AFTER SUCCESSFUL ORDER)
@@ -64,7 +67,8 @@ router.put("/:id", async (req, res) => {
     const { orderStatus, paymentStatus } = req.body;
 
     const updateData = {
-      orderStatus
+      orderStatus,
+      $push: { orderHistory: { status: orderStatus, date: Date.now() } }
     };
 
     // ✅ Auto mark payment as Paid when Delivered

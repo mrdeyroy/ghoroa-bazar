@@ -46,7 +46,9 @@ export default function Checkout() {
       productId: item.id,
       name: item.name,
       price: item.price,
-      qty: item.qty
+      qty: item.qty,
+      image: item.image,
+      weight: item.selectedWeight || item.weight
     })),
     totalAmount: total,
     paymentMethod
@@ -82,6 +84,7 @@ export default function Checkout() {
     if (!validateBeforeOrder()) return;
 
     try {
+      console.log("PAYLOAD BEING SENT:", JSON.stringify(baseOrderData, null, 2));
       const res = await fetch("http://localhost:5000/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -98,15 +101,15 @@ export default function Checkout() {
   };
 
   const proceedToPayment = () => {
-  if (!validateBeforeOrder()) return;
+    if (!validateBeforeOrder()) return;
 
-  navigate("/payment", {
-    state: {
-      customer,
-      paymentMethod
-    }
-  });
-};
+    navigate("/payment", {
+      state: {
+        customer,
+        paymentMethod
+      }
+    });
+  };
 
 
   return (

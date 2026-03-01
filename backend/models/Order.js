@@ -21,7 +21,9 @@ const orderSchema = new mongoose.Schema({
       productId: String,
       name: String,
       price: Number,
-      qty: Number
+      qty: Number,
+      image: String,
+      weight: String
     }
   ],
 
@@ -37,6 +39,16 @@ const orderSchema = new mongoose.Schema({
     type: String,
     default: "Placed"
   },
+
+  orderHistory: [
+    {
+      status: String,
+      date: {
+        type: Date,
+        default: Date.now
+      }
+    }
+  ],
 
   createdAt: {
     type: Date,

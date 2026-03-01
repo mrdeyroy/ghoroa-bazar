@@ -22,6 +22,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 
 // ---------- ADMIN ----------
+import AdminDashboard from "./pages/AdminDashboard";
 import AdminOrders from "./pages/AdminOrders";
 import AdminProducts from "./pages/AdminProducts";
 import AdminRoute from "./components/AdminRoute";
@@ -59,7 +60,22 @@ export default function App() {
         <Route path="/signup" element={<Signup />} />
 
         {/* ---------- ADMIN ---------- */}
-        <Route path="/admin/messages" element={<AdminMessages />} />
+        <Route
+          path="/admin/dashboard"
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/messages"
+          element={
+            <AdminRoute>
+              <AdminMessages />
+            </AdminRoute>
+          }
+        />
 
 
         <Route

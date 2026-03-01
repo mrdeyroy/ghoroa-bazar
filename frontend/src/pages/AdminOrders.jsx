@@ -161,6 +161,7 @@ export default function AdminOrders() {
             >
               <option value="Placed">Placed</option>
               <option value="Packed">Packed</option>
+              <option value="Shipped">Shipped</option>
               <option value="Delivered">Delivered</option>
               <option value="Cancelled">Cancelled</option>
             </select>
@@ -198,8 +199,8 @@ export default function AdminOrders() {
             {order.items && order.items.length > 0 ? (
               <ul style={{ paddingLeft: 18 }}>
                 {order.items.map((item, index) => (
-                  <li key={index} style={{ fontSize: 14 }}>
-                    {item.name} × {item.qty} (₹{item.price})
+                  <li key={index} style={{ fontSize: 14, marginBottom: 4 }}>
+                    <strong>{item.name}</strong> {item.weight && <span style={{ color: "#666" }}>({item.weight})</span>} × {item.qty} — ₹{(item.price * item.qty).toFixed(2)}
                   </li>
                 ))}
               </ul>
