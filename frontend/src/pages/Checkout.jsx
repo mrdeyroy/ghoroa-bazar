@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCart } from "../context/CartContext";
 import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 export default function Checkout() {
   const { cart, clearCart } = useCart();
@@ -9,16 +10,23 @@ export default function Checkout() {
   const userId = localStorage.getItem("userId");
 
 
-  const [customer, setCustomer] = useState({
-    firstName: "",
-    lastName: "",
-    phone: "",
-    address: "",
-    city: "",
-    state: "",
-    pincode: "",
-    email: ""
+  const [customer, setCustomer] = useState(() => {
+    const saved = localStorage.getItem("billing_details");
+    return saved ? JSON.parse(saved) : {
+      firstName: "",
+      lastName: "",
+      phone: "",
+      address: "",
+      city: "",
+      state: "",
+      pincode: "",
+      email: ""
+    };
   });
+
+  useEffect(() => {
+    localStorage.setItem("billing_details", JSON.stringify(customer));
+  }, [customer]);
 
   const hasStockIssue = cart.some(item => item.qty > item.stock);
 
@@ -113,6 +121,22 @@ export default function Checkout() {
 
   return (
     <div style={styles.page}>
+      <button
+        onClick={() => navigate(-1)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 5,
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          marginBottom: 10,
+          fontSize: 16,
+          color: "#333"
+        }}
+      >
+        <ArrowLeft size={18} /> Back
+      </button>
       <h2 style={styles.title}>Checkout</h2>
 
       <div style={styles.wrapper}>

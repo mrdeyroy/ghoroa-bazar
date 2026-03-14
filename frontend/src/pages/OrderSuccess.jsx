@@ -1,6 +1,11 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 
 export default function OrderSuccess() {
+  useEffect(() => {
+    localStorage.removeItem("billing_details");
+  }, []);
+
   return (
     <div
       style={{

@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
 import { useCart } from "../context/CartContext";
 
 export default function Payment() {
@@ -60,6 +61,22 @@ export default function Payment() {
 
   return (
     <div style={styles.page}>
+      <button
+        onClick={() => navigate(-1)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 5,
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          marginBottom: 10,
+          fontSize: 16,
+          color: "#333"
+        }}
+      >
+        <ArrowLeft size={18} /> Back
+      </button>
       <div style={styles.wrapper}>
         {/* LEFT */}
         <div style={styles.left}>
