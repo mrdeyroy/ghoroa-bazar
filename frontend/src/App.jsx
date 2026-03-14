@@ -41,7 +41,11 @@ export default function App() {
           <Route path="/cart" element={<Cart />} />
           <Route path="/faq" element={<Faq />} />
           <Route path="/contact" element={<Contact />} />
-          
+
+          <Route path="/product/:id" element={<ProductDetails />} />
+          <Route path="/invoice/:orderId" element={<ProtectedRoute><Invoice /></ProtectedRoute>} />
+          <Route path="/order-success" element={<OrderSuccess />} />
+
           {/* Protected Customer Routes */}
           <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
           <Route path="/payment" element={<ProtectedRoute><Payment /></ProtectedRoute>} />
@@ -50,10 +54,8 @@ export default function App() {
         </Route>
 
         {/* Pages WITHOUT Navbar + Footer */}
-        <Route path="/product/:id" element={<ProductDetails />} />
-        <Route path="/invoice/:orderId" element={<ProtectedRoute><Invoice /></ProtectedRoute>} />
-        <Route path="/order-success" element={<OrderSuccess />} />
-        
+
+
         {/* ---------- AUTH ---------- */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
