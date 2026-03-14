@@ -7,7 +7,7 @@ export default function Checkout() {
   const navigate = useNavigate();
 
   const userId = localStorage.getItem("userId");
-  const [paymentMethod, setPaymentMethod] = useState("COD");
+
 
   const [customer, setCustomer] = useState({
     firstName: "",
@@ -51,7 +51,7 @@ export default function Checkout() {
       weight: item.selectedWeight || item.weight
     })),
     totalAmount: total,
-    paymentMethod
+    paymentMethod: "Online" // Default for initial payload calculation
   };
 
   const validateBeforeOrder = () => {
@@ -105,8 +105,7 @@ export default function Checkout() {
 
     navigate("/payment", {
       state: {
-        customer,
-        paymentMethod
+        customer
       }
     });
   };
@@ -178,26 +177,6 @@ export default function Checkout() {
             value={customer.email}
             onChange={e => setCustomer({ ...customer, email: e.target.value })}
           />
-
-          <h4 style={styles.sectionTitle}>Payment Method</h4>
-
-          <label style={styles.radio}>
-            <input
-              type="radio"
-              checked={paymentMethod === "COD"}
-              onChange={() => setPaymentMethod("COD")}
-            />
-            Cash on Delivery
-          </label>
-
-          <label style={styles.radio}>
-            <input
-              type="radio"
-              checked={paymentMethod !== "COD"}
-              onChange={() => setPaymentMethod("UPI")}
-            />
-            Online Payment
-          </label>
         </div>
 
         {/* RIGHT */}

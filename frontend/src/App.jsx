@@ -42,7 +42,7 @@ export default function App() {
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/faq" element={<Faq />} />
           <Route path="/contact" element={<Contact />} />
-
+          <Route path="/payment" element={<Payment />} />
 
         </Route>
 
@@ -50,7 +50,6 @@ export default function App() {
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
-        <Route path="/payment" element={<Payment />} />
         <Route path="/invoice/:orderId" element={<Invoice />} />
         <Route path="/order-success" element={<OrderSuccess />} />
         <Route path="*" element={<NotFound />} />
