@@ -1,24 +1,224 @@
 const express = require("express");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const router = express.Router();
 const User = require("../models/User");
+const { sendEmail } = require("../utils/mail");
+const { otpTemplate } = require("../utils/templates");
+require("dotenv").config();
 
-// signup
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// 1️⃣ Signup API
 router.post("/signup", async (req, res) => {
-  const user = new User(req.body);
-  await user.save();
-  res.json({ message: "Signup successful" });
+  try {
+    const { name, email, password } = req.body;
+
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: "Invalid email format" });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: "Email already registered" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword,
+      verificationOTP: otp,
+      otpExpires,
+      isVerified: false
+    });
+
+    await user.save();
+
+    const emailHtml = otpTemplate.replace("{{OTP}}", otp);
+    try {
+      await sendEmail(email, "Verify your email - Ghoroa Bazar", emailHtml);
+    } catch (mailErr) {
+      console.error("Mail sending failed:", mailErr);
+      throw new Error("Failed to send email");
+    }
+
+    res.status(201).json({ message: "Verification OTP sent to your email" });
+  } catch (err) {
+    console.error("Signup error details:", err);
+    if (err.message === "Failed to send email") {
+      return res.status(500).json({ error: "Email service configuration error. Please check backend .env variables." });
+    }
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
-// login
-router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-  const user = await User.findOne({ email, password });
+// 2️⃣ Verify Email API
+router.post("/verify-email", async (req, res) => {
+  try {
+    const { email, otp } = req.body;
 
-  if (!user) {
-    return res.status(401).json({ error: "Invalid credentials" });
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({ error: "User already verified" });
+    }
+
+    if (user.verificationOTP !== otp || user.otpExpires < Date.now()) {
+      return res.status(400).json({ error: "Invalid or expired OTP" });
+    }
+
+    user.isVerified = true;
+    user.verificationOTP = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+    res.json({ message: "Email verified successfully" });
+  } catch (err) {
+    console.error("Verify Email error:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
+});
 
-  res.json({ userId: user._id, name: user.name });
+// 3️⃣ Resend OTP API
+router.post("/resend-otp", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({ error: "User already verified" });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpires = Date.now() + 10 * 60 * 1000;
+
+    user.verificationOTP = otp;
+    user.otpExpires = otpExpires;
+    await user.save();
+
+    const emailHtml = otpTemplate.replace("{{OTP}}", otp);
+    await sendEmail(email, "New Verification Code - Ghoroa Bazar", emailHtml);
+
+    res.json({ message: "New OTP sent" });
+  } catch (err) {
+    console.error("Resend OTP error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// 4️⃣ Login API
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    if (!user.isVerified) {
+      return res.status(403).json({ error: "Please verify your email first" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email
+      }
+    });
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// 5️⃣ Forgot Password API
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
+
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = resetExpires;
+    await user.save();
+
+    const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
+
+    await sendEmail(
+      email,
+      "Reset your password - Ghoroa Bazar",
+      `<div style="font-family: Arial, sans-serif; padding: 20px;">
+        <h2>Password Reset Request</h2>
+        <p>Click the link below to reset your password:</p>
+        <a href="${resetLink}" style="display:inline-block; padding:10px 20px; background:#006837; color:#fff; text-decoration:none; border-radius:5px;">Reset Password</a>
+        <p>This link will expire in 15 minutes.</p>
+      </div>`
+    );
+
+    res.json({ message: "Password reset link sent to your email" });
+  } catch (err) {
+    console.error("Forgot Password error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// 6️⃣ Reset Password API
+router.post("/reset-password/:token", async (req, res) => {
+  try {
+    const { password } = req.body;
+    const { token } = req.params;
+
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: "Invalid or expired reset token" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(password, salt);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+
+    await user.save();
+
+    res.json({ message: "Password reset successful" });
+  } catch (err) {
+    console.error("Reset Password error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 module.exports = router;

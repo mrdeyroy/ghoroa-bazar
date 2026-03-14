@@ -1,23 +1,11 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { useAuth } from "./AuthContext";
 
 const CartContext = createContext();
 
 export function CartProvider({ children }) {
-
-  // ✅ Make userId reactive
-  const [userId, setUserId] = useState(
-    localStorage.getItem("userId") || "guest"
-  );
-
-  // ✅ Listen for login/logout changes
-  useEffect(() => {
-    const handleAuthChange = () => {
-      setUserId(localStorage.getItem("userId") || "guest");
-    };
-
-    window.addEventListener("authChanged", handleAuthChange);
-    return () => window.removeEventListener("authChanged", handleAuthChange);
-  }, []);
+  const { user } = useAuth();
+  const userId = user?.id || "guest";
 
   // ✅ Generate key dynamically
   const getCartKey = (id) => `cart_${id}`;

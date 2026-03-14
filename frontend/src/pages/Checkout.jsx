@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import { useCart } from "../context/CartContext";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 export default function Checkout() {
   const { cart, clearCart } = useCart();
   const navigate = useNavigate();
 
-  const userId = localStorage.getItem("userId");
+  const { user } = useAuth();
+  const userId = user?.id || localStorage.getItem("userId");
 
 
   const [customer, setCustomer] = useState(() => {

@@ -4,12 +4,15 @@ import { useWishlist } from "../context/WishlistContext";
 import { useState, useEffect, useRef } from "react";
 import CartSidebar from "./CartSidebar";
 import SearchModal from "./SearchModal";
+import { useAuth } from "../context/AuthContext";
 
 import {
   ShoppingCart,
   Heart,
   Search,
   User,
+  LogOut,
+  ShoppingBag,
   Menu
 } from "lucide-react";
 
@@ -17,6 +20,7 @@ export default function Navbar() {
   const { cart } = useCart();
   const { wishlist } = useWishlist();
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
@@ -24,17 +28,14 @@ export default function Navbar() {
   const [prevCartCount, setPrevCartCount] = useState(cart.length);
   const [searchOpen, setSearchOpen] = useState(false);
 
-  const userId = localStorage.getItem("userId");
-  const userName = localStorage.getItem("userName");
-
   const dropdownRef = useRef(null);
 
   useEffect(() => {
-    if (userId && cart.length > prevCartCount) {
+    if (user && cart.length > prevCartCount) {
       setCartOpen(true);
     }
     setPrevCartCount(cart.length);
-  }, [cart.length, userId]);
+  }, [cart.length, user]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -46,13 +47,11 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const logout = () => {
-    localStorage.removeItem("userId");
-    localStorage.removeItem("userName");
-    window.dispatchEvent(new Event("authChanged"));
-    navigate("/login");
-    setUserDropdown(false);
+  const handleLogout = () => {
+    logout();
     setMenuOpen(false);
+    setUserDropdown(false);
+    navigate("/login");
   };
 
   const iconStyle = { cursor: "pointer" };
@@ -129,7 +128,7 @@ export default function Navbar() {
                 size={20}
                 style={iconStyle}
                 onClick={() => {
-                  if (!userId) return navigate("/login");
+                  if (!user) return navigate("/login");
                   setCartOpen(true);
                 }}
               />
@@ -140,7 +139,7 @@ export default function Navbar() {
 
             {/* DESKTOP AUTH AREA */}
             <div className="desktop-only" ref={dropdownRef}>
-              {userId ? (
+              {user ? (
                 <div style={{ position: "relative" }}>
                   <User
                     size={20}
@@ -151,7 +150,7 @@ export default function Navbar() {
                   {userDropdown && (
                     <div style={dropdownStyle}>
                       <div style={dropdownHeader}>
-                        Hello, <strong>{userName}</strong>
+                        Hello, <strong>{user.name}</strong>
                       </div>
 
                       <div
@@ -161,14 +160,14 @@ export default function Navbar() {
                           setUserDropdown(false);
                         }}
                       >
-                        My Orders
+                        <ShoppingBag size={14} className="inline mr-2" /> My Orders
                       </div>
 
                       <div
                         style={{ ...dropdownItem, color: "red" }}
-                        onClick={logout}
+                        onClick={handleLogout}
                       >
-                        Logout
+                        <LogOut size={14} className="inline mr-2" /> Logout
                       </div>
                     </div>
                   )}
@@ -194,7 +193,7 @@ export default function Navbar() {
               Home
             </Link>
 
-            {userId && (
+            {user && (
               <Link
                 to="/my-orders"
                 style={{ color: "#fff" }}
@@ -204,14 +203,14 @@ export default function Navbar() {
               </Link>
             )}
 
-            {userId ? (
-              <button onClick={logout} style={mobileLogoutBtn}>
+            {user ? (
+              <button onClick={handleLogout} style={mobileLogoutBtn}>
                 Logout
               </button>
             ) : (
               <>
-                <Link to="/login" style={{ color: "#fff" }}>Login</Link>
-                <Link to="/signup" style={mobileSignupBtn}>
+                <Link to="/login" style={{ color: "#fff" }} onClick={() => setMenuOpen(false)}>Login</Link>
+                <Link to="/signup" style={mobileSignupBtn} onClick={() => setMenuOpen(false)}>
                   Signup
                 </Link>
               </>
@@ -223,6 +222,7 @@ export default function Navbar() {
           {`
             .mobile-only { display: none; }
             .desktop-only { display: block; }
+            .inline { display: inline; }
 
             @media (max-width: 768px) {
               .mobile-only { display: block; }
@@ -234,7 +234,7 @@ export default function Navbar() {
 
       <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
 
-      {userId && (
+      {user && (
         <CartSidebar open={cartOpen} onClose={() => setCartOpen(false)} />
       )}
     </>

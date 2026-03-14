@@ -2,11 +2,13 @@ const express = require("express");
 const router = express.Router();
 const Order = require("../models/Order");
 const Product = require("../models/Product");
+const authMiddleware = require("../middleware/authMiddleware");
 
 // 1️⃣ CREATE ORDER + VALIDATE + REDUCE STOCK (SAFE)
-router.post("/", async (req, res) => {
+router.post("/", authMiddleware, async (req, res) => {
   try {
     const { items } = req.body;
+    // ... rest of code
     console.log("RECEIVED ITEMS:", JSON.stringify(items, null, 2));
 
     // 🔍 STEP 1: STOCK VALIDATION

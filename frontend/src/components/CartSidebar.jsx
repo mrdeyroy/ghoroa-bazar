@@ -1,24 +1,26 @@
 import { useCart } from "../context/CartContext";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
 
 export default function CartSidebar({ open, onClose }) {
   const { cart, increaseQty, decreaseQty, removeItem } = useCart();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [toast, setToast] = useState("");
 
-const subtotal = cart.reduce(
-  (sum, item) => sum + Number(item.price) * item.qty,
-  0
-);
+  const subtotal = cart.reduce(
+    (sum, item) => sum + Number(item.price) * item.qty,
+    0
+  );
 
-const userId = localStorage.getItem("userId");
-
-if (!userId) {
-  navigate("/login");
-  return;
-}
+  useEffect(() => {
+    if (!user && open) {
+      navigate("/login");
+      onClose();
+    }
+  }, [user, open, navigate, onClose]);
 
 
   const hasStockIssue = cart.some(
