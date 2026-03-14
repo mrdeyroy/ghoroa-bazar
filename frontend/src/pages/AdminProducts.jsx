@@ -35,36 +35,49 @@ export default function AdminProducts() {
     fetchProducts();
   }, []);
 
+  const [submitting, setSubmitting] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (uploading) return;
+    if (uploading || submitting) return;
 
     if (!form.image) {
       setMessage("Please upload a product image");
+      setTimeout(() => setMessage(""), 3000);
       return;
     }
 
-    const payload = { ...form };
-    delete payload.newWeight; // cleanup temp field
+    setSubmitting(true);
+    try {
+      const payload = { ...form };
+      delete payload.newWeight; // cleanup temp field
 
-    const url = editingId
-      ? `http://localhost:5000/api/products/${editingId}`
-      : "http://localhost:5000/api/products";
+      const url = editingId
+        ? `http://localhost:5000/api/products/${editingId}`
+        : "http://localhost:5000/api/products";
 
-    const method = editingId ? "PUT" : "POST";
+      const method = editingId ? "PUT" : "POST";
 
-    await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
 
-    setMessage(editingId ? "Product updated successfully" : "Product added successfully");
-    setForm(emptyForm);
-    setEditingId(null);
-    fetchProducts();
-
-    setTimeout(() => setMessage(""), 3000);
+      if (res.ok) {
+        setMessage(editingId ? "Product updated successfully" : "Product added successfully");
+        setForm(emptyForm);
+        setEditingId(null);
+        fetchProducts();
+      } else {
+        setMessage("Failed to save product");
+      }
+    } catch (err) {
+      setMessage("Error occurred while saving product");
+    } finally {
+      setSubmitting(false);
+      setTimeout(() => setMessage(""), 3000);
+    }
   };
 
   const startEdit = (product) => {
@@ -166,8 +179,8 @@ export default function AdminProducts() {
         <h3>{editingId ? "Edit Product" : "Add New Product"}</h3>
 
         {message && (
-          <div style={{ margin: "10px 0", color: "#006837", fontWeight: 600 }}>
-            {message}
+          <div className="notification-popup">
+            {message.includes("successfully") ? "✅" : "❌"} {message}
           </div>
         )}
 
@@ -332,17 +345,26 @@ export default function AdminProducts() {
             textAlign: "center"
           }}
         >
-          <label htmlFor="fileUpload">
-            Drag & drop image here or <strong>click to upload</strong>
-          </label>
+          {uploading ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
+              <div className="spinner"></div>
+              <span>Uploading to Cloudinary...</span>
+            </div>
+          ) : (
+            <>
+              <label htmlFor="fileUpload" style={{ cursor: "pointer" }}>
+                Drag & drop image here or <strong>click to upload</strong>
+              </label>
 
-          <input
-            type="file"
-            hidden
-            id="fileUpload"
-            accept="image/*"
-            onChange={e => uploadImage(e.target.files[0])}
-          />
+              <input
+                type="file"
+                hidden
+                id="fileUpload"
+                accept="image/*"
+                onChange={e => uploadImage(e.target.files[0])}
+              />
+            </>
+          )}
         </div>
 
         {/* Preview */}
@@ -354,8 +376,29 @@ export default function AdminProducts() {
         )}
 
         <div style={{ marginTop: "20px", display: "flex", gap: "12px" }}>
-          <button type="submit" style={{ background: "#006837", color: "#fff", padding: "12px 22px", borderRadius: "10px" }}>
-            {editingId ? "Update Product" : "Add Product"}
+          <button 
+            type="submit" 
+            disabled={uploading || submitting}
+            style={{ 
+              background: "#006837", 
+              color: "#fff", 
+              padding: "12px 22px", 
+              borderRadius: "10px",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              opacity: (uploading || submitting) ? 0.7 : 1,
+              cursor: (uploading || submitting) ? "not-allowed" : "pointer"
+            }}
+          >
+            {(submitting) ? (
+              <>
+                <div className="spinner" style={{ width: "16px", height: "16px", borderTopColor: "#fff" }}></div>
+                Saving...
+              </>
+            ) : (
+              editingId ? "Update Product" : "Add Product"
+            )}
           </button>
 
           {editingId && (
