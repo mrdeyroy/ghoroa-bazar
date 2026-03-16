@@ -85,9 +85,10 @@ export default function Payment() {
       });
 
       if (!res.ok) throw new Error();
+      const data = await res.json();
 
       clearCart();
-      navigate("/order-success");
+      navigate("/order-success", { state: { order: data.order } });
     } catch {
       alert("Order failed. Please try again.");
     }

@@ -1,34 +1,137 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   CheckCircle2,
   ShoppingBag,
   ArrowRight,
   ChevronRight,
   Truck,
-  Mail,
+  Package,
   Download,
   Calendar,
   PackageCheck,
   Star,
-  ExternalLink
+  ExternalLink,
+  FileText
 } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function OrderSuccess() {
-  const navigate = useNavigate();
-  const [orderId, setOrderId] = useState("");
+  const location = useLocation();
+  const order = location.state?.order;
+  const [orderId, setOrderId] = useState(order?._id || "GB-" + Math.floor(100000 + Math.random() * 900000));
+
+  const formattedId = orderId.startsWith("GB-") 
+    ? orderId 
+    : `GB-${new Date().getFullYear()}-${String(orderId).slice(-6).toUpperCase()}`;
 
   useEffect(() => {
     // Clear billing details as the order is complete
     localStorage.removeItem("billing_details");
 
-    // Generate a random-looking Order ID for a more professional feel
-    const randomId = "GB-" + Math.floor(100000 + Math.random() * 900000);
-    setOrderId(randomId);
-
     // Scroll to top on mount
     window.scrollTo(0, 0);
   }, []);
+
+  const handleDownloadInvoice = () => {
+    try {
+      const doc = new jsPDF();
+      const primaryGreen = "#1F7A3B";
+      const safeOrderId = String(orderId || "N/A");
+
+      // Header
+      doc.setFontSize(22);
+      doc.setTextColor(primaryGreen);
+      doc.text("GHOROA BAZAR", 14, 20);
+
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text("Premium Organic & Natural Products", 14, 26);
+
+      doc.setFontSize(16);
+      doc.setTextColor(0);
+      doc.text("INVOICE", 150, 20);
+
+      doc.setFontSize(10);
+      doc.text(`Invoice No: INV-${new Date().getFullYear()}-${safeOrderId.slice(-5).toUpperCase()}`, 150, 28);
+      doc.text(`Date: ${new Date().toLocaleDateString()}`, 150, 34);
+
+      doc.setDrawColor(230);
+      doc.line(14, 40, 196, 40);
+
+      // Billing Details
+      doc.setFontSize(11);
+      doc.setTextColor(primaryGreen);
+      doc.text("BILL TO:", 14, 50);
+
+      doc.setFontSize(10);
+      doc.setTextColor(0);
+      const customerName = order?.customerDetails?.firstName
+        ? `${order.customerDetails.firstName} ${order.customerDetails.lastName}`
+        : "Valued Customer";
+      doc.text(customerName, 14, 56);
+      doc.text(order?.customerDetails?.address || "N/A", 14, 62);
+      doc.text(`${order?.customerDetails?.city || ""}, ${order?.customerDetails?.state || ""} - ${order?.customerDetails?.zipCode || ""}`, 14, 68);
+      doc.text(`Phone: ${order?.customerDetails?.phone || "N/A"}`, 14, 74);
+
+      // Order Info
+      doc.setFontSize(11);
+      doc.setTextColor(primaryGreen);
+      doc.text("ORDER INFO:", 130, 50);
+
+      doc.setFontSize(10);
+      doc.setTextColor(0);
+      doc.text(`Order ID: ${safeOrderId}`, 130, 56);
+      doc.text(`Payment: ${order?.paymentMethod || "COD"}`, 130, 62);
+      doc.text(`Status: Confirmed`, 130, 68);
+
+      // Table
+      const items = order?.items || [];
+      const tableData = items.length > 0
+        ? items.map(item => [
+          item.name,
+          item.qty,
+          `INR ${Number(item.price || 0).toFixed(2)}`,
+          `INR ${(Number(item.price || 0) * Number(item.qty || 0)).toFixed(2)}`
+        ])
+        : [["Item Details", "1", "INR 0.00", "INR 0.00"]];
+
+      autoTable(doc, {
+        startY: 85,
+        head: [['Product', 'Qty', 'Price', 'Total']],
+        body: tableData,
+        headStyles: { fillColor: primaryGreen, textColor: 255 },
+        alternateRowStyles: { fillColor: [245, 248, 245] },
+      });
+
+      // Summary
+      const finalY = doc.lastAutoTable?.finalY || 150;
+      doc.setFontSize(10);
+      doc.setTextColor(0);
+      doc.text("Subtotal:", 140, finalY + 10);
+      doc.text(`INR ${Number(order?.totalAmount || 0).toFixed(2)}`, 175, finalY + 10);
+
+      doc.text("Shipping:", 140, finalY + 16);
+      doc.text("FREE", 175, finalY + 16);
+
+      doc.setFontSize(12);
+      doc.setTextColor(primaryGreen);
+      doc.text("Total Payable:", 140, finalY + 25);
+      doc.text(`INR ${Number(order?.totalAmount || 0).toFixed(2)}`, 175, finalY + 25);
+
+      // Footer
+      doc.setFontSize(9);
+      doc.setTextColor(150);
+      doc.text("This is a computer generated invoice and does not require a signature.", 105, 280, { align: "center" });
+      doc.text("Thank you for shopping with Ghoroa Bazar!", 105, 285, { align: "center" });
+
+      doc.save(`Invoice_${safeOrderId}.pdf`);
+    } catch (error) {
+      console.error("PDF Generation Error:", error);
+      alert("Failed to generate invoice. Please try again or view in My Orders.");
+    }
+  };
 
   const steps = [
     { name: "Cart", status: "complete" },
@@ -86,17 +189,24 @@ export default function OrderSuccess() {
 
             {/* Order Details Mini Card */}
             <div className="bg-gray-50 rounded-3xl p-6 md:p-10 mb-10 space-y-6 text-left border border-gray-100 shadow-sm transition-all hover:shadow-md">
-              <div className="flex flex-wrap justify-between items-center gap-4 border-b border-gray-200 pb-6">
-                <div>
-                  <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">Order ID</p>
-                  <p className="text-xl font-black text-gray-900 font-mono tracking-tight">{orderId}</p>
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-gray-200 pb-8">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest pl-1">Order Identifier</p>
+                  <p className="text-2xl font-black text-gray-900 font-mono tracking-tight break-all md:break-normal">{formattedId}</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-green-600 cursor-pointer hover:bg-green-50 transition-colors">
+
+                <button
+                  onClick={handleDownloadInvoice}
+                  className="flex items-center justify-center gap-3 bg-white border-2 border-green-600 text-[#1F7A3B] px-6 py-3 rounded-2xl font-black text-sm hover:bg-green-50 active:scale-95 transition-all shadow-md shadow-green-100 group"
+                >
+                  <div className="w-8 h-8 bg-green-100 rounded-xl flex items-center justify-center group-hover:bg-green-600 group-hover:text-white transition-colors">
                     <Download className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Recipt</span>
-                </div>
+                  <div className="text-left">
+
+                    <p className="leading-none">Download Invoice</p>
+                  </div>
+                </button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -111,11 +221,11 @@ export default function OrderSuccess() {
                 </div>
                 <div className="flex gap-4">
                   <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 flex-shrink-0">
-                    <Mail className="w-5 h-5" />
+                    <Package className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">Confirmation Sent</p>
-                    <p className="text-sm font-black text-gray-900">Track details in your email</p>
+                    <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">ORDER CONFIRMATION</p>
+                    <p className="text-sm font-black text-gray-900">View your order details in My Orders</p>
                   </div>
                 </div>
               </div>
@@ -129,7 +239,7 @@ export default function OrderSuccess() {
                   Continue Shopping
                 </button>
               </Link>
-              <Link to="/profile" className="w-full md:w-auto">
+              <Link to="/my-orders" className="w-full md:w-auto">
                 <button className="w-full bg-white text-gray-900 border-2 border-gray-100 py-5 px-10 rounded-full font-black text-lg hover:border-gray-200 transition-all active:scale-95 flex items-center justify-center gap-2 group">
                   View Orders
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

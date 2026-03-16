@@ -29,7 +29,7 @@ router.post("/", authMiddleware, async (req, res) => {
     }
 
     // 💾 STEP 2: SAVE ORDER
-    const orderData = { ...req.body };
+    const orderData = { ...req.body, userId: req.user._id };
     orderData.orderHistory = [{ status: "Placed", date: Date.now() }];
     const order = new Order(orderData);
     await order.save();
@@ -99,7 +99,18 @@ router.put("/:id", async (req, res) => {
 });
 
 
-// 4️⃣ GET ORDERS BY USER (CUSTOMER HISTORY)
+// 4️⃣ GET CURRENT USER'S ORDERS (PROTECTED)
+router.get("/my", authMiddleware, async (req, res) => {
+  try {
+    const orders = await Order.find({ userId: req.user._id })
+      .sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch user orders" });
+  }
+});
+
+// 5️⃣ GET ORDERS BY USER (CUSTOMER HISTORY) - LEGACY SUPPORT
 router.get("/user/:userId", async (req, res) => {
   try {
     const orders = await Order.find({ userId: req.params.userId })
