@@ -1,5 +1,6 @@
 import { useWishlist } from "../context/WishlistContext";
 import ProductCard from "../components/ProductCard";
+import BackButton from "../components/BackButton";
 
 export default function Wishlist() {
   const { wishlist } = useWishlist();
@@ -7,6 +8,8 @@ export default function Wishlist() {
   return (
     <>
       <div style={{ padding: "40px" }}>
+        <BackButton />
+
         <h2
           style={{
             color: "#1f7a3b",

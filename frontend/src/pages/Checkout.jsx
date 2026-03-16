@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useCart } from "../context/CartContext";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import BackButton from "../components/BackButton";
 
 export default function Checkout() {
   const { cart, clearCart } = useCart();
@@ -123,22 +123,7 @@ export default function Checkout() {
 
   return (
     <div style={styles.page}>
-      <button
-        onClick={() => navigate(-1)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 5,
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          marginBottom: 10,
-          fontSize: 16,
-          color: "#333"
-        }}
-      >
-        <ArrowLeft size={18} /> Back
-      </button>
+      <BackButton color="#333" margin="10px" />
       <h2 style={styles.title}>Checkout</h2>
 
       <div style={styles.wrapper}>

@@ -1,23 +1,32 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { useAuth } from "./AuthContext";
 
 const WishlistContext = createContext(null);
 
 export function WishlistProvider({ children }) {
-  const userId = localStorage.getItem("userId");
+  const { user } = useAuth();
+  const userId = user?.id || "guest";
+
+  const getWishlistKey = (id) => `wishlist_${id}`;
 
   const [wishlist, setWishlist] = useState(() => {
-    if (!userId) return [];
-    const saved = localStorage.getItem(`wishlist_${userId}`);
+    const saved = localStorage.getItem(getWishlistKey(userId));
     return saved ? JSON.parse(saved) : [];
   });
 
+  // ✅ Reload wishlist when user changes
   useEffect(() => {
-    if (userId) {
-      localStorage.setItem(
-        `wishlist_${userId}`,
-        JSON.stringify(wishlist)
-      );
+    const saved = localStorage.getItem(getWishlistKey(userId));
+    if (!saved) {
+      setWishlist([]);
+    } else {
+      setWishlist(JSON.parse(saved));
     }
+  }, [userId]);
+
+  // ✅ Save wishlist when it updates
+  useEffect(() => {
+    localStorage.setItem(getWishlistKey(userId), JSON.stringify(wishlist));
   }, [wishlist, userId]);
 
   const addToWishlist = (product) => {

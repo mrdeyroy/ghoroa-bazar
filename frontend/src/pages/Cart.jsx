@@ -1,7 +1,7 @@
 import { useCart } from "../context/CartContext";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import BackButton from "../components/BackButton";
 
 export default function Cart() {
   const { cart, increaseQty, decreaseQty, removeItem } = useCart();
@@ -28,22 +28,7 @@ export default function Cart() {
   if (cart.length === 0) {
     return (
       <div style={{ padding: 30 }}>
-        <button
-          onClick={() => navigate(-1)}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 5,
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            marginBottom: 20,
-            fontSize: 16,
-            color: "#333"
-          }}
-        >
-          <ArrowLeft size={18} /> Back
-        </button>
+        <BackButton />
         <h2>Your cart is empty</h2>
       </div>
     );
@@ -71,21 +56,7 @@ export default function Cart() {
 
       {/* BACK BUTTON */}
       <div style={{ maxWidth: 1100, margin: "20px auto 0", padding: "0 20px" }}>
-        <button
-          onClick={() => navigate(-1)}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 5,
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            fontSize: 16,
-            color: "#333"
-          }}
-        >
-          <ArrowLeft size={18} /> Back
-        </button>
+        <BackButton />
       </div>
 
       {/* CART LAYOUT */}

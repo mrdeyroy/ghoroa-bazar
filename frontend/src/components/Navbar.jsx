@@ -25,17 +25,10 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [userDropdown, setUserDropdown] = useState(false);
-  const [prevCartCount, setPrevCartCount] = useState(cart.length);
   const [searchOpen, setSearchOpen] = useState(false);
 
   const dropdownRef = useRef(null);
 
-  useEffect(() => {
-    if (user && cart.length > prevCartCount) {
-      setCartOpen(true);
-    }
-    setPrevCartCount(cart.length);
-  }, [cart.length, user]);
 
   useEffect(() => {
     const handler = (e) => {
