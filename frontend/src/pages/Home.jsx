@@ -409,24 +409,12 @@ return (
    🟢 CERTIFICATIONS
 ================================= */}
 <h3
-  style={{
-    marginBottom: "16px",
-    color: "#1f7a3b",
-    fontWeight: "700"
-  }}
+  className="text-lg md:text-xl font-bold text-[#1f7a3b] mb-6"
 >
   Certifications
 </h3>
 
-<div
-  style={{
-    display: "flex",
-    justifyContent: "center",
-    flexWrap: "wrap",
-    gap: "18px",
-    marginBottom: "45px"
-  }}
->
+<div className="flex flex-wrap justify-center gap-4 md:gap-8 mb-12 md:mb-16">
   {[
     "/src/assets/fpo.avif",
     "/src/assets/gmo.png",
@@ -440,21 +428,12 @@ return (
   ].map((img, i) => (
     <div
       key={i}
-      style={{
-        width: "80px",
-        height: "80px",
-        
-        background: "#fff",
-        
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center"
-      }}
+      className="w-16 h-16 md:w-20 md:h-20 bg-white flex items-center justify-center transition-transform hover:scale-110"
     >
       <img
         src={img}
         alt="Certification"
-        style={{ width: "80px" }}
+        className="w-full h-full object-contain p-1"
       />
     </div>
   ))}
@@ -465,24 +444,12 @@ return (
       🟢 KEY FEATURES
   ================================= */}
   <h3
-    style={{
-      marginBottom: "16px",
-      color: "#1f7a3b",
-      fontWeight: "700"
-    }}
+    className="text-xl md:text-2xl font-bold text-[#1f7a3b] mb-6 md:mb-8"
   >
     Our Key Features
   </h3>
 
-  <div
-    style={{
-      display: "grid",
-      gridTemplateColumns: "repeat(6, 1fr)",
-      gap: "18px",
-      maxWidth: "1050px",
-      margin: "0 auto"
-    }}
-  >
+  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 md:gap-8 max-w-6xl mx-auto px-4">
     {[
       { icon: "/src/assets/flag.avif", title: "100% Made in India" },
       { icon: "/src/assets/premium.png", title: "Premium Quality" },
@@ -491,29 +458,11 @@ return (
       { icon: "/src/assets/secure.png", title: "100% Secure Payment" },
       { icon: "/src/assets/satisfaction.png", title: "Satisfaction Guarantee" }
     ].map((f, i) => (
-      <div
-        key={i}
-        style={{
-          textAlign: "center"
-        }}
-      >
-        <div
-          style={{
-            width: "80px",
-            height: "80px",
-            // borderRadius: "50%",
-            // border: "1px dashed #1f7a3b",
-            margin: "0 auto 8px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "#fff"
-          }}
-        >
-          <img src={f.icon} style={{ width: "80px" }} />
+      <div key={i} className="flex flex-col items-center group">
+        <div className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center p-4 transition-transform group-hover:scale-110 mb-3">
+          <img src={f.icon} alt={f.title} className="w-full h-full object-contain" />
         </div>
-
-        <p style={{ fontWeight: "600", color: "#444" }}>{f.title}</p>
+        <p className="font-semibold text-gray-700 text-sm md:text-base leading-tight">{f.title}</p>
       </div>
     ))}
   </div>
@@ -523,184 +472,81 @@ return (
 {/* ================================
     🟢 STORE LOCATIONS + STATS
 ================================= */}
-<section
-  style={{
-    padding: "70px 8%",
-    background: "#ffffff",
-    textAlign: "center"
-  }}
->
-  <h2
-    style={{
-      color: "#1f7a3b",
-      fontWeight: "700",
-      fontSize: "22px",
-      marginBottom: "12px"
-    }}
-  >
+<section className="py-12 md:py-20 px-4 md:px-[8%] bg-white text-center">
+  <h2 className="text-xl md:text-3xl font-bold text-[#1f7a3b] mb-4">
     Our Store Locations
   </h2>
 
   {/* Announcement Bar */}
-  <div
-    style={{
-      background: "#fff8c9",
-      padding: "10px 20px",
-      borderRadius: "10px",
-      display: "inline-block",
-      marginBottom: "16px",
-      color: "#444",
-      fontSize: "13px"
-    }}
-  >
-    We will coming soon physically, but now we are trustfully everywhere in world by digitally
+  <div className="bg-[#fff8c9] px-6 py-3 rounded-2xl inline-block mb-6 text-gray-700 text-xs md:text-sm font-medium border border-[#ffe082]">
+    We are coming soon physically, but currently we are digitally present everywhere!
   </div>
 
   {/* CTA Button */}
-  <div style={{ marginBottom: "35px" }}>
-    <button
-      style={{
-        background: "#1f7a3b",
-        color: "#fff",
-        padding: "10px 22px",
-        border: "none",
-        borderRadius: "20px",
-        cursor: "pointer",
-        fontWeight: "600"
-      }}
-    >
+  <div className="mb-12">
+    <button className="bg-[#1f7a3b] text-white px-8 py-3 rounded-full hover:bg-[#185e2e] transition-colors font-bold shadow-lg shadow-green-100">
       View Our Stores
     </button>
   </div>
 
-        {/* Stats Row */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
-            maxWidth: "900px",
-            margin: "0 auto 40px",
-            gap: "12px",
-            textAlign: "center"
-          }}
-        >
-          {[
-            { icon: "/src/assets/vector.svg", num: "8+", label: "Year of Experience" },
-            { icon: "/src/assets/city.svg", num: "45+", label: "City" },
-            { icon: "/src/assets/happy.svg", num: "120+", label: "Happy Families" },
-            { icon: "/src/assets/export.svg", num: "8+", label: "Export Country" }
-          ].map((s, i) => (
-            <div
-              key={i}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center"
-              }}
-            >
-              <img
-                src={s.icon}
-                alt={s.label}
-                style={{
-                  width: 36,
-                  height: 36,
-                  marginBottom: 8
-                }}
-              />
-
-              <h2
-                style={{
-                  color: "#1f7a3b",
-                  margin: "0 0 4px",
-                  fontSize: "22px"
-                }}
-              >
-                {s.num}
-              </h2>
-
-              <p
-                style={{
-                  color: "#666",
-                  fontSize: "13px",
-                  margin: 0
-                }}
-              >
-                {s.label}
-              </p>
-            </div>
-          ))}
+  {/* Stats Row */}
+  <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 max-w-5xl mx-auto mb-10 md:mb-16">
+    {[
+      { icon: "/src/assets/vector.svg", num: "8+", label: "Year of Experience" },
+      { icon: "/src/assets/city.svg", num: "45+", label: "City" },
+      { icon: "/src/assets/happy.svg", num: "120+", label: "Happy Families" },
+      { icon: "/src/assets/export.svg", num: "8+", label: "Export Country" }
+    ].map((s, i) => (
+      <div key={i} className="flex flex-col items-center">
+        <div className="w-12 h-12 md:w-16 md:h-16 bg-green-50 rounded-2xl flex items-center justify-center mb-4">
+          <img src={s.icon} alt={s.label} className="w-6 h-6 md:w-8 md:h-8" />
         </div>
-
+        <h2 className="text-2xl md:text-3xl font-extrabold text-[#1f7a3b] mb-1">{s.num}</h2>
+        <p className="text-gray-500 text-xs md:text-sm font-medium">{s.label}</p>
+      </div>
+    ))}
+  </div>
 
   {/* Divider */}
-  <hr
-    style={{
-      maxWidth: "900px",
-      margin: "0 auto 40px",
-      border: "none",
-      borderTop: "1px solid #eee"
-    }}
-  />
+  <hr className="max-w-5xl mx-auto mb-12 md:mb-16 border-gray-100" />
 
 
   {/* ================================
       🟢 NEWS SECTION
   ================================= */}
-
-  <h2
-    style={{
-      color: "#1f7a3b",
-      fontWeight: "700",
-      fontSize: "22px",
-      marginBottom: "12px"
-    }}
-  >
-    Ghoroabazar News
+  <h2 className="text-xl md:text-3xl font-bold text-[#1f7a3b] mb-8 md:mb-12">
+    Ghorer Bazar News
   </h2>
 
-
-  <div
-    style={{
-      display: "grid",
-      gridTemplateColumns: "repeat(3, 1fr)",
-      gap: "18px",
-      maxWidth: "1000px",
-      margin: "0 auto"
-    }}
-  >
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto px-4">
     {[1, 2, 3].map(i => (
-      <div
-        key={i}
-        style={{
-          background: "#fff",
-          borderRadius: "14px",
-          boxShadow: "0 8px 16px rgba(0,0,0,.06)",
-          overflow: "hidden"
-        }}
-      >
-        <img
-          src="/src/assets/grandopening.webp"
-          alt="News"
-          style={{ width: "100%", height: "160px", objectFit: "cover" }}
-        />
+      <div key={i} className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all group">
+        <div className="relative overflow-hidden h-48 md:h-56">
+          <img
+            src="/src/assets/grandopening.webp"
+            alt="News"
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          />
+          <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-[#1f7a3b] uppercase tracking-wider">
+            Latest News
+          </div>
+        </div>
 
-        <div style={{ padding: "16px", textAlign: "left" }}>
-          <h4 style={{ fontWeight: "700", marginBottom: 6 }}>
+        <div className="p-6 text-left">
+          <p className="text-gray-400 text-xs mb-2 font-medium">April 25, 2024</p>
+          <h4 className="text-lg font-bold text-gray-800 mb-3 group-hover:text-[#1f7a3b] transition-colors">
             {i === 1 && "Big Sale Coming Soon"}
             {i === 2 && "We Opened a New Store"}
             {i === 3 && "Special Festive Offers"}
           </h4>
 
-          <small style={{ color: "#888" }}>Apr, 25, 2024</small>
-
-          <p style={{ fontSize: "13px", color: "#666", margin: "6px 0 10px" }}>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit… short preview text here…
+          <p className="text-sm text-gray-500 leading-relaxed mb-6 line-clamp-2">
+            Experience the essence of nature with our upcoming offers and expansions. We are bringing healthy lifestyles closer to you...
           </p>
 
-          <span style={{ color: "#1f7a3b", fontWeight: "600", cursor: "pointer" }}>
-            Read More →
-          </span>
+          <Link to="/news" className="text-[#1f7a3b] font-bold text-sm inline-flex items-center gap-1 hover:gap-2 transition-all">
+            Read More <span>→</span>
+          </Link>
         </div>
       </div>
     ))}

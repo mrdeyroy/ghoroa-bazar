@@ -1,26 +1,17 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import BackButton from "../components/BackButton";
 
 export default function MainLayout() {
-    const location = useLocation();
+  const location = useLocation();
 
-useEffect(() => {
-  if (location.hash) {
-    const el = document.querySelector(location.hash);
-    el?.scrollIntoView({ behavior: "smooth" });
-  }
-}, [location]);
-
-const linkStyle = {
-  display: "block",
-  color: "#333",
-  textDecoration: "none",
-  marginBottom: "6px",
-  fontSize: "14px",
-  cursor: "pointer"
-};
-
+  useEffect(() => {
+    if (location.hash) {
+      const el = document.querySelector(location.hash);
+      el?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [location]);
 
   return (
     <>
@@ -32,92 +23,84 @@ const linkStyle = {
       {/* ================================
           🟢 FOOTER
       ================================= */}
-      <footer style={{ background: "#f5f6f4", padding: "50px 8% 20px" }}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "2fr 1fr 1fr 1.5fr",
-            gap: "24px",
-            marginBottom: 30
-          }}
-        >
-          {/* Column 1 */}
-          <div>
-            <h4 style={{ color: "#1f7a3b" }}>Ghorer Bazar</h4>
-            <p style={{ fontSize: 13, color: "#666", lineHeight: 1.6 }}>
-              Ghorer Bazar is your trusted source for safe, healthy,
-              and organic food in Bangladesh. From premium mustard oil
-              to fresh nuts and pure honey, we bring nature to your doorstep.
-            </p>
+      <footer className="bg-[#f5f6f4] py-12 px-4 md:px-8 lg:px-[8%]">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-16 mb-12">
+          
+          {/* Column 1: About */}
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <h4 className="text-2xl font-bold text-[#1f7a3b]">Ghorer Bazar</h4>
+              <p className="text-sm text-gray-600 leading-relaxed max-w-sm">
+                Ghorer Bazar is your trusted source for safe, healthy,
+                and organic food in Bangladesh. From premium mustard oil
+                to fresh nuts and pure honey, we bring nature to your doorstep.
+              </p>
+            </div>
       
-            <p style={{ marginTop: 12, fontWeight: 600 }}>We Accept</p>
-      
-            <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
-              <img src="/src/assets/gpay.png" style={{ height: 30 }} />
-              <img src="/src/assets/cod.png" style={{ height: 26 }} />
-              <img src="/src/assets/mastercard.png" style={{ height: 26 }} />
+            <div className="space-y-3">
+              <p className="font-bold text-gray-800 text-sm">We Accept</p>
+              <div className="flex flex-wrap gap-3 items-center">
+                <img src="/src/assets/gpay.png" alt="Google Pay" className="h-8 object-contain" />
+                <img src="/src/assets/cod.png" alt="Cash on Delivery" className="h-7 object-contain" />
+                <img src="/src/assets/mastercard.png" alt="Mastercard" className="h-7 object-contain" />
+              </div>
             </div>
           </div>
       
-          {/* Column 2 */}
-                <div>
-                  <h4 style={{ color: "#1f7a3b" }}>Quick Links</h4>
+          {/* Column 2: Quick Links */}
+          <div className="space-y-4">
+            <h4 className="text-lg font-bold text-[#1f7a3b]">Quick Links</h4>
+            <div className="flex flex-col space-y-3">
+              <Link to="/" className="text-sm text-gray-700 hover:text-[#1f7a3b] transition-colors font-medium">Home</Link>
+              <Link to="/#products-section" className="text-sm text-gray-700 hover:text-[#1f7a3b] transition-colors font-medium">Shop</Link>
+              <Link to="/contact" className="text-sm text-gray-700 hover:text-[#1f7a3b] transition-colors font-medium">Contact</Link> 
+              <Link to="/faq" className="text-sm text-gray-700 hover:text-[#1f7a3b] transition-colors font-medium">FAQ</Link>
+            </div>
+          </div>
       
-                  <Link to="/" style={linkStyle}>Home</Link>
+          {/* Column 3: Customer Service */}
+          <div className="space-y-4">
+            <h4 className="text-lg font-bold text-[#1f7a3b]">Customer Service</h4>
+            <div className="flex flex-col space-y-3">
+              <Link to="/#about-section" className="text-sm text-gray-700 hover:text-[#1f7a3b] transition-colors font-medium">About Us</Link>
+              <Link to="/return-policy" className="text-sm text-gray-700 hover:text-[#1f7a3b] transition-colors font-medium">Return Policy</Link>
+              <Link to="/refund-policy" className="text-sm text-gray-700 hover:text-[#1f7a3b] transition-colors font-medium">Refund Policy</Link>
+              <Link to="/contact" className="text-sm text-gray-700 hover:text-[#1f7a3b] transition-colors font-medium">Customer Care</Link>
+            </div>
+          </div>
       
-                  <Link to="/#products-section" style={linkStyle}>Shop</Link>
-      
-                  <Link to="/contact" style={linkStyle}>Contact</Link> 
-
-                  <Link to="/faq" style={linkStyle}>FAQ</Link>
-                </div>
-      
-          {/* Column 3 */}
-                <div>
-                  <h4 style={{ color: "#1f7a3b" }}>Customer Service</h4>
-      
-                  <Link to="/#about-section" style={linkStyle}>About Us</Link>
-                  <Link to="/return-policy" style={linkStyle}>Return Policy</Link>
-                  <Link to="/refund-policy" style={linkStyle}>Refund Policy</Link>
-                  <Link to="/contact" style={linkStyle}>Customer Care</Link>
-                </div>
-      
-      
-          {/* Column 4 */}
-          <div>
-            <h4 style={{ color: "#1f7a3b" }}>Get in Touch</h4>
-      
-            {/* GOOGLE MAP */}
-            <iframe
-              title="Ghorer Bazar Location"
-              src="https://www.google.com/maps?q=Kolkata,India&output=embed"
-              width="100%"
-              height="140"
-              style={{
-                border: 0,
-                borderRadius: 10,
-                marginBottom: 10
-              }}
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
-      
-            <p>📞 +91 880019300X</p>
-            <p>✉ contact@ghoroabazar.shop</p>
+          {/* Column 4: Location & Contact */}
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <h4 className="text-lg font-bold text-[#1f7a3b]">Get in Touch</h4>
+              <div className="rounded-2xl overflow-hidden shadow-sm border border-gray-100 bg-white group">
+                <iframe
+                  title="Ghorer Bazar Location"
+                  src="https://www.google.com/maps?q=Kolkata,India&output=embed"
+                  className="w-full aspect-video border-0 grayscale hover:grayscale-0 transition-all duration-500"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+            </div>
+            <div className="space-y-3">
+              <p className="text-sm text-gray-700 flex items-center gap-3">
+                <span className="bg-green-100 p-2 rounded-full text-green-600 text-xs text-center flex items-center justify-center w-8 h-8">📞</span> 
+                <span className="font-medium">+91 880019300X</span>
+              </p>
+              <p className="text-sm text-gray-700 flex items-center gap-3">
+                <span className="bg-green-100 p-2 rounded-full text-green-600 text-xs text-center flex items-center justify-center w-8 h-8">✉</span> 
+                <span className="font-medium">contact@ghoroabazar.shop</span>
+              </p>
+            </div>
           </div>
         </div>
       
-        {/* bottom bar */}
-        <div
-          style={{
-            textAlign: "center",
-            padding: "12px 0",
-            borderTop: "1px solid #ddd",
-            color: "#1f7a3b",
-            fontWeight: 600
-          }}
-        >
-          © 2025 Ghorer Bazar | All Rights Reserved.
+        {/* Bottom bar */}
+        <div className="max-w-7xl mx-auto pt-8 border-t border-gray-200 text-center">
+          <p className="text-sm font-bold text-[#1f7a3b] tracking-wide">
+            © 2025 Ghorer Bazar | All Rights Reserved.
+          </p>
         </div>
       </footer>
     </>
