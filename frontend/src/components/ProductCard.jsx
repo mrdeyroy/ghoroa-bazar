@@ -1,207 +1,154 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { ShoppingCart, Heart, Eye, Star } from "lucide-react";
 
 export default function ProductCard({ product }) {
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isWishlisted } = useWishlist();
   const navigate = useNavigate();
-  const heartRef = useRef(null);
 
-  const [showToast, setShowToast] = useState(false);
+  const [toast, setToast] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   const wished = isWishlisted(product._id);
   const isOutOfStock = !product.stock || product.stock === 0;
 
   const handleWishlistClick = (e) => {
     e.stopPropagation();
-
-    if (heartRef.current) {
-      heartRef.current.style.transform = "scale(1.35)";
-      setTimeout(() => {
-        heartRef.current.style.transform = wished ? "scale(1.15)" : "scale(1)";
-      }, 150);
+    if (wished) {
+      removeFromWishlist(product._id);
+    } else {
+      addToWishlist(product);
     }
-
-    wished
-      ? removeFromWishlist(product._id)
-      : addToWishlist(product);
   };
 
   const handleAddToCart = (e) => {
     e.stopPropagation();
+    if (isOutOfStock) return;
+
     addToCart({
       ...product,
       id: product._id,
       qty: 1,
-      selectedWeight: product.defaultWeight || product.weight,
-      price: product.price
+      selectedWeight: product.weights?.[0]?.label || product.weight || "Default",
+      price: product.weights?.[0]?.price || product.price
     });
 
-
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 2500);
+    setToast(true);
+    setTimeout(() => setToast(false), 2000);
   };
 
   return (
-    <>
-      {/* TOAST */}
-      {showToast && (
-        <div
-          style={{
-            position: "fixed",
-            top: "20px",
-            right: "20px",
-            background: "#1f7a3b",
-            color: "#fff",
-            padding: "12px 16px",
-            borderRadius: "8px",
-            boxShadow: "0 6px 16px rgba(0,0,0,0.25)",
-            fontSize: "14px",
-            fontWeight: "600",
-            zIndex: 9999,
-            animation: "slideIn 0.3s ease"
-          }}
-        >
-          ✅ Added to cart
-        </div>
-      )}
-
-      {/* PRODUCT CARD */}
-      <div
-        onClick={() => navigate(`/product/${product._id}`)}
-        style={{
-          width: "220px",
-          background: "#fefffd",
-          borderRadius: "12px",
-          boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
-          padding: "12px",
-          position: "relative",
-          opacity: isOutOfStock ? 0.5 : 1,
-          cursor: "pointer"
-        }}
-      >
-        {/* ❤️ Wishlist */}
-        <span
-          ref={heartRef}
-          onClick={handleWishlistClick}
-          onMouseEnter={() => {
-            if (heartRef.current)
-              heartRef.current.style.transform = "scale(1.2)";
-          }}
-          onMouseLeave={() => {
-            if (heartRef.current)
-              heartRef.current.style.transform = wished ? "scale(1.15)" : "scale(1)";
-          }}
-          style={{
-            position: "absolute",
-            top: "10px",
-            right: "10px",
-            width: "36px",
-            height: "36px",
-            borderRadius: "50%",
-            background: wished ? "#ffe6e6" : "#ffffff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            fontSize: "22px",
-            color: wished ? "#e60000" : "#999",
-            boxShadow: "0 3px 8px rgba(0,0,0,0.18)",
-            transition: "all 0.2s ease",
-            transform: wished ? "scale(1.15)" : "scale(1)",
-            userSelect: "none",
-            zIndex: 2
-          }}
-        >
-          ♥
-        </span>
-
-        {/* OUT OF STOCK */}
-        {isOutOfStock && (
-          <div
-            style={{
-              position: "absolute",
-              top: "10px",
-              left: "10px",
-              background: "#000",
-              color: "#fff",
-              fontSize: "11px",
-              padding: "4px 8px",
-              borderRadius: "12px",
-              fontWeight: "bold",
-              zIndex: 2
-            }}
+    <motion.div
+      layout
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      whileHover={{ y: -5 }}
+      className="group relative bg-white rounded-2xl p-3 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col h-full cursor-pointer"
+      onClick={() => navigate(`/product/${product._id}`)}
+    >
+      {/* TOAST NOTIFICATION */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="absolute top-4 left-1/2 -translate-x-1/2 bg-green-600 text-white text-[10px] font-bold px-3 py-1 rounded-full z-50 shadow-lg whitespace-nowrap"
           >
+            Added to Cart! ✅
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* TOP SECTION: IMAGE & BADGES */}
+      <div className="relative aspect-square overflow-hidden rounded-xl bg-gray-50 mb-3">
+        {/* IMAGE WITH HOVER ZOOM */}
+        <motion.img
+          src={product.image}
+          alt={product.name}
+          animate={{ scale: isHovered ? 1.1 : 1 }}
+          transition={{ duration: 0.4 }}
+          className="w-full h-full object-cover"
+        />
+
+        {/* WISHLIST HEART */}
+        <button
+          onClick={handleWishlistClick}
+          className={`absolute top-2 right-2 p-2 rounded-full shadow-md transition-all duration-300 z-10 ${
+            wished ? "bg-red-50 text-red-500" : "bg-white/80 backdrop-blur-sm text-gray-400 hover:text-red-500"
+          }`}
+        >
+          <motion.div whileTap={{ scale: 1.5 }}>
+            <Heart size={18} fill={wished ? "currentColor" : "none"} strokeWidth={wished ? 0 : 2} />
+          </motion.div>
+        </button>
+
+        {/* OUT OF STOCK BADGE */}
+        {isOutOfStock && (
+          <div className="absolute top-2 left-2 bg-black/70 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-md z-10">
             OUT OF STOCK
           </div>
         )}
 
-        <img
-          src={product.image}
-          alt={product.name}
-          style={{
-            width: "100%",
-            height: "140px",
-            objectFit: "cover",
-            borderRadius: "8px"
-          }}
-        />
-
-        <h4 style={{ margin: "8px 0 4px" }}>{product.name}</h4>
-        <p style={{ fontSize: "13px", margin: "0" }}>{product.bnName}</p>
-        {(product.weight || product.weights?.length > 0) && (
-          <p style={{ fontSize: "12px", margin: "2px 0", color: "#666" }}>
-            Pack: {product.weight || product.weights[0].label}
-          </p>
-        )}
-
-
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginTop: "10px"
-          }}
-        >
-          <strong>₹{product.price}</strong>
-
-          <button
-            disabled={isOutOfStock}
-            onClick={handleAddToCart}
-            style={{
-              background: isOutOfStock ? "#ccc" : "#ffa500",
-              border: "none",
-              padding: "6px 12px",
-              borderRadius: "6px",
-              cursor: isOutOfStock ? "not-allowed" : "pointer",
-              fontWeight: "bold",
-              color: "#000"
-            }}
-          >
-            ADD
-          </button>
+        {/* QUICK VIEW OVERLAY (DESKTOP) */}
+        <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            <div className="bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                <Eye size={20} className="text-gray-700" />
+            </div>
         </div>
       </div>
 
-      {/* TOAST ANIMATION */}
-      <style>
-        {`
-          @keyframes slideIn {
-            from {
-              opacity: 0;
-              transform: translateX(100%);
-            }
-            to {
-              opacity: 1;
-              transform: translateX(0);
-            }
-          }
-        `}
-      </style>
-    </>
+      {/* MIDDLE SECTION: DETAILS */}
+      <div className="flex-1 space-y-1">
+        <div className="flex items-center gap-1.5 mb-1">
+            <div className="flex items-center bg-yellow-50 px-2 py-0.5 rounded-md">
+                <Star size={12} className="fill-yellow-400 text-yellow-400" />
+                <span className="text-[10px] font-bold text-yellow-700 ml-1">{product.rating || "4.5"}</span>
+            </div>
+            <span className="text-[10px] text-gray-400 font-medium">({product.numReviews || "23"} reviews)</span>
+        </div>
+
+        <h3 className="font-bold text-gray-800 text-sm md:text-base leading-tight line-clamp-2 min-h-[2.5rem]">
+          {product.name}
+        </h3>
+        
+        <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded">
+                {product.weights?.[0]?.label || product.weight || "Pack"}
+            </span>
+        </div>
+        
+        <p className="text-[10px] text-gray-400 italic line-clamp-1">{product.bnName}</p>
+      </div>
+
+      {/* BOTTOM SECTION: PRICE & ADD BUTTON */}
+      <div className="mt-4 flex items-center justify-between gap-2">
+        <div className="flex flex-col">
+            <span className="text-lg font-black text-gray-900">₹{product.price}</span>
+            {/* Discount Placeholder if applicable */}
+            {product.discountPrice && (
+                <span className="text-[10px] text-gray-400 line-through">₹{product.originalPrice}</span>
+            )}
+        </div>
+
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={handleAddToCart}
+          disabled={isOutOfStock}
+          className={`px-4 py-2 rounded-xl border-2 font-bold text-sm transition-all flex items-center gap-2 ${
+            isOutOfStock
+              ? "border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed"
+              : "border-green-600 bg-white text-green-600 hover:bg-green-600 hover:text-white"
+          }`}
+        >
+          {isOutOfStock ? "Out" : "ADD"}
+          {!isOutOfStock && <ShoppingCart size={14} />}
+        </motion.button>
+      </div>
+    </motion.div>
   );
 }

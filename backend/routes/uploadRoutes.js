@@ -7,28 +7,43 @@ const fs = require("fs");
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 
-router.post("/", upload.single("image"), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: "No image file provided" });
+router.post("/", upload.array("images", 5), async (req, res) => {
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).json({ error: "No image files provided" });
   }
 
   try {
-    // 1️⃣ Image is first uploaded to Cloudinary
-    const result = await cloudinary.uploader.upload(req.file.path);
+    const uploadPromises = req.files.map(async (file) => {
+      // 1️⃣ Image is first uploaded to Cloudinary
+      const result = await cloudinary.uploader.upload(file.path, {
+        folder: "products"
+      });
 
-    // 2️⃣ After successful upload, the local file is deleted using fs.unlinkSync
-    if (fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
+      // 2️⃣ After successful upload, the local file is deleted using fs.unlinkSync
+      if (fs.existsSync(file.path)) {
+        fs.unlinkSync(file.path);
+      }
 
-    // 3️⃣ Only the Cloudinary URL is returned (to be saved in the database)
-    res.json({ url: result.secure_url });
+      return {
+        url: result.secure_url,
+        public_id: result.public_id
+      };
+    });
+
+    const results = await Promise.all(uploadPromises);
+
+    // 3️⃣ Array of Cloudinary objects is returned
+    res.json(results);
   } catch (err) {
     console.error("Upload error:", err);
 
-    // Cleanup local file even if upload fails
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
+    // Cleanup local files even if upload fails
+    if (req.files) {
+      req.files.forEach(file => {
+        if (fs.existsSync(file.path)) {
+          fs.unlinkSync(file.path);
+        }
+      });
     }
 
     res.status(500).json({ error: "Image upload failed" });

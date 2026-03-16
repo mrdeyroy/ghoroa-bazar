@@ -210,14 +210,12 @@ return (
           </select>
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            gap: "20px",
-            flexWrap: "wrap"
-          }}
-        >
-          {filteredProducts.length === 0 && <p>No products found</p>}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+          {filteredProducts.length === 0 && (
+            <div className="col-span-full py-10 text-center text-gray-400">
+              No products found
+            </div>
+          )}
 
           {filteredProducts.map(p => (
             <ProductCard key={p._id} product={p} />

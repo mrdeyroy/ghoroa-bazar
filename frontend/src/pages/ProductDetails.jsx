@@ -14,8 +14,13 @@ import {
   ShoppingCart,
   Loader2,
   Plus,
-  Minus
+  Minus,
+  ShieldCheck,
+  Leaf,
+  Truck,
+  ThumbsUp
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import Skeleton from "../components/Skeleton";
 import ProductCard from "../components/ProductCard";
 import BackButton from "../components/BackButton";
@@ -197,18 +202,37 @@ export default function ProductDetails() {
           {/* LEFT COLUMN: IMAGES */}
           <div className="space-y-6">
             <div 
-              className="relative overflow-hidden rounded-3xl border border-gray-100 bg-gray-50 aspect-square cursor-zoom-in"
+              className="relative overflow-hidden rounded-3xl border border-gray-100 bg-gray-50 aspect-square cursor-zoom-in group"
               onMouseEnter={() => setIsZoomed(true)}
               onMouseLeave={() => setIsZoomed(false)}
               onMouseMove={handleMouseMove}
               ref={mainImageRef}
             >
-              <img
-                src={product.images?.[activeImage] || product.image}
+              <motion.img
+                key={activeImage}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                onDragEnd={(e, { offset, velocity }) => {
+                    const swipe = offset.x > 50 ? -1 : offset.x < -50 ? 1 : 0;
+                    if (swipe !== 0 && product.images?.length > 1) {
+                        const newIdx = (activeImage + swipe + product.images.length) % product.images.length;
+                        setActiveImage(newIdx);
+                    }
+                }}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                src={product.images?.[activeImage]?.url || product.image}
                 alt={product.name}
                 className={`w-full h-full object-contain transition-transform duration-200 ${isZoomed ? 'scale-[2]' : 'scale-100'}`}
                 style={isZoomed ? { transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` } : {}}
               />
+              
+              {/* MOBILE SWIPE INDICATOR */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 md:hidden">
+                {product.images?.map((_, i) => (
+                    <div key={i} className={`h-1.5 rounded-full transition-all ${i === activeImage ? "w-6 bg-green-600" : "w-1.5 bg-gray-300"}`} />
+                ))}
+              </div>
             </div>
             
             {product.images?.length > 1 && (
@@ -221,7 +245,7 @@ export default function ProductDetails() {
                       i === activeImage ? "border-green-600 scale-105" : "border-transparent hover:border-gray-300"
                     }`}
                   >
-                    <img src={img} className="w-full h-full object-cover" alt="thumbnail" />
+                    <img src={img.url || img} className="w-full h-full object-cover" alt="thumbnail" />
                   </button>
                 ))}
               </div>
@@ -326,12 +350,26 @@ export default function ProductDetails() {
             </div>
 
             {/* DESCRIPTION & ACCORDIONS */}
-            <div className="pt-4 space-y-4">
-              <div className="text-gray-600 leading-relaxed text-sm md:text-base border-l-4 border-green-200 pl-4 py-2 italic font-medium">
-                {product.description}
-              </div>
+            {/* TRUST BADGES */}
+            <div className="grid grid-cols-3 gap-2 pt-4">
+              {[
+                { icon: ShieldCheck, label: "Secure Payment", color: "text-blue-600", bg: "bg-blue-50" },
+                { icon: Leaf, label: "Fresh Products", color: "text-green-600", bg: "bg-green-50" },
+                { icon: Truck, label: "Fast Delivery", color: "text-orange-600", bg: "bg-orange-50" }
+              ].map((badge, i) => (
+                <div key={i} className={`${badge.bg} p-3 rounded-2xl flex flex-col items-center text-center gap-1`}>
+                  <badge.icon size={20} className={badge.color} />
+                  <span className="text-[10px] font-bold text-gray-700 leading-tight">{badge.label}</span>
+                </div>
+              ))}
+            </div>
 
-              <div className="border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-sm">
+            <div className="space-y-4 pt-4">
+              <p className="text-gray-600 leading-relaxed text-sm md:text-base">
+                {product.description || "Indulge in the pure, natural flavor of our premium products. Sourced directly from farms to ensure the highest quality and freshness for your kitchen."}
+              </p>
+            </div>
+            <div className="border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-sm">
                 {['Ingredients', 'Nutrition info'].map((label, idx) => {
                   const key = label.toLowerCase().split(' ')[0];
                   const isOpen = activeAccordion === key;
@@ -355,7 +393,6 @@ export default function ProductDetails() {
               </div>
             </div>
           </div>
-        </div>
 
         {/* CUSTOMER REVIEWS SECTION */}
         <div className="mt-20 lg:mt-32 space-y-12">
@@ -387,7 +424,20 @@ export default function ProductDetails() {
                       </div>
                       {renderStars(rev.rating)}
                     </div>
-                    <p className="text-gray-600 text-[15px] leading-relaxed italic">"{rev.comment}"</p>
+                    <p className="text-gray-600 text-[15px] leading-relaxed italic mb-4">"{rev.comment}"</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-400 font-medium">
+                        {new Date(rev.createdAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </span>
+                      <button className="flex items-center gap-1 text-xs font-bold text-gray-500 hover:text-green-600 transition-colors">
+                        <ThumbsUp size={14} />
+                        Helpful
+                      </button>
+                    </div>
                   </div>
                 ))
               ) : (
@@ -456,7 +506,7 @@ export default function ProductDetails() {
         {related.length > 0 && (
           <div className="mt-20 lg:mt-32 border-t border-gray-100 pt-20">
             <h2 className="text-3xl font-black text-gray-900 mb-10 text-center tracking-tight">You May Also Like</h2>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-8">
               {related.slice(0, 4).map(p => (
                 <ProductCard key={p._id} product={p} />
               ))}

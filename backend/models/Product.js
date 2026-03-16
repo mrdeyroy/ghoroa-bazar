@@ -22,10 +22,19 @@ const productSchema = new mongoose.Schema({
   // Legacy field (optional)
   weight: String,
 
+  // Main image (url string for backward compatibility)
   image: {
     type: String,
     required: true
   },
+
+  // Multiple images with public IDs for easy deletion from Cloudinary
+  images: [
+    {
+      url: { type: String, required: true },
+      public_id: { type: String, required: true }
+    }
+  ],
 
   description: String,
 

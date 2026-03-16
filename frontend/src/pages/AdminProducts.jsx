@@ -14,16 +14,19 @@ export default function AdminProducts() {
     category: "",
     price: "",
     weight: "",
-    weights: [],          // ⭐ NEW — selectable sizes
-    newWeight: { label: "", price: "" },        // temp input holder
-    image: "",
+    weights: [],
+    newWeight: { label: "", price: "" },
+    image: "", // Main image URL for card
+    images: [], // All image objects {url, public_id}
     stock: "",
     description: "",
-    ingredients: "",      // ⭐ NEW
-    nutrition: ""         // ⭐ NEW
+    ingredients: "",
+    nutrition: ""
   };
 
   const [form, setForm] = useState(emptyForm);
+  const [selectedFiles, setSelectedFiles] = useState([]); // Raw files for upload
+  const [previews, setPreviews] = useState([]); // Blob URLs for preview
 
   const fetchProducts = () => {
     fetch("http://localhost:5000/api/products")
@@ -37,20 +40,78 @@ export default function AdminProducts() {
 
   const [submitting, setSubmitting] = useState(false);
 
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length + selectedFiles.length + form.images.length > 5) {
+      alert("Maximum 5 images allowed");
+      return;
+    }
+
+    const newFiles = [...selectedFiles, ...files];
+    setSelectedFiles(newFiles);
+
+    // Create previews
+    const newPreviews = files.map(file => URL.createObjectURL(file));
+    setPreviews(prev => [...prev, ...newPreviews]);
+  };
+
+  const removePreview = (index) => {
+    const newFiles = [...selectedFiles];
+    newFiles.splice(index, 1);
+    setSelectedFiles(newFiles);
+
+    const newPreviews = [...previews];
+    URL.revokeObjectURL(newPreviews[index]);
+    newPreviews.splice(index, 1);
+    setPreviews(newPreviews);
+  };
+
+  const removeExistingImage = async (public_id) => {
+    if (!window.confirm("Remove this image?")) return;
+    
+    // We'll update the database later, but for now just remove from UI
+    setForm(prev => ({
+      ...prev,
+      images: prev.images.filter(img => img.public_id !== public_id)
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (uploading || submitting) return;
 
-    if (!form.image) {
-      setMessage("Please upload a product image");
+    if (selectedFiles.length === 0 && form.images.length === 0) {
+      setMessage("Please upload at least one image");
       setTimeout(() => setMessage(""), 3000);
       return;
     }
 
     setSubmitting(true);
     try {
-      const payload = { ...form };
-      delete payload.newWeight; // cleanup temp field
+      let uploadedImages = [...form.images];
+
+      // 1️⃣ Upload new files if any
+      if (selectedFiles.length > 0) {
+        setUploading(true);
+        const formData = new FormData();
+        selectedFiles.forEach(file => formData.append("images", file));
+
+        const uploadRes = await fetch("http://localhost:5000/api/upload", {
+          method: "POST",
+          body: formData
+        });
+        const uploadData = await uploadRes.json();
+        uploadedImages = [...uploadedImages, ...uploadData];
+        setUploading(false);
+      }
+
+      // 2️⃣ Save product
+      const payload = { 
+        ...form, 
+        images: uploadedImages,
+        image: uploadedImages[0]?.url || "" // Set first image as main image
+      };
+      delete payload.newWeight;
 
       const url = editingId
         ? `http://localhost:5000/api/products/${editingId}`
@@ -68,67 +129,48 @@ export default function AdminProducts() {
         setMessage(editingId ? "Product updated successfully" : "Product added successfully");
         setForm(emptyForm);
         setEditingId(null);
+        setSelectedFiles([]);
+        setPreviews([]);
         fetchProducts();
       } else {
         setMessage("Failed to save product");
       }
     } catch (err) {
+      console.error(err);
       setMessage("Error occurred while saving product");
     } finally {
       setSubmitting(false);
+      setUploading(false);
       setTimeout(() => setMessage(""), 3000);
     }
   };
 
   const startEdit = (product) => {
     setEditingId(product._id);
-
     setForm({
       ...product,
       weights: product.weights || [],
-      newWeight: ""
+      images: product.images || [],
+      newWeight: { label: "", price: "" }
     });
-
+    setSelectedFiles([]);
+    setPreviews([]);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const cancelEdit = () => {
     setEditingId(null);
     setForm(emptyForm);
+    setSelectedFiles([]);
+    setPreviews([]);
   };
 
   const deleteProduct = async (id) => {
     if (!window.confirm("Delete this product?")) return;
-
     await fetch(`http://localhost:5000/api/products/${id}`, {
       method: "DELETE"
     });
-
     fetchProducts();
-  };
-
-  const uploadImage = async (file) => {
-    if (!file) return;
-
-    setUploading(true);
-
-    try {
-      const formData = new FormData();
-      formData.append("image", file);
-
-      const res = await fetch("http://localhost:5000/api/upload", {
-        method: "POST",
-        body: formData
-      });
-
-      const data = await res.json();
-      setForm(prev => ({ ...prev, image: data.url }));
-    } catch {
-      setMessage("Image upload failed");
-    } finally {
-      setUploading(false);
-      setDragActive(false);
-    }
   };
 
   const addWeight = () => {
@@ -335,47 +377,116 @@ export default function AdminProducts() {
           onDragLeave={() => setDragActive(false)}
           onDrop={e => {
             e.preventDefault();
-            uploadImage(e.dataTransfer.files[0]);
+            handleFileChange({ target: { files: e.dataTransfer.files } });
           }}
           style={{
             marginTop: "20px",
             padding: "20px",
             border: `2px dashed ${dragActive ? "#006837" : "#ccc"}`,
             borderRadius: "12px",
-            textAlign: "center"
+            textAlign: "center",
+            background: dragActive ? "#f0fdf4" : "transparent"
           }}
         >
-          {uploading ? (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
-              <div className="spinner"></div>
-              <span>Uploading to Cloudinary...</span>
-            </div>
-          ) : (
-            <>
-              <label htmlFor="fileUpload" style={{ cursor: "pointer" }}>
-                Drag & drop image here or <strong>click to upload</strong>
-              </label>
+          <label htmlFor="fileUpload" style={{ cursor: "pointer", display: "block" }}>
+            <div style={{ fontSize: "24px", marginBottom: "8px" }}>📸</div>
+            Drag & drop images here or <strong>click to upload</strong>
+            <p style={{ fontSize: "12px", color: "#666", marginTop: "4px" }}>Max 5 images</p>
+          </label>
 
-              <input
-                type="file"
-                hidden
-                id="fileUpload"
-                accept="image/*"
-                onChange={e => uploadImage(e.target.files[0])}
-              />
-            </>
-          )}
+          <input
+            type="file"
+            multiple
+            hidden
+            id="fileUpload"
+            accept="image/*"
+            onChange={handleFileChange}
+          />
         </div>
 
-        {/* Preview */}
-        {form.image && (
-          <img
-            src={form.image}
-            style={{ width: "90px", marginTop: "12px", borderRadius: "10px" }}
-          />
+        {/* IMAGE PREVIEWS */}
+        {(previews.length > 0 || form.images.length > 0) && (
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "16px" }}>
+            {/* Existing Images */}
+            {form.images.map((img) => (
+              <div key={img.public_id} style={{ position: "relative" }}>
+                <img
+                  src={img.url}
+                  style={{ width: "80px", height: "80px", borderRadius: "10px", objectFit: "cover", border: "2px solid #006837" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeExistingImage(img.public_id)}
+                  style={{
+                    position: "absolute",
+                    top: "-8px",
+                    right: "-8px",
+                    background: "#000",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "50%",
+                    width: "20px",
+                    height: "20px",
+                    fontSize: "12px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer"
+                  }}
+                >
+                  ✕
+                </button>
+                <div style={{ position: "absolute", bottom: "4px", left: "4px", background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: "8px", padding: "2px 4px", borderRadius: "4px" }}>
+                    Saved
+                </div>
+              </div>
+            ))}
+
+            {/* New Previews */}
+            {previews.map((url, index) => (
+              <div key={index} style={{ position: "relative" }}>
+                <img
+                  src={url}
+                  style={{ width: "80px", height: "80px", borderRadius: "10px", objectFit: "cover", border: "2px solid #ddd" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => removePreview(index)}
+                  style={{
+                    position: "absolute",
+                    top: "-8px",
+                    right: "-8px",
+                    background: "#ff4d4f",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "50%",
+                    width: "20px",
+                    height: "20px",
+                    fontSize: "12px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer"
+                  }}
+                >
+                  ✕
+                </button>
+                <div style={{ position: "absolute", bottom: "4px", left: "4px", background: "rgba(255,255,255,0.8)", color: "#000", fontSize: "8px", padding: "2px 4px", borderRadius: "4px" }}>
+                    New
+                </div>
+              </div>
+            ))}
+          </div>
         )}
 
-        <div style={{ marginTop: "20px", display: "flex", gap: "12px" }}>
+        {uploading && (
+          <div style={{ marginTop: "12px", display: "flex", alignItems: "center", gap: "8px", color: "#006837", fontWeight: "bold" }}>
+            <div className="spinner" style={{ width: "16px", height: "16px" }}></div>
+            <span>Uploading images to Cloudinary...</span>
+          </div>
+        )}
+
+        <div style={{ marginTop: "24px", display: "flex", gap: "12px" }}>
           <button 
             type="submit" 
             disabled={uploading || submitting}

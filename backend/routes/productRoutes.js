@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Product = require("../models/Product");
+const cloudinary = require("../utils/cloudinary");
 
 // 1️⃣ ADD product
 router.post("/", async (req, res) => {
@@ -42,6 +43,24 @@ router.get("/:id", async (req, res) => {
 // 4️⃣ UPDATE product
 router.put("/:id", async (req, res) => {
   try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    // Check for removed images to delete from Cloudinary
+    if (req.body.images && product.images) {
+      const currentPublicIds = req.body.images.map(img => img.public_id);
+      const removedImages = product.images.filter(img => !currentPublicIds.includes(img.public_id));
+      
+      if (removedImages.length > 0) {
+        const deletePromises = removedImages.map(img => 
+          cloudinary.uploader.destroy(img.public_id)
+        );
+        await Promise.all(deletePromises);
+      }
+    }
+
     const updated = await Product.findByIdAndUpdate(
       req.params.id,
       req.body,
@@ -49,6 +68,7 @@ router.put("/:id", async (req, res) => {
     );
     res.json(updated);
   } catch (err) {
+    console.error("Update error:", err);
     res.status(500).json({ error: "Failed to update product" });
   }
 });
@@ -56,9 +76,23 @@ router.put("/:id", async (req, res) => {
 // 5️⃣ DELETE product
 router.delete("/:id", async (req, res) => {
   try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    // Delete images from Cloudinary
+    if (product.images && product.images.length > 0) {
+      const deletePromises = product.images.map(img => 
+        cloudinary.uploader.destroy(img.public_id)
+      );
+      await Promise.all(deletePromises);
+    }
+
     await Product.findByIdAndDelete(req.params.id);
     res.json({ message: "Product deleted" });
   } catch (err) {
+    console.error("Delete error:", err);
     res.status(500).json({ error: "Failed to delete product" });
   }
 });
