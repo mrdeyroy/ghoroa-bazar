@@ -56,7 +56,9 @@ router.post("/", authMiddleware, async (req, res) => {
 // 2️⃣ GET ALL ORDERS (ADMIN)
 router.get("/", async (req, res) => {
   try {
-    const orders = await Order.find().sort({ createdAt: -1 });
+    const orders = await Order.find()
+      .populate("userId", "email name")
+      .sort({ createdAt: -1 });
     res.json(orders);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch orders" });

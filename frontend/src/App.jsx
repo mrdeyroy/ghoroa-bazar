@@ -43,7 +43,12 @@ export default function App() {
           <Route path="/contact" element={<Contact />} />
 
           <Route path="/product/:id" element={<ProductDetails />} />
-          <Route path="/invoice/:orderId" element={<ProtectedRoute><Invoice /></ProtectedRoute>} />
+          <Route 
+            path="/invoice/:orderId" 
+            element={
+              localStorage.getItem("adminLoggedIn") ? <Invoice /> : <ProtectedRoute><Invoice /></ProtectedRoute>
+            } 
+          />
           <Route path="/order-success" element={<OrderSuccess />} />
 
           {/* Protected Customer Routes */}

@@ -1,5 +1,22 @@
 import { useEffect, useState } from "react";
 import AdminLayout from "../components/AdminLayout";
+import { 
+  Plus, 
+  Search, 
+  Edit2, 
+  Trash2, 
+  Package, 
+  Image as ImageIcon, 
+  X, 
+  Check, 
+  AlertCircle,
+  ChevronDown,
+  ChevronRight,
+  UploadCloud,
+  Layers,
+  IndianRupee,
+  Database
+} from "lucide-react";
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
@@ -16,8 +33,8 @@ export default function AdminProducts() {
     weight: "",
     weights: [],
     newWeight: { label: "", price: "" },
-    image: "", // Main image URL for card
-    images: [], // All image objects {url, public_id}
+    image: "", 
+    images: [], 
     stock: "",
     description: "",
     ingredients: "",
@@ -25,8 +42,8 @@ export default function AdminProducts() {
   };
 
   const [form, setForm] = useState(emptyForm);
-  const [selectedFiles, setSelectedFiles] = useState([]); // Raw files for upload
-  const [previews, setPreviews] = useState([]); // Blob URLs for preview
+  const [selectedFiles, setSelectedFiles] = useState([]); 
+  const [previews, setPreviews] = useState([]); 
 
   const fetchProducts = () => {
     fetch("http://localhost:5000/api/products")
@@ -68,8 +85,6 @@ export default function AdminProducts() {
 
   const removeExistingImage = async (public_id) => {
     if (!window.confirm("Remove this image?")) return;
-    
-    // We'll update the database later, but for now just remove from UI
     setForm(prev => ({
       ...prev,
       images: prev.images.filter(img => img.public_id !== public_id)
@@ -90,7 +105,6 @@ export default function AdminProducts() {
     try {
       let uploadedImages = [...form.images];
 
-      // 1️⃣ Upload new files if any
       if (selectedFiles.length > 0) {
         setUploading(true);
         const formData = new FormData();
@@ -105,11 +119,10 @@ export default function AdminProducts() {
         setUploading(false);
       }
 
-      // 2️⃣ Save product
       const payload = { 
         ...form, 
         images: uploadedImages,
-        image: uploadedImages[0]?.url || "" // Set first image as main image
+        image: uploadedImages[0]?.url || "" 
       };
       delete payload.newWeight;
 
@@ -174,420 +187,389 @@ export default function AdminProducts() {
   };
 
   const addWeight = () => {
-  const { label, price } = form.newWeight;
-  if (!label || !price) return;
+    const { label, price } = form.newWeight;
+    if (!label || !price) return;
 
-  setForm(prev => ({
-    ...prev,
-    weights: [...prev.weights, { label, price: Number(price) }],
-    newWeight: { label: "", price: "" }
-  }));
-};
-
-
-  const removeWeight = (label) => {
-  setForm(prev => ({
-    ...prev,
-    weights: prev.weights.filter(w => w.label !== label)
-  }));
-};
-
-
-  const inputStyle = {
-    width: "100%",
-    padding: "10px",
-    borderRadius: "8px",
-    border: "1px solid #ccc",
-    fontSize: "14px"
+    setForm(prev => ({
+      ...prev,
+      weights: [...prev.weights, { label, price: Number(price) }],
+      newWeight: { label: "", price: "" }
+    }));
   };
 
-  const fieldWrapper = { marginRight: "15px" };
+  const removeWeight = (label) => {
+    setForm(prev => ({
+      ...prev,
+      weights: prev.weights.filter(w => w.label !== label)
+    }));
+  };
 
   return (
     <AdminLayout>
-      <h2 style={{ marginBottom: "15px" }}>Products</h2>
+      <div className="mb-8">
+        <h1 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">Stock Inventory</h1>
+        <p className="text-gray-400 font-medium mt-1 uppercase tracking-widest text-[8px] sm:text-[10px] pl-1">Product catalog & dynamic warehouse control</p>
+      </div>
 
+      {/* PRODUCT FORM */}
       <form
         onSubmit={handleSubmit}
-        style={{
-          background: "#fff",
-          padding: "24px",
-          borderRadius: "14px",
-          boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
-          marginBottom: "30px",
-          border: editingId ? "2px solid #006837" : "none"
-        }}
+        className={`bg-white p-6 sm:p-10 rounded-[32px] sm:rounded-[40px] shadow-sm border ${editingId ? "border-[#66FF99] ring-4 ring-[#66FF99]/10" : "border-gray-100"} mb-12 relative transition-all duration-500`}
       >
-        <h3>{editingId ? "Edit Product" : "Add New Product"}</h3>
-
-        {message && (
-          <div className="notification-popup">
-            {message.includes("successfully") ? "✅" : "❌"} {message}
+        <div className="flex items-center gap-4 mb-8 sm:mb-10">
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${editingId ? "bg-[#66FF99]/10 text-[#1F7A3B]" : "bg-gray-100 text-gray-400"}`}>
+            {editingId ? <Edit2 className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
           </div>
-        )}
-
-        {/* INPUT GRID */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }}>
-
-          <div style={fieldWrapper}>
-            <input
-              placeholder="Product Name"
-              value={form.name}
-              onChange={e => setForm({ ...form, name: e.target.value })}
-              style={inputStyle}
-            />
-          </div>
-
-          <div style={fieldWrapper}>
-            <input
-              placeholder="Bengali Name"
-              value={form.bnName}
-              onChange={e => setForm({ ...form, bnName: e.target.value })}
-              style={inputStyle}
-            />
-          </div>
-
-          <div style={fieldWrapper}>
-            <select
-              value={form.category}
-              onChange={e => setForm({ ...form, category: e.target.value })}
-              style={inputStyle}
-            >
-              <option value="">Select Category</option>
-              <option value="Honey">🍯 Honey</option>
-              <option value="Ghee">🧈 Ghee</option>
-              <option value="Nuts">🥜 Nuts</option>
-              <option value="Others">📦 Others</option>
-            </select>
-          </div>
-
-          <div style={fieldWrapper}>
-            <input
-              type="number"
-              placeholder="Base Price"
-              value={form.price}
-              onChange={e => setForm({ ...form, price: e.target.value })}
-              style={inputStyle}
-            />
-          </div>
-
-          {/* ⭐ Weight / Pack Options */}
-<div style={fieldWrapper}>
-  <input
-    placeholder="Weight (ex: 250g, 1kg)"
-    value={form.newWeight.label}
-    onChange={e =>
-      setForm({
-        ...form,
-        newWeight: { ...form.newWeight, label: e.target.value }
-      })
-    }
-    style={inputStyle}
-  />
-
-  <input
-    type="number"
-    placeholder="Price for this weight"
-    value={form.newWeight.price}
-    onChange={e =>
-      setForm({
-        ...form,
-        newWeight: { ...form.newWeight, price: e.target.value }
-      })
-    }
-    style={{ ...inputStyle, marginTop: "6px" }}
-  />
-
-  <button
-    type="button"
-    onClick={addWeight}
-    style={{ marginTop: "6px", padding: "6px 10px", borderRadius: "8px" }}
-  >
-    Add Pack
-  </button>
-
-  {form.weights.length > 0 && (
-    <div style={{ marginTop: "8px", display: "flex", gap: "6px", flexWrap: "wrap" }}>
-      {form.weights.map((w, i) => (
-        <span
-          key={i}
-          style={{
-            padding: "6px 10px",
-            borderRadius: "16px",
-            background: "#eef",
-            cursor: "pointer"
-          }}
-          onClick={() => removeWeight(w.label)}
-        >
-          {w.label} – ₹{w.price} ✕
-        </span>
-      ))}
-    </div>
-  )}
-</div>
-
-
-          <div style={fieldWrapper}>
-            <input
-              type="number"
-              placeholder="Stock Quantity"
-              value={form.stock}
-              onChange={e => setForm({ ...form, stock: e.target.value })}
-              style={inputStyle}
-            />
-          </div>
-
-          {/* ⭐ Ingredients */}
-          <div style={{ gridColumn: "1 / -1" }}>
-            <textarea
-              placeholder="Ingredients"
-              value={form.ingredients}
-              onChange={e => setForm({ ...form, ingredients: e.target.value })}
-              rows={2}
-              style={inputStyle}
-            />
-          </div>
-
-          {/* ⭐ Nutrition Facts */}
-          <div style={{ gridColumn: "1 / -1" }}>
-            <textarea
-              placeholder="Nutrition Facts"
-              value={form.nutrition}
-              onChange={e => setForm({ ...form, nutrition: e.target.value })}
-              rows={2}
-              style={inputStyle}
-            />
-          </div>
-
-          {/* Description */}
-          <div style={{ gridColumn: "1 / -1" }}>
-            <textarea
-              placeholder="Product Description"
-              value={form.description}
-              onChange={e => setForm({ ...form, description: e.target.value })}
-              rows={4}
-              style={inputStyle}
-            />
+          <div>
+            <h3 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">{editingId ? "Modify Product Spec" : "Register New Product"}</h3>
+            <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mt-0.5">Define core properties and logistic parameters</p>
           </div>
         </div>
 
-        {/* Drag + Drop Upload */}
-        <div
-          onDragOver={e => { e.preventDefault(); setDragActive(true); }}
-          onDragLeave={() => setDragActive(false)}
-          onDrop={e => {
-            e.preventDefault();
-            handleFileChange({ target: { files: e.dataTransfer.files } });
-          }}
-          style={{
-            marginTop: "20px",
-            padding: "20px",
-            border: `2px dashed ${dragActive ? "#006837" : "#ccc"}`,
-            borderRadius: "12px",
-            textAlign: "center",
-            background: dragActive ? "#f0fdf4" : "transparent"
-          }}
-        >
-          <label htmlFor="fileUpload" style={{ cursor: "pointer", display: "block" }}>
-            <div style={{ fontSize: "24px", marginBottom: "8px" }}>📸</div>
-            Drag & drop images here or <strong>click to upload</strong>
-            <p style={{ fontSize: "12px", color: "#666", marginTop: "4px" }}>Max 5 images</p>
-          </label>
+        {message && (
+          <div className={`mb-8 p-4 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 ${message.includes("successfully") ? "bg-green-50 text-green-700 border border-green-100" : "bg-red-50 text-red-700 border border-red-100"}`}>
+            {message.includes("successfully") ? <Check className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+            <span className="text-sm font-black tracking-tight">{message}</span>
+          </div>
+        )}
 
-          <input
-            type="file"
-            multiple
-            hidden
-            id="fileUpload"
-            accept="image/*"
-            onChange={handleFileChange}
-          />
+        {/* FORM GRID */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] ml-1">Universal Name</label>
+            <input
+              placeholder="e.g. Organic Sundarban Honey"
+              value={form.name}
+              onChange={e => setForm({ ...form, name: e.target.value })}
+              className="w-full px-5 py-4 bg-gray-50/50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#1F7A3B] outline-none transition-all font-bold text-sm"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] ml-1">Regional Label (BN)</label>
+            <input
+              placeholder="উন্নত মানের মধু"
+              value={form.bnName}
+              onChange={e => setForm({ ...form, bnName: e.target.value })}
+              className="w-full px-5 py-4 bg-gray-50/50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#1F7A3B] outline-none transition-all font-bold text-sm"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] ml-1">Product Category</label>
+            <div className="relative">
+              <select
+                value={form.category}
+                onChange={e => setForm({ ...form, category: e.target.value })}
+                className="w-full px-5 py-4 bg-gray-50/50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#1F7A3B] outline-none transition-all font-black text-sm uppercase tracking-widest appearance-none cursor-pointer"
+                required
+              >
+                <option value="">Select Category</option>
+                <option value="Honey">🍯 Honey</option>
+                <option value="Ghee">🧈 Ghee</option>
+                <option value="Nuts">🥜 Nuts</option>
+                <option value="Others">📦 Others</option>
+              </select>
+              <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] ml-1">Base Valuation (₹)</label>
+            <div className="relative">
+              <IndianRupee className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="number"
+                placeholder="499"
+                value={form.price}
+                onChange={e => setForm({ ...form, price: e.target.value })}
+                className="w-full pl-12 pr-5 py-4 bg-gray-50/50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#1F7A3B] outline-none transition-all font-black text-sm"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2 lg:row-span-2">
+            <label className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] ml-1">Logistic Variants (Weights)</label>
+            <div className="bg-gray-50/50 border border-gray-100 rounded-2xl p-5 space-y-4">
+               <div className="grid grid-cols-2 gap-3">
+                  <input
+                    placeholder="250g"
+                    value={form.newWeight.label}
+                    onChange={e => setForm({ ...form, newWeight: { ...form.newWeight, label: e.target.value } })}
+                    className="px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-[#1F7A3B] font-bold text-xs"
+                  />
+                  <input
+                    type="number"
+                    placeholder="₹ Price"
+                    value={form.newWeight.price}
+                    onChange={e => setForm({ ...form, newWeight: { ...form.newWeight, price: e.target.value } })}
+                    className="px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-[#1F7A3B] font-bold text-xs"
+                  />
+               </div>
+               <button
+                 type="button"
+                 onClick={addWeight}
+                 className="w-full py-3 bg-gray-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-colors"
+               >
+                 Assign Pack Variant
+               </button>
+               
+               {form.weights.length > 0 && (
+                 <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
+                   {form.weights.map((w, i) => (
+                     <div key={i} className="flex items-center gap-2 bg-white border border-gray-100 px-3 py-1.5 rounded-lg">
+                        <span className="text-[10px] font-black text-gray-700">{w.label} - ₹{w.price}</span>
+                        <X 
+                          className="w-3 h-3 text-red-400 cursor-pointer hover:text-red-600 transition-colors"
+                          onClick={() => removeWeight(w.label)}
+                        />
+                     </div>
+                   ))}
+                 </div>
+               )}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] ml-1">Stock Readiness</label>
+            <div className="relative">
+              <Database className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="number"
+                placeholder="Units available"
+                value={form.stock}
+                onChange={e => setForm({ ...form, stock: e.target.value })}
+                className="w-full pl-12 pr-5 py-4 bg-gray-50/50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#1F7A3B] outline-none transition-all font-black text-sm"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="sm:col-span-2 space-y-2">
+            <label className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] ml-1">Core Description</label>
+            <textarea
+              placeholder="Detailed product information..."
+              value={form.description}
+              onChange={e => setForm({ ...form, description: e.target.value })}
+              rows={3}
+              className="w-full px-5 py-4 bg-gray-50/50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#1F7A3B] outline-none transition-all font-medium text-sm leading-relaxed"
+            />
+          </div>
+
+          <div className="sm:col-span-2 lg:col-span-3 grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] ml-1">Ingredients Profile</label>
+              <textarea
+                placeholder="List ingredients..."
+                value={form.ingredients}
+                onChange={e => setForm({ ...form, ingredients: e.target.value })}
+                rows={2}
+                className="w-full px-5 py-4 bg-gray-50/50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#1F7A3B] outline-none transition-all font-medium text-xs leading-relaxed"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] ml-1">Nutritional Bio</label>
+              <textarea
+                placeholder="Caloric and nutrient data..."
+                value={form.nutrition}
+                onChange={e => setForm({ ...form, nutrition: e.target.value })}
+                rows={2}
+                className="w-full px-5 py-4 bg-gray-50/50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#1F7A3B] outline-none transition-all font-medium text-xs leading-relaxed"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* DRAG & DROP UPLOAD */}
+        <div className="mt-8">
+          <label className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] ml-1 mb-2 block">System Media Assets (Max 5)</label>
+          <div
+            onDragOver={e => { e.preventDefault(); setDragActive(true); }}
+            onDragLeave={() => setDragActive(false)}
+            onDrop={e => {
+              e.preventDefault();
+              handleFileChange({ target: { files: e.dataTransfer.files } });
+            }}
+            className={`cursor-pointer transition-all duration-300 border-2 border-dashed flex flex-col items-center justify-center p-8 sm:p-12 rounded-[32px] ${dragActive ? "border-[#1F7A3B] bg-green-50/50" : "border-gray-200 hover:border-[#1F7A3B]/50 hover:bg-gray-50"}`}
+          >
+            <input
+              type="file"
+              multiple
+              hidden
+              id="fileUpload"
+              accept="image/*"
+              onChange={handleFileChange}
+            />
+            <label htmlFor="fileUpload" className="cursor-pointer text-center">
+              <div className="w-16 h-16 bg-gray-100 rounded-3xl flex items-center justify-center mx-auto mb-4 text-gray-400 group-hover:scale-110 transition-transform">
+                <UploadCloud className="w-8 h-8" />
+              </div>
+              <p className="font-black text-gray-900 tracking-tight">Drop files or <span className="text-[#1F7A3B]">Synchronize Storage</span></p>
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2 italic">Format: PNG, JPG, WEBP (Limit 5MB each)</p>
+            </label>
+          </div>
         </div>
 
         {/* IMAGE PREVIEWS */}
         {(previews.length > 0 || form.images.length > 0) && (
-          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "16px" }}>
-            {/* Existing Images */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4 mt-8">
             {form.images.map((img) => (
-              <div key={img.public_id} style={{ position: "relative" }}>
+              <div key={img.public_id} className="relative group aspect-square">
                 <img
                   src={img.url}
-                  style={{ width: "80px", height: "80px", borderRadius: "10px", objectFit: "cover", border: "2px solid #006837" }}
+                  className="w-full h-full object-cover rounded-3xl border-4 border-gray-50 shadow-sm"
                 />
                 <button
                   type="button"
                   onClick={() => removeExistingImage(img.public_id)}
-                  style={{
-                    position: "absolute",
-                    top: "-8px",
-                    right: "-8px",
-                    background: "#000",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "50%",
-                    width: "20px",
-                    height: "20px",
-                    fontSize: "12px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    cursor: "pointer"
-                  }}
+                  className="absolute -top-3 -right-3 w-8 h-8 bg-black text-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-500 transition-colors active:scale-90"
                 >
-                  ✕
+                  <X className="w-4 h-4" />
                 </button>
-                <div style={{ position: "absolute", bottom: "4px", left: "4px", background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: "8px", padding: "2px 4px", borderRadius: "4px" }}>
-                    Saved
+                <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/60 to-transparent rounded-b-3xl">
+                   <p className="text-[8px] font-black text-white uppercase text-center tracking-widest">Server Image</p>
                 </div>
               </div>
             ))}
-
-            {/* New Previews */}
             {previews.map((url, index) => (
-              <div key={index} style={{ position: "relative" }}>
+              <div key={index} className="relative group aspect-square">
                 <img
                   src={url}
-                  style={{ width: "80px", height: "80px", borderRadius: "10px", objectFit: "cover", border: "2px solid #ddd" }}
+                  className="w-full h-full object-cover rounded-3xl border-4 border-emerald-100 shadow-sm animate-pulse"
                 />
                 <button
                   type="button"
                   onClick={() => removePreview(index)}
-                  style={{
-                    position: "absolute",
-                    top: "-8px",
-                    right: "-8px",
-                    background: "#ff4d4f",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "50%",
-                    width: "20px",
-                    height: "20px",
-                    fontSize: "12px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    cursor: "pointer"
-                  }}
+                  className="absolute -top-3 -right-3 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors active:scale-90"
                 >
-                  ✕
+                  <X className="w-4 h-4" />
                 </button>
-                <div style={{ position: "absolute", bottom: "4px", left: "4px", background: "rgba(255,255,255,0.8)", color: "#000", fontSize: "8px", padding: "2px 4px", borderRadius: "4px" }}>
-                    New
+                <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-emerald-600/80 to-transparent rounded-b-3xl border-t border-white/20">
+                   <p className="text-[8px] font-black text-white uppercase text-center tracking-widest">New Staging</p>
                 </div>
               </div>
             ))}
           </div>
         )}
 
+        {/* PROGRESS INDICATOR */}
         {uploading && (
-          <div style={{ marginTop: "12px", display: "flex", alignItems: "center", gap: "8px", color: "#006837", fontWeight: "bold" }}>
-            <div className="spinner" style={{ width: "16px", height: "16px" }}></div>
-            <span>Uploading images to Cloudinary...</span>
+          <div className="mt-8 flex items-center gap-4 p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+             <div className="w-8 h-8 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
+             <p className="text-xs font-black text-emerald-800 uppercase tracking-widest">Uploading segments to cloud storage...</p>
           </div>
         )}
 
-        <div style={{ marginTop: "24px", display: "flex", gap: "12px" }}>
+        {/* ACTION BUTTONS */}
+        <div className="mt-10 sm:mt-12 flex flex-col sm:flex-row gap-4">
           <button 
             type="submit" 
             disabled={uploading || submitting}
-            style={{ 
-              background: "#006837", 
-              color: "#fff", 
-              padding: "12px 22px", 
-              borderRadius: "10px",
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              opacity: (uploading || submitting) ? 0.7 : 1,
-              cursor: (uploading || submitting) ? "not-allowed" : "pointer"
-            }}
+            className={`flex-1 flex items-center justify-center gap-3 px-8 py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition-all duration-500 shadow-xl ${
+              editingId 
+                ? "bg-[#0F1E11] text-[#66FF99] shadow-green-900/20" 
+                : "bg-[#1F7A3B] text-white shadow-green-900/40"
+            } hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed`}
           >
-            {(submitting) ? (
+            {submitting ? (
               <>
-                <div className="spinner" style={{ width: "16px", height: "16px", borderTopColor: "#fff" }}></div>
-                Saving...
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Processing Transaction...
               </>
             ) : (
-              editingId ? "Update Product" : "Add Product"
+              <>
+                {editingId ? <Check className="w-5 h-5" /> : <UploadCloud className="w-5 h-5" />}
+                {editingId ? "Finalize Update" : "Synchronize to System"}
+              </>
             )}
           </button>
 
           {editingId && (
-            <button type="button" onClick={cancelEdit} style={{ background: "#eee", padding: "12px 22px", borderRadius: "10px" }}>
+            <button 
+              type="button" 
+              onClick={cancelEdit} 
+              className="px-8 py-5 bg-gray-100 text-gray-500 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-gray-200 transition-all active:scale-95"
+            >
               Cancel Edit
             </button>
           )}
         </div>
       </form>
 
-      {/* LIST */}
-      {/* LIST */}
-{products.map(p => (
-  <div
-    key={p._id}
-    style={{
-      background: "#fff",
-      padding: "14px",
-      borderRadius: "12px",
-      display: "flex",
-      alignItems: "center",
-      gap: "14px",
-      marginBottom: "12px",
-      boxShadow: "0 4px 10px rgba(0,0,0,0.05)"
-    }}
-  >
-    <img
-      src={p.image}
-      alt={p.name}
-      style={{ width: 60, height: 60, borderRadius: "10px", objectFit: "cover" }}
-    />
+      {/* PRODUCT LISTING */}
+      <div className="space-y-6 mb-12">
+        <div className="flex items-center justify-between px-4">
+           <h3 className="text-xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+             <Layers className="w-6 h-6 text-[#1F7A3B]" />
+             Registry Records
+           </h3>
+           <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+              Total Managed: {products.length}
+           </div>
+        </div>
 
-    <div style={{ flex: 1 }}>
-      <strong>{p.name}</strong>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {products.map(p => (
+            <div
+              key={p._id}
+              className="bg-white group rounded-[32px] p-5 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden transition-all hover:shadow-2xl hover:border-green-100"
+            >
+              <div className="relative aspect-square mb-5 overflow-hidden rounded-2xl bg-gray-50">
+                <img
+                  src={p.image}
+                  alt={p.name}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                />
+                <div className="absolute top-3 left-3 flex gap-2">
+                   <div className="bg-white/90 backdrop-blur px-3 py-1.5 rounded-xl border border-white/20 shadow-sm text-[9px] font-black uppercase tracking-widest text-[#1F7A3B]">
+                      {p.category}
+                   </div>
+                   {p.stock === 0 && (
+                     <div className="bg-red-500 text-white px-3 py-1.5 rounded-xl shadow-lg shadow-red-500/30 text-[9px] font-black uppercase tracking-widest animate-pulse">
+                        Unavailable
+                     </div>
+                   )}
+                </div>
+              </div>
 
-      <div style={{ fontSize: "13px", color: "#555" }}>
-        ₹{p.price} — {p.weights?.map(w => w.label).join(", ") || p.weight}
+              <div className="flex-1 space-y-2 mb-6">
+                <div className="flex justify-between items-start gap-2">
+                   <h4 className="font-black text-gray-900 leading-tight line-clamp-2">{p.name}</h4>
+                   <p className="font-mono font-black text-gray-900 bg-gray-50 px-2 py-1 rounded-lg text-xs">₹{p.price}</p>
+                </div>
+                <p className="text-[10px] font-bold text-gray-400 line-clamp-1 truncate uppercase tracking-tighter">
+                   {p.weights?.map(w => w.label).join(" / ") || p.weight || "Standard Pack"}
+                </p>
+                <div className="pt-2 flex items-center gap-2">
+                   <Database className={`w-3.5 h-3.5 ${p.stock === 0 ? "text-red-500" : "text-green-600"}`} />
+                   <span className={`text-[10px] font-black uppercase tracking-widest ${p.stock === 0 ? "text-red-500" : "text-gray-500"}`}>
+                     Inventory: {p.stock} Units
+                   </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-4 border-t border-gray-50">
+                <button
+                  onClick={() => startEdit(p)}
+                  className="flex items-center justify-center gap-2 bg-gray-50 text-gray-700 hover:bg-[#66FF99]/20 hover:text-[#1F7A3B] transition-all py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest ring-1 ring-inset ring-gray-100 group-hover:ring-green-100"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                  Edit
+                </button>
+                <button
+                  onClick={() => deleteProduct(p._id)}
+                  className="flex items-center justify-center gap-2 bg-gray-50 text-gray-400 hover:bg-black hover:text-white transition-all py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest ring-1 ring-inset ring-gray-100 group-hover:ring-black"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Drop
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-
-      <div style={{ fontSize: "13px", color: p.stock === 0 ? "red" : "green" }}>
-        Stock: {p.stock}
-      </div>
-    </div>
-
-    <div style={{ display: "flex", gap: "8px" }}>
-      <button
-        onClick={() => startEdit(p)}
-        style={{
-          background: "#ffb703",
-          color: "#000",
-          border: "none",
-          padding: "8px 14px",
-          borderRadius: "8px",
-          fontWeight: 600,
-          cursor: "pointer"
-        }}
-      >
-        ✏️ Edit
-      </button>
-
-      <button
-        onClick={() => deleteProduct(p._id)}
-        style={{
-          background: "#222",
-          color: "#fff",
-          border: "none",
-          padding: "8px 14px",
-          borderRadius: "8px",
-          fontWeight: 600,
-          cursor: "pointer"
-        }}
-      >
-        🗑️ Delete
-      </button>
-    </div>
-  </div>
-))}
-
     </AdminLayout>
   );
 }
