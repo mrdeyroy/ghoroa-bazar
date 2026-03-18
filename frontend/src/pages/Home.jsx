@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 
 import ProductCard from "../components/ProductCard";
-import CategoryFilter from "../components/CategoryFilter";
 import { Link, useLocation } from "react-router-dom";
+import { Package, ChevronRight } from "lucide-react";
+import Hero from "../components/Hero";
 
 const linkStyle = {
   display: "block",
@@ -13,7 +14,6 @@ const linkStyle = {
 };
 
 export default function Home() {
-  const categories = ["All", "Honey", "Ghee", "Nuts", "Others"];
   const [activeCategory, setActiveCategory] = useState("All");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("default");
@@ -27,10 +27,21 @@ export default function Home() {
   }, []);
 
   const filteredProducts = products
-    .filter(p =>
-      (activeCategory === "All" || p.category === activeCategory) &&
-      p.name.toLowerCase().includes(search.toLowerCase())
-    )
+    .filter(p => {
+      const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
+      
+      if (activeCategory === "All") return matchesSearch;
+      
+      // Smart mapping for the new tabs
+      if (activeCategory === "Spices") {
+        return matchesSearch && (p.category === "Spices" || p.category === "Others" && (p.name.toLowerCase().includes("spice") || p.name.toLowerCase().includes("masala")));
+      }
+      if (activeCategory === "Organic") {
+        return matchesSearch && (p.category === "Organic" || p.category === "Others" && p.name.toLowerCase().includes("organic"));
+      }
+      
+      return p.category === activeCategory && matchesSearch;
+    })
     .sort((a, b) => {
       if (sort === "low") return a.price - b.price;
       if (sort === "high") return b.price - a.price;
@@ -79,150 +90,72 @@ useEffect(() => {
 
 return (
   <>
-  
-<section
-  className="hero"
-  style={{
-    padding: "80px 20px",
-    margin: "5px",
-    /* ✅ BACKGROUND IMAGE */
-    backgroundImage: "url(/src/assets/herobanner.jpg)",
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    backgroundRepeat: "no-repeat",
+  <Hero />
+      {/* ===== SHOP OUR NATURAL PRODUCTS SECTION ===== */}
+      <section id="products-section" className="py-20 px-4 md:px-[8%] bg-white">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-5xl font-black text-gray-900 tracking-tight mb-4">
+              Shop Our <span className="text-[#1f7a3b]">Natural Products</span>
+            </h2>
+            <p className="text-gray-500 font-medium max-w-2xl mx-auto">
+              Sourced directly from nature's heart, processed with traditional methods, and delivered fresh to your doorstep.
+            </p>
+          </div>
 
-    /* overlay effect */
-    position: "relative",
-    overflow: "hidden"
-  }}
->
-  {/* DARK OVERLAY */}
-  <div
-    style={{
-      position: "absolute",
-      inset: 0,
-      background: "rgba(0,0,0,0.30)"
-    }}
-  />
+          {/* Category Tabs */}
+          <div className="flex flex-nowrap overflow-x-auto pb-4 mb-10 no-scrollbar gap-3 sm:justify-center">
+            {[
+              { label: "All Products", internal: "All" },
+              { label: "Honey", internal: "Honey" },
+              { label: "Ghee & Dairy", internal: "Ghee" },
+              { label: "Dry Fruits & Nuts", internal: "Nuts" },
+              { label: "Spices & Masala", internal: "Spices" },
+              { label: "Natural & Organic", internal: "Organic" }
+            ].map((cat) => (
+              <button
+                key={cat.label}
+                onClick={() => setActiveCategory(cat.internal)}
+                className={`flex-shrink-0 px-6 py-3 rounded-full text-sm font-black uppercase tracking-widest transition-all duration-300 border ${
+                  activeCategory === cat.internal
+                    ? "bg-[#1f7a3b] border-[#1f7a3b] text-white shadow-xl shadow-green-100 scale-105"
+                    : "bg-white border-gray-100 text-gray-400 hover:border-green-200 hover:text-green-700"
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
 
-  <div
-    className="hero-content"
-    style={{
-      textAlign: "center",
-      position: "relative",
-      zIndex: 1,
-      color: "#fff"
-    }}
-  >
-    <h1 style={{ marginBottom: "10px" }}>
-      Pure Goodness from Nature to Your Home
-    </h1>
+          {/* Product Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
+            {filteredProducts.slice(0, 8).length === 0 ? (
+              <div className="col-span-full py-20 text-center">
+                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                   <Package className="w-10 h-10 text-gray-200" />
+                </div>
+                <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No products in this category yet</p>
+              </div>
+            ) : (
+              filteredProducts.slice(0, 8).map(p => (
+                <ProductCard key={p._id} product={p} />
+              ))
+            )}
+          </div>
 
-    <p style={{ marginBottom: "18px", color: "#e6e6e6" }}>
-      Premium Honey • Desi Ghee • Dry Fruits • Natural Products
-    </p>
-
-    <button
-      className="shop-btn"
-      style={{
-        padding: "12px 22px",
-        borderRadius: "8px",
-        background: "#1f7a3b",
-        color: "#fff",
-        border: "none",
-        cursor: "pointer",
-        fontWeight: 600
-      }}
-      onClick={() =>
-        document
-          .getElementById("products-section")
-          ?.scrollIntoView({ behavior: "smooth" })
-      }
-    >
-      Shop Now
-    </button>
-  </div>
-</section>
-
-
-
-
-      {/* ===== POPULAR PRODUCTS (unchanged) ===== */}
-      <section id="products-section" style={{ padding: "20px" }}>
-       
-      <h2
-        style={{
-          color: "#1f7a3b",
-          fontWeight: "700",
-          fontSize: "22px",
-          marginBottom: "12px",
-          textAlign: "center"
-        }}
-      >
-        Popular Products
-      </h2>
-
-        <input
-          type="text"
-          placeholder="Search products..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{
-            width: "100%",
-            maxWidth: "400px",
-            padding: "10px",
-            marginBottom: "15px",
-            borderRadius: "8px",
-            border: "1px solid #ccc"
-          }}
-        />
-
-        <div
-          style={{
-            display: "flex",
-            gap: "15px",
-            flexWrap: "wrap",
-            alignItems: "center",
-            marginBottom: "15px"
-          }}
-        >
-          <CategoryFilter
-            categories={categories}
-            active={activeCategory}
-            onChange={(cat) => {
-              setActiveCategory(cat);
-              setSearch("");
-            }}
-          />
-
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-            style={{
-              padding: "8px",
-              borderRadius: "6px",
-              border: "1px solid #ccc"
-            }}
-          >
-            <option value="default">Sort by Price</option>
-            <option value="low">Low → High</option>
-            <option value="high">High → Low</option>
-          </select>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-          {filteredProducts.length === 0 && (
-            <div className="col-span-full py-10 text-center text-gray-400">
-              No products found
-            </div>
-          )}
-
-          {filteredProducts.map(p => (
-            <ProductCard key={p._id} product={p} />
-          ))}
+          {/* View All Button */}
+          <div className="mt-16 text-center">
+            <Link 
+              to="/products"
+              className="inline-flex items-center gap-3 px-10 py-5 bg-white text-[#1f7a3b] border-2 border-[#1f7a3b] rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-green-100 hover:bg-[#1f7a3b] hover:text-white transition-all group"
+            >
+              Explore All Products
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
         </div>
       </section>
-
 
 
 

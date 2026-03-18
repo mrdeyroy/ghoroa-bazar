@@ -139,13 +139,13 @@ export default function ProductCard({ product }) {
           whileTap={{ scale: 0.95 }}
           onClick={handleAddToCart}
           disabled={isOutOfStock}
-          className={`px-4 py-2 rounded-xl border-2 font-bold text-sm transition-all flex items-center gap-2 ${
+          className={`px-4 py-2 rounded-xl border-2 font-bold text-[10px] sm:text-xs transition-all flex items-center gap-2 ${
             isOutOfStock
               ? "border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed"
               : "border-green-600 bg-white text-green-600 hover:bg-green-600 hover:text-white"
           }`}
         >
-          {isOutOfStock ? "Out" : "ADD"}
+          {isOutOfStock ? "Out of Stock" : "ADD TO CART"}
           {!isOutOfStock && <ShoppingCart size={14} />}
         </motion.button>
       </div>

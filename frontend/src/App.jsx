@@ -7,6 +7,7 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Payment from "./pages/Payment";
 import OrderSuccess from "./pages/OrderSuccess";
+import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
 import Wishlist from "./pages/Wishlist";
 import MyOrders from "./pages/MyOrders";
@@ -41,6 +42,7 @@ export default function App() {
           <Route path="/cart" element={<Cart />} />
           <Route path="/faq" element={<Faq />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/products" element={<Products />} />
 
           <Route path="/product/:id" element={<ProductDetails />} />
           <Route 
