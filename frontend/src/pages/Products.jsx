@@ -1,24 +1,33 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import { Search, Filter, X, ChevronRight, SlidersHorizontal } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+import { CATEGORIES } from "../constants";
+
 export default function Products() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlCategory = searchParams.get("category");
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState("All");
+  const [activeCategory, setActiveCategory] = useState(urlCategory || "All");
   const [search, setSearch] = useState("");
   const [priceRange, setPriceRange] = useState(2000); // Max price
   const [showFilters, setShowFilters] = useState(false);
 
+  useEffect(() => {
+    if (urlCategory) {
+      setActiveCategory(urlCategory);
+    } else {
+      setActiveCategory("All");
+    }
+  }, [urlCategory]);
+
   const categories = [
     { label: "All Products", internal: "All" },
-    { label: "Honey", internal: "Honey" },
-    { label: "Ghee & Dairy", internal: "Ghee" },
-    { label: "Dry Fruits & Nuts", internal: "Nuts" },
-    { label: "Spices & Masala", internal: "Spices" },
-    { label: "Natural & Organic", internal: "Organic" },
-    { label: "Essential Others", internal: "Others" }
+    ...CATEGORIES.map(cat => ({ label: cat.name, internal: cat.name }))
   ];
 
   useEffect(() => {
@@ -42,10 +51,6 @@ export default function Products() {
     let matchesCategory = false;
     if (activeCategory === "All") {
       matchesCategory = true;
-    } else if (activeCategory === "Spices") {
-      matchesCategory = p.category === "Spices" || (p.category === "Others" && (p.name.toLowerCase().includes("spice") || p.name.toLowerCase().includes("masala")));
-    } else if (activeCategory === "Organic") {
-      matchesCategory = p.category === "Organic" || (p.category === "Others" && p.name.toLowerCase().includes("organic"));
     } else {
       matchesCategory = p.category === activeCategory;
     }

@@ -221,4 +221,80 @@ router.post("/reset-password/:token", async (req, res) => {
   }
 });
 
+const authMiddleware = require("../middleware/authMiddleware");
+
+// 7️⃣ Get user profile API
+router.get("/me", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    res.json(user);
+  } catch (err) {
+    console.error("Get user error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// 8️⃣ Update profile API
+router.put("/profile", authMiddleware, async (req, res) => {
+  try {
+    const { name, phone, avatar } = req.body;
+    const user = await User.findById(req.user.id);
+
+    if (name) user.name = name;
+    if (phone) user.phone = phone;
+    if (avatar) user.avatar = avatar;
+
+    await user.save();
+    res.json({ message: "Profile updated", user: { name: user.name, phone: user.phone, avatar: user.avatar } });
+  } catch (err) {
+    console.error("Update profile error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// 9️⃣ Add address API
+router.post("/address", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    user.addresses.push(req.body);
+    await user.save();
+    res.status(201).json({ message: "Address added", addresses: user.addresses });
+  } catch (err) {
+    console.error("Add address error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// 🔟 Update address API
+router.put("/address/:addressId", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    const address = user.addresses.id(req.params.addressId);
+    
+    if (!address) {
+      return res.status(404).json({ error: "Address not found" });
+    }
+
+    Object.assign(address, req.body);
+    await user.save();
+    res.json({ message: "Address updated", addresses: user.addresses });
+  } catch (err) {
+    console.error("Update address error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// 1️⃣1️⃣ Delete address API
+router.delete("/address/:addressId", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    user.addresses.pull({ _id: req.params.addressId });
+    await user.save();
+    res.json({ message: "Address deleted", addresses: user.addresses });
+  } catch (err) {
+    console.error("Delete address error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 module.exports = router;

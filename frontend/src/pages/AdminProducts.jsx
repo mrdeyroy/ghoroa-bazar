@@ -17,6 +17,13 @@ import {
   IndianRupee,
   Database
 } from "lucide-react";
+const CATEGORIES = [
+  "Honey & Natural Sweeteners",
+  "Fresh Fruits",
+  "Ghee & Dairy",
+  "Spices & Masala",
+  "Dry Fruits"
+];
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
@@ -48,7 +55,10 @@ export default function AdminProducts() {
   const fetchProducts = () => {
     fetch("http://localhost:5000/api/products")
       .then(res => res.json())
-      .then(data => setProducts(data));
+      .then((data) => {
+        console.log("Fetched products, first item category:", data[0]?.category);
+        setProducts(data);
+      });
   };
 
   useEffect(() => {
@@ -93,9 +103,14 @@ export default function AdminProducts() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (uploading || submitting) return;
+    console.log("handleSubmit triggered");
+    if (uploading || submitting) {
+      console.log("Blocked: uploading =", uploading, "submitting =", submitting);
+      return;
+    }
 
-    if (selectedFiles.length === 0 && form.images.length === 0) {
+    if (selectedFiles.length === 0 && form.images.length === 0 && !form.image) {
+      console.log("Blocked: Absolutely No images (array or string)");
       setMessage("Please upload at least one image");
       setTimeout(() => setMessage(""), 3000);
       return;
@@ -103,9 +118,11 @@ export default function AdminProducts() {
 
     setSubmitting(true);
     try {
+      console.log("Starting submission process...");
       let uploadedImages = [...form.images];
 
       if (selectedFiles.length > 0) {
+        console.log("Uploading files:", selectedFiles.length);
         setUploading(true);
         const formData = new FormData();
         selectedFiles.forEach(file => formData.append("images", file));
@@ -115,23 +132,41 @@ export default function AdminProducts() {
           body: formData
         });
         const uploadData = await uploadRes.json();
+        console.log("Upload response:", uploadData);
         uploadedImages = [...uploadedImages, ...uploadData];
         setUploading(false);
+      }
+
+      console.log("Constructing payload...");
+      // Map singular image to images[0] if it doesn't already exist in the array
+      // This helps with data migration
+      if (uploadedImages.length === 0 && form.image) {
+        console.log("Merging legacy image into array...");
+        // If we only have the singular string, we can't easily get the public_id here 
+        // without backfilling, so we'll just ensure the singular 'image' field stays set.
       }
 
       const payload = { 
         ...form, 
         images: uploadedImages,
-        image: uploadedImages[0]?.url || "" 
+        image: uploadedImages.length > 0 ? uploadedImages[0].url : form.image
       };
+      
       delete payload.newWeight;
+      delete payload._id;
+      delete payload.__v;
+      delete payload.createdAt;
 
+      console.log("FINAL PAYLOAD:", payload);
       const url = editingId
         ? `http://localhost:5000/api/products/${editingId}`
         : "http://localhost:5000/api/products";
 
       const method = editingId ? "PUT" : "POST";
+      console.log("Sending request:", method, url);
 
+      console.log("Submitting payload:", payload);
+      console.log("Updating product:", editingId, "with body:", payload); // Added frontend log for update
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -160,12 +195,21 @@ export default function AdminProducts() {
 
   const startEdit = (product) => {
     setEditingId(product._id);
-    setForm({
+    const normalizedProduct = {
       ...product,
+      name: product.name || "",
+      bnName: product.bnName || "",
+      category: product.category || "",
+      price: product.price || "",
+      stock: product.stock || 0,
+      description: product.description || "",
+      ingredients: product.ingredients || "",
+      nutrition: product.nutrition || "",
       weights: product.weights || [],
       images: product.images || [],
       newWeight: { label: "", price: "" }
-    });
+    };
+    setForm(normalizedProduct);
     setSelectedFiles([]);
     setPreviews([]);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -261,15 +305,17 @@ export default function AdminProducts() {
             <div className="relative">
               <select
                 value={form.category}
-                onChange={e => setForm({ ...form, category: e.target.value })}
+                onChange={e => {
+                  console.log("Selected category:", e.target.value);
+                  setForm({ ...form, category: e.target.value });
+                }}
                 className="w-full px-5 py-4 bg-gray-50/50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#1F7A3B] outline-none transition-all font-black text-sm uppercase tracking-widest appearance-none cursor-pointer"
                 required
               >
                 <option value="">Select Category</option>
-                <option value="Honey">🍯 Honey</option>
-                <option value="Ghee">🧈 Ghee</option>
-                <option value="Nuts">🥜 Nuts</option>
-                <option value="Others">📦 Others</option>
+                {CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
               </select>
               <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             </div>

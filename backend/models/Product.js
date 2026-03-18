@@ -3,7 +3,17 @@ const mongoose = require("mongoose");
 const productSchema = new mongoose.Schema({
   name: String,
   bnName: String,
-  category: String,
+  category: {
+    type: String,
+    required: true,
+    enum: [
+      "Honey & Natural Sweeteners",
+      "Fresh Fruits",
+      "Ghee & Dairy",
+      "Spices & Masala",
+      "Dry Fruits"
+    ]
+  },
 
   // Base price (used if no weights exist)
   price: {
@@ -68,6 +78,11 @@ const productSchema = new mongoose.Schema({
   numReviews: {
     type: Number,
     default: 0
+  },
+
+  featured: {
+    type: Boolean,
+    default: false
   },
 
   createdAt: {

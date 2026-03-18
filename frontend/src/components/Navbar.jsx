@@ -68,11 +68,11 @@ export default function Navbar() {
 
   const categories = [
     { name: "All Categories", path: "/products" },
-    { name: "Honey & Natural Sweeteners", path: "/products?category=Honey" },
-    { name: "Fresh Fruits", path: "/products?category=Fruits" },
-    { name: "Ghee & Dairy", path: "/products?category=Ghee" },
-    { name: "Spices & Masala", path: "/products?category=Spices" },
-    { name: "Dry Fruits", path: "/products?category=Nuts" },
+    { name: "Honey & Natural Sweeteners", path: "/products?category=Honey%20%26%20Natural%20Sweeteners" },
+    { name: "Fresh Fruits", path: "/products?category=Fresh%20Fruits" },
+    { name: "Ghee & Dairy", path: "/products?category=Ghee%20%26%20Dairy" },
+    { name: "Spices & Masala", path: "/products?category=Spices%20%26%20Masala" },
+    { name: "Dry Fruits", path: "/products?category=Dry%20Fruits" },
   ];
 
   return (
@@ -227,14 +227,29 @@ export default function Navbar() {
                     onClick={() => setUserDropdown(!userDropdown)}
                     className="flex items-center gap-2 text-green-800 p-1 hover:bg-green-100 rounded-full transition-all border border-green-100 shadow-sm"
                   >
-                    <div className="w-9 h-9 rounded-full bg-green-600 text-white flex items-center justify-center font-black text-sm border-2 border-white group-hover:scale-105 transition-transform">
-                      {user.name.charAt(0)}
+                    <div className="w-9 h-9 rounded-full bg-green-600 text-white flex items-center justify-center font-black text-sm border-2 border-white group-hover:scale-105 transition-transform overflow-hidden">
+                      {user.avatar ? (
+                        <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                      ) : (
+                        user.name.charAt(0)
+                      )}
                     </div>
                   </button>
                 ) : (
-                  <Link to="/login" className="p-2.5 text-green-800 hover:bg-green-100 rounded-full border border-green-100 transition-all group">
-                    <User size={22} className="group-hover:scale-110 transition-transform" />
-                  </Link>
+                  <div className="flex items-center gap-2 sm:gap-4">
+                    <Link 
+                      to="/login" 
+                      className="hidden sm:block text-[10px] font-black uppercase tracking-[0.2em] text-green-800 hover:text-green-600 transition-all px-2 py-1"
+                    >
+                      Login
+                    </Link>
+                    <Link 
+                      to="/signup" 
+                      className="bg-green-600 text-white px-4 py-2 sm:px-6 sm:py-2.5 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-green-200 hover:bg-green-700 hover:scale-105 active:scale-95 transition-all text-center whitespace-nowrap"
+                    >
+                      Sign Up
+                    </Link>
+                  </div>
                 )}
                 
                 <AnimatePresence>
@@ -250,6 +265,14 @@ export default function Navbar() {
                          <span className="block text-sm font-black text-green-900 truncate tracking-tight">{user.name}</span>
                          <span className="block text-[10px] text-green-600 mt-1 font-bold">{user.email}</span>
                       </div>
+                      <Link 
+                        to="/profile" 
+                        onClick={() => setUserDropdown(false)}
+                        className="w-full flex items-center gap-3 px-6 py-3.5 text-[13px] font-bold text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors"
+                      >
+                        <User size={18} />
+                        My Profile
+                      </Link>
                       <Link 
                         to="/my-orders" 
                         onClick={() => setUserDropdown(false)}
@@ -280,7 +303,7 @@ export default function Navbar() {
               {[
                 { name: "Home", path: "/" },
                 { name: "Shop", path: "/products" },
-                { name: "About Us", path: "/faq" },
+                { name: "About Us", path: "/#about-section" },
                 { name: "Contact Us", path: "/contact" }
               ].map((link, idx) => (
                 <Link 
@@ -336,7 +359,7 @@ export default function Navbar() {
                   {[
                     { name: "Home", path: "/" },
                     { name: "Shop", path: "/products" },
-                    { name: "About Us", path: "/faq" },
+                    { name: "About Us", path: "/#about-section" },
                     { name: "Contact Us", path: "/contact" }
                   ].map((link, idx) => (
                     <Link 
@@ -376,13 +399,22 @@ export default function Navbar() {
                     Logout Account
                   </button>
                 ) : (
-                  <Link 
-                    to="/login"
-                    onClick={() => setMenuOpen(false)}
-                    className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-green-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-green-200"
-                  >
-                    Login / Sign Up
-                  </Link>
+                  <div className="flex flex-col gap-3">
+                    <Link 
+                      to="/login"
+                      onClick={() => setMenuOpen(false)}
+                      className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border border-green-100 text-green-800 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-green-50 transition-all"
+                    >
+                      Login
+                    </Link>
+                    <Link 
+                      to="/signup"
+                      onClick={() => setMenuOpen(false)}
+                      className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-green-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-green-200 hover:bg-green-700 transition-all"
+                    >
+                      Create Account
+                    </Link>
+                  </div>
                 )}
               </div>
             </motion.div>

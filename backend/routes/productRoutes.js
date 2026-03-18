@@ -15,12 +15,30 @@ router.post("/", async (req, res) => {
   }
 });
 
-// 2️⃣ GET all products
+// 2️⃣ GET all products with optional filters
 router.get("/", async (req, res) => {
   try {
-    const products = await Product.find().sort({ createdAt: -1 });
+    const { category, featured, limit } = req.query;
+    let query = {};
+
+    if (category) {
+      query.category = category;
+    }
+
+    if (featured === "true") {
+      query.featured = true;
+    }
+
+    let productsQuery = Product.find(query).sort({ createdAt: -1 });
+
+    if (limit) {
+      productsQuery = productsQuery.limit(parseInt(limit));
+    }
+
+    const products = await productsQuery;
     res.json(products);
   } catch (err) {
+    console.error("Fetch products error:", err);
     res.status(500).json({ error: "Failed to fetch products" });
   }
 });
@@ -61,12 +79,23 @@ router.put("/:id", async (req, res) => {
       }
     }
 
-    const updated = await Product.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-    res.json(updated);
+    console.log("Updating product:", req.params.id, " - New category:", req.body.category);
+    
+    const existingProduct = await Product.findById(req.params.id);
+    if (!existingProduct) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    // Update all fields from body except protected ones
+    Object.keys(req.body).forEach(key => {
+      if (key !== "_id" && key !== "__v") {
+        existingProduct[key] = req.body[key];
+      }
+    });
+
+    await existingProduct.save();
+    console.log("Successfully saved category:", existingProduct.category);
+    res.json(existingProduct);
   } catch (err) {
     console.error("Update error:", err);
     res.status(500).json({ error: "Failed to update product" });

@@ -158,7 +158,7 @@ export default function MyOrders() {
                 </h1>
                 <p className="text-gray-400 font-medium mt-1">Track, manage and view your purchase history.</p>
             </div>
-            <Link to="/" className="text-green-600 font-black text-sm flex items-center gap-2 hover:underline underline-offset-4">
+            <Link to="/products" className="text-green-600 font-black text-sm flex items-center gap-2 hover:underline underline-offset-4">
                 Continue Shopping
                 <ArrowRight className="w-4 h-4" />
             </Link>
@@ -173,7 +173,7 @@ export default function MyOrders() {
              </div>
              <h3 className="text-2xl font-black text-gray-900 mb-2">No Orders Yet</h3>
              <p className="text-gray-400 font-medium mb-10 max-w-xs mx-auto text-sm">Looks like you haven't started your organic journey with us yet!</p>
-             <Link to="/" className="inline-flex items-center gap-3 bg-[#1F7A3B] text-white px-10 py-5 rounded-full font-black text-lg shadow-lg shadow-green-100 hover:bg-[#185e2e] transition-all active:scale-95">
+             <Link to="/products" className="inline-flex items-center gap-3 bg-[#1F7A3B] text-white px-10 py-5 rounded-full font-black text-lg shadow-lg shadow-green-100 hover:bg-[#185e2e] transition-all active:scale-95">
                 Shop Now
                 <ArrowRight className="w-5 h-5" />
              </Link>
