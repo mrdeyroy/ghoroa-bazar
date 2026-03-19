@@ -291,22 +291,6 @@ export default function Contact() {
         </motion.div>
       </div>
 
-      {/* WHATSAPP FLOAT BUTTON */}
-      <motion.a
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        whileHover={{ scale: 1.1 }}
-        href="https://wa.me/9188001930X"
-        target="_blank"
-        rel="noreferrer"
-        className="fixed bottom-8 right-8 w-16 h-16 bg-green-500 text-white rounded-full flex items-center justify-center shadow-2xl shadow-green-500/40 z-50 hover:bg-green-600 transition-colors"
-      >
-        <MessageSquare size={30} fill="currentColor" className="text-white" />
-        <span className="absolute -top-1 -right-1 flex h-4 w-4">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-4 w-4 bg-white"></span>
-        </span>
-      </motion.a>
     </div>
   );
 }

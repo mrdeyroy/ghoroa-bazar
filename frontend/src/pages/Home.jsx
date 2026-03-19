@@ -625,27 +625,6 @@ return (
 
 
 
-{/* ================================
-    🟢 FLOATING SCROLL BUTTON
-================================= */}
-<button
-  onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-  style={{
-    position: "fixed",
-    bottom: 18,
-    right: 18,
-    width: 40,
-    height: 40,
-    borderRadius: "50%",
-    background: "#1f7a3b",
-    color: "#fff",
-    border: "none",
-    cursor: "pointer",
-    fontSize: 20
-  }}
->
-  {"↑"}
-</button>
-</>
-);
+    </>
+  );
 }

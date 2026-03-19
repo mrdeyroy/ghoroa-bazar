@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import BackButton from "../components/BackButton";
+import ChatBot from "../components/ChatBot";
+import ScrollToTopButton from "../components/ScrollToTopButton";
 
 export default function MainLayout() {
   const location = useLocation();
@@ -103,6 +105,8 @@ export default function MainLayout() {
           </p>
         </div>
       </footer>
+      <ChatBot />
+      <ScrollToTopButton />
     </>
   );
 }
