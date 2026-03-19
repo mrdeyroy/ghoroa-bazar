@@ -43,7 +43,7 @@ export default function Navbar() {
   // Scroll logic for Glass Effect
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
+      setScrolled(window.scrollY > 100);
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
@@ -297,9 +297,9 @@ export default function Navbar() {
         </nav>
 
         {/* --- BOTTOM NAVIGATION (MENU) --- */}
-        <div className={`transition-all duration-300 py-1 px-4 shadow-sm border-b border-gray-50 ${scrolled ? 'hidden' : 'bg-white hidden md:block'}`}>
-          <div className="max-w-7xl mx-auto">
-            <div className="flex items-center justify-center gap-10 md:gap-16">
+        <div className={`transition-all duration-500 overflow-hidden ${scrolled ? 'h-0 opacity-0 pointer-events-none' : 'h-[52px] opacity-100 bg-white border-b border-gray-50'} hidden md:block`}>
+          <div className="max-w-7xl mx-auto h-full flex items-center justify-center">
+            <div className="flex items-center gap-10 md:gap-16">
               {[
                 { name: "Home", path: "/" },
                 { name: "Shop", path: "/products" },
@@ -309,7 +309,7 @@ export default function Navbar() {
                 <Link 
                   key={idx}
                   to={link.path}
-                  className="text-[11px] md:text-xs font-black uppercase tracking-[0.2em] text-gray-400 hover:text-green-600 transition-all relative group py-3.5"
+                  className="text-[11px] md:text-xs font-black uppercase tracking-[0.2em] text-gray-400 hover:text-green-600 transition-all relative group py-4"
                 >
                   {link.name}
                   <span className="absolute bottom-2 left-0 w-0 h-0.5 bg-green-500 transition-all group-hover:w-full" />
