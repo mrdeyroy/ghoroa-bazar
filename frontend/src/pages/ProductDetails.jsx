@@ -28,9 +28,9 @@ import BackButton from "../components/BackButton";
 export default function ProductDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const { cart, addToCart } = useCart();
   const { user, token } = useAuth();
-  const { addToWishlist, removeFromWishlist, isWishlisted } = useWishlist();
+  const { wishlist, addToWishlist, removeFromWishlist, isWishlisted } = useWishlist();
 
   const [loading, setLoading] = useState(true);
   const [product, setProduct] = useState(null);
@@ -62,15 +62,22 @@ export default function ProductDetails() {
           setSelectedWeight(null);
         }
 
-        fetch(`http://localhost:5000/api/products?category=${data.category}`)
+        const cartProductIds = cart.map(item => item.id).join(",");
+        const wishlistProductIds = wishlist.map(item => item._id).join(",");
+        const userId = user?.id || "guest";
+
+        fetch(`http://localhost:5000/api/products/recommend/${id}/${userId}?cartProductIds=${cartProductIds}&wishlistProductIds=${wishlistProductIds}`)
           .then(res => res.json())
           .then(list => {
-            setRelated(list.filter(p => p._id !== data._id));
+            setRelated(list);
             setLoading(false);
           });
       })
-      .catch(() => setLoading(false));
-  }, [id]);
+      .catch((err) => {
+        console.error("Fetch error:", err);
+        setLoading(false);
+      });
+  }, [id, user?.id]);
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -502,17 +509,26 @@ export default function ProductDetails() {
           </div>
         </div>
 
-        {/* RELATED PRODUCTS */}
-        {related.length > 0 && (
-          <div className="mt-20 lg:mt-32 border-t border-gray-100 pt-20">
-            <h2 className="text-3xl font-black text-gray-900 mb-10 text-center tracking-tight">You May Also Like</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-8">
-              {related.slice(0, 4).map(p => (
+        {/* RECOMMENDATIONS SECTION */}
+        <div className="mt-20 lg:mt-32 border-t border-gray-100 pt-20">
+          <h2 className="text-3xl font-black text-gray-900 mb-10 text-center tracking-tight">You May Also Like</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-8">
+            {related.length > 0 ? (
+              related.map(p => (
                 <ProductCard key={p._id} product={p} />
-              ))}
-            </div>
+              ))
+            ) : (
+              // Skeletons while loading recommendations
+              [1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="space-y-4">
+                  <Skeleton height="250px" className="rounded-3xl" />
+                  <Skeleton height="20px" width="70%" />
+                  <Skeleton height="20px" width="40%" />
+                </div>
+              ))
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* MOBILE STICKY BUTTON */}

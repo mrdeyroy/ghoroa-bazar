@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import ScrollToTop from "./components/ScrollToTop";
 
 // ---------- CUSTOMER PAGES ----------
 import Home from "./pages/Home";
@@ -35,6 +36,7 @@ import AdminMessages from "./pages/AdminMessages";
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
 
         {/* ---------- Pages WITH Navbar + Footer ---------- */}

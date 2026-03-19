@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Product = require("../models/Product");
+const Order = require("../models/Order");
 const cloudinary = require("../utils/cloudinary");
 
 // 1️⃣ ADD product
@@ -165,6 +166,85 @@ router.post("/:id/reviews", authMiddleware, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server Error" });
+  }
+});
+
+// 7️⃣ RECOMMEND products
+router.get("/recommend/:productId/:userId", async (req, res) => {
+  try {
+    const { productId, userId } = req.params;
+    const { cartProductIds, wishlistProductIds } = req.query;
+
+    const currentProduct = await Product.findById(productId);
+    if (!currentProduct) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    const recommendedIds = new Set();
+    const finalRecommendations = [];
+
+    // Helper function to add products avoiding duplicates and current product
+    const addProducts = (products) => {
+      for (const p of products) {
+        if (recommendedIds.size >= 10) break; // Limit total recommendations for performance
+        if (p._id.toString() !== productId && !recommendedIds.has(p._id.toString())) {
+          recommendedIds.add(p._id.toString());
+          finalRecommendations.push(p);
+        }
+      }
+    };
+
+    // 1️⃣ Products from SAME CATEGORY
+    const sameCategory = await Product.find({
+      category: currentProduct.category,
+      _id: { $ne: productId }
+    }).limit(6);
+    addProducts(sameCategory);
+
+    // 2️⃣ Products based on USER CART items (if provided via query params)
+    if (cartProductIds) {
+      const ids = cartProductIds.split(",");
+      const cartProducts = await Product.find({
+        _id: { $in: ids, $ne: productId }
+      }).limit(4);
+      addProducts(cartProducts);
+    }
+
+    // 3️⃣ Products from USER WISHLIST (if provided via query params)
+    if (wishlistProductIds) {
+      const ids = wishlistProductIds.split(",");
+      const wishlistProducts = await Product.find({
+        _id: { $in: ids, $ne: productId }
+      }).limit(4);
+      addProducts(wishlistProducts);
+    }
+
+    // 4️⃣ Products from USER PREVIOUS ORDERS
+    if (userId && userId !== "guest") {
+      const orders = await Order.find({ userId }).sort({ createdAt: -1 }).limit(3);
+      const orderProductIds = orders.flatMap(order => order.items.map(item => item.productId));
+      
+      if (orderProductIds.length > 0) {
+        const orderProducts = await Product.find({
+          _id: { $in: orderProductIds, $ne: productId }
+        }).limit(4);
+        addProducts(orderProducts);
+      }
+    }
+
+    // 5️⃣ Fallback: Random products (if we have less than 4)
+    if (finalRecommendations.length < 4) {
+      const fallback = await Product.find({
+        _id: { $nin: Array.from(recommendedIds).concat([productId]) }
+      }).limit(4);
+      addProducts(fallback);
+    }
+
+    // Always return at least 4 products (sliced to ensure max if multiple sources filled up)
+    res.json(finalRecommendations.slice(0, 8));
+  } catch (err) {
+    console.error("Recommendation error:", err);
+    res.status(500).json({ error: "Failed to fetch recommendations" });
   }
 });
 
