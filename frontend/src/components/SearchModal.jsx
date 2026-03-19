@@ -206,9 +206,9 @@ export default function SearchModal({ open, onClose }) {
           }
 
           .product-grid {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
           }
 
           .empty {
@@ -231,7 +231,8 @@ export default function SearchModal({ open, onClose }) {
             }
 
             .product-grid {
-              justify-content: center;
+              grid-template-columns: repeat(2, 1fr);
+              gap: 12px;
             }
           }
         `}

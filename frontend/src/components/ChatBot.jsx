@@ -109,7 +109,7 @@ export default function ChatBot() {
             animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 50, x: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="pointer-events-auto w-[340px] sm:w-[380px] h-[520px] bg-white rounded-[32px] shadow-2xl flex flex-col overflow-hidden border border-gray-100 origin-bottom-right"
+            className="pointer-events-auto w-[calc(100vw-2rem)] xs:w-[350px] sm:w-[380px] h-[65vh] sm:h-[520px] max-h-[calc(100vh-180px)] bg-white rounded-[32px] shadow-2xl flex flex-col overflow-hidden border border-gray-100 origin-bottom-right"
           >
             {/* Header */}
             <div className="bg-[#1f7a3b] p-5 text-white flex justify-between items-center shadow-lg relative">
