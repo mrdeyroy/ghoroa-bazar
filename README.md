@@ -297,7 +297,7 @@ CLIENT_URL=http://localhost:5173
 | 🛒 Cart Sidebar | ![Cart](screenshots/cart-slidebar.png) |
 | 💳 Checkout | ![Checkout](screenshots/checkout.png) |
 | 📋 My Orders | ![My Orders](screenshots/my-orders.png) |
-| 🤖 Chatbot | ![Chatbot](screenshots/chatbot-ui.png) |
+| 🤖 Chatbot | ![Chatbot](screenshots/chatbot_ui.png) |
 | 🛡️ Admin Dashboard | ![Admin Dashboard](screenshots/admin-dashboard.png) |
 
 ### Drive link (More Assets)
