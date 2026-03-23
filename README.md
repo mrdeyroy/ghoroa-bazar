@@ -289,41 +289,24 @@ CLIENT_URL=http://localhost:5173
 
 ## 📸 Screenshots
 
-> 📷 Add your screenshots to a `screenshots/` folder in the root and replace the placeholders below.
-
 | Page | Preview |
 |---|---|
-| 🏠 Home / Hero | ![Home Page](screenshots/hero.png) |
-| 🛍️ Products | ![Products Page](screenshots/products.png) |
-| 📦 Product Details | ![Product Details](screenshots/product-details.png) |
-| 🛒 Cart Sidebar | ![Cart](screenshots/cart.png) |
-| 💳 Checkout | ![Checkout](screenshots/checkout.png) |
+| 🏠 Hero | ![Home Page](screenshots/hero.png) |
+| 🛍️ Products | ![Products Page](screenshots/product_ui/products.png) |
+| 📦 Product Details | ![Product Details](screenshots/product_ui/product-details.png) |
+| 🛒 Cart Sidebar | ![Cart](screenshots/cart_ui/cart-slidebar.png) |
+| 💳 Checkout | ![Checkout](screenshots/product_buy/checkout.png) |
 | 📋 My Orders | ![My Orders](screenshots/my-orders.png) |
-| 🤖 Chatbot | ![Chatbot](screenshots/chatbot.png) |
-| 🛡️ Admin Dashboard | ![Admin Dashboard](screenshots/admin-dashboard.png) |
-
----
-
-## 🎯 Future Improvements
-
-- [ ] **Online Payment** — Full Razorpay/Stripe payment gateway integration
-- [ ] **Product Reviews & Ratings** — Let users rate and review purchased products
-- [ ] **Coupons & Discounts** — Promo code system at checkout
-- [ ] **Real-time Order Tracking** — Live status updates with WebSockets
-- [ ] **Push Notifications** — Email/SMS alerts for order updates
-- [ ] **Progressive Web App (PWA)** — Installable app with offline support
-- [ ] **Multi-vendor Support** — Allow multiple sellers to list products
-- [ ] **Advanced Analytics** — Charts and revenue graphs in the admin panel
-- [ ] **Product Reviews** — Customer review and rating system
-- [ ] **Dark Mode** — System-aware dark/light theme toggle
+| 🤖 Chatbot | ![Chatbot](screenshots/chatbot_ui/chatbot-ui.png) |
+| 🛡️ Admin Dashboard | ![Admin Dashboard](screenshots/admin_UI/admin-dashboard.png) |
 
 ---
 
 ## 👨‍💻 Author & Credits
 
 **Developed by:** [Shibam Dey Roy]  
-**GitHub:** [@your-username](https://github.com/mrdeyroy)  
-**LinkedIn:** [Your LinkedIn](https://linkedin.com/in/shibamdeyroy)  
+**GitHub:** [@mrdeyroy](https://github.com/mrdeyroy)  
+**LinkedIn:** [Shibam Dey Roy](https://linkedin.com/in/shibamdeyroy)  
 
 ---
 
