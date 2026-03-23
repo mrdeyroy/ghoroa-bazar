@@ -11,6 +11,10 @@
 
 Whether you're a developer exploring the codebase, a recruiter evaluating the project, or a hackathon judge — this app is built to impress.
 
+### Live link
+
+https://ghoroa-bazar.vercel.app/
+
 ---
 
 ## 🚀 Features
