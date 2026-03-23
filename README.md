@@ -292,13 +292,13 @@ CLIENT_URL=http://localhost:5173
 | Page | Preview |
 |---|---|
 | 🏠 Hero | ![Hero](screenshots/hero.png) |
-| 🛍️ Products | ![Products Page](screenshots/product_ui/products.png) |
-| 📦 Product Details | ![Product Details](screenshots/product_ui/product-details.png) |
-| 🛒 Cart Sidebar | ![Cart](screenshots/cart_ui/cart-slidebar.png) |
-| 💳 Checkout | ![Checkout](screenshots/product_buy/checkout.png) |
+| 🛍️ Products | ![Products Page](screenshots/products.png) |
+| 📦 Product Details | ![Product Details](screenshots/product-details.png) |
+| 🛒 Cart Sidebar | ![Cart](screenshots/cart-slidebar.png) |
+| 💳 Checkout | ![Checkout](screenshots/checkout.png) |
 | 📋 My Orders | ![My Orders](screenshots/my-orders.png) |
 | 🤖 Chatbot | ![Chatbot](screenshots/chatbot-ui.png) |
-| 🛡️ Admin Dashboard | ![Admin Dashboard](screenshots/admin_UI/admin-dashboard.png) |
+| 🛡️ Admin Dashboard | ![Admin Dashboard](screenshots/admin-dashboard.png) |
 
 ### Drive link (More Assets)
 
