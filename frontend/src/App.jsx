@@ -1,7 +1,8 @@
+import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ScrollToTop from "./components/ScrollToTop";
 import NotificationToast from "./components/NotificationToast";
-
+import Loader from "./components/Loader";
 // ---------- CUSTOMER PAGES ----------
 import Home from "./pages/Home";
 import MainLayout from "./layouts/MainLayout";
@@ -37,9 +38,20 @@ import AdminMessages from "./pages/AdminMessages";
 import { Toaster } from "react-hot-toast";
 
 export default function App() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2500); // 2.5s premium loading feel
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <BrowserRouter>
-      <ScrollToTop />
+    <>
+      <Loader isLoading={isLoading} />
+      <BrowserRouter>
+        <ScrollToTop />
       <Toaster 
         position="top-center"
         toastOptions={{
@@ -112,6 +124,7 @@ export default function App() {
 
         <Route path="*" element={<NotFound />} />
       </Routes>
-    </BrowserRouter>
+      </BrowserRouter>
+    </>
   );
 }
