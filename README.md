@@ -38,6 +38,8 @@ https://ghoroa-bazar.vercel.app/
 - **Message Centre** — Read customer messages submitted through the contact form
 
 ### ✨ Advanced Features
+- **Real-Time Notifications** — Instant updates for order status using WebSockets (Socket.io)
+- **PDF Invoice Generation** — Automatically generate, download, and print professional order invoices using jsPDF
 - **Smart Product Recommendations** — Suggests products based on:
   - Current category being viewed
   - Items already in the cart
@@ -49,7 +51,7 @@ https://ghoroa-bazar.vercel.app/
   - Fallback contact prompt for unanswered queries
 - **Animated Hero Banner** — Full-width hero with floating animations and parallax effects (Framer Motion)
 - **Responsive Design** — Fully mobile-friendly layout across all screen sizes
-- **Scroll-to-Top Button** — Global floating button for quick navigation
+- **Elegant UI Toasts** — Non-blocking, smooth push notifications for success/error alerts (`react-hot-toast`)
 
 ---
 
@@ -79,11 +81,13 @@ User → React Frontend (Vite) ──HTTP──▶ Express REST API ──▶ Mo
 | **Frontend** | React 18 (Vite), Tailwind CSS, Framer Motion |
 | **Backend** | Node.js, Express.js |
 | **Database** | MongoDB, Mongoose ODM |
+| **Real-Time / WebSockets** | Socket.io |
 | **Authentication** | JSON Web Tokens (JWT), bcrypt |
 | **Image Hosting** | Cloudinary + Multer |
 | **Email Service** | Nodemailer |
 | **Payment** | Razorpay |
 | **State Management** | React Context API |
+| **PDF Generation**| jsPDF + jsPDF-AutoTable |
 | **Routing** | React Router v6 |
 | **Dev Tools** | Nodemon, Vite HMR |
 
