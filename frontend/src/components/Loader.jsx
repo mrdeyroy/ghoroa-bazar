@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { motion, AnimatePresence } from "framer-motion";
-import { Leaf } from "lucide-react";
+import logoSrc from "../assets/grocery_favicon.jpg";
 
 export default function Loader({ isLoading }) {
   return (
@@ -56,9 +56,13 @@ export default function Loader({ isLoading }) {
                 initial={{ scale: 0.8 }}
                 animate={{ scale: [0.8, 1.1, 0.8] }}
                 transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-                className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-[#1F7A3B] to-[#4ade80] rounded-full shadow-lg shadow-green-500/30"
+                className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#1F7A3B] to-[#4ade80] rounded-full shadow-lg shadow-green-500/30 overflow-hidden"
               >
-                <Leaf size={28} className="text-white" strokeWidth={2} />
+                <img 
+                  src={logoSrc} 
+                  alt="Loading..." 
+                  className="w-10 h-10 object-contain grayscale contrast-200 invert mix-blend-screen" 
+                />
               </motion.div>
             </div>
 
