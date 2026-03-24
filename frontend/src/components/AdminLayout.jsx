@@ -23,7 +23,7 @@ export default function AdminLayout({ children }) {
 
   const fetchUnreadCount = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/contact/unread-count");
+      const res = await fetch(import.meta.env.VITE_API_URL + "/api/contact/unread-count");
       const data = await res.json();
       setUnreadCount(data.count);
     } catch (err) {

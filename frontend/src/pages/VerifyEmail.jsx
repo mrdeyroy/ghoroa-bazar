@@ -27,7 +27,7 @@ export default function VerifyEmail() {
     setSuccess("");
 
     try {
-      await axios.post("http://localhost:5000/api/users/verify-email", { email, otp });
+      await axios.post(import.meta.env.VITE_API_URL + "/api/users/verify-email", { email, otp });
       setSuccess("Email verified successfully! Redirecting to login...");
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
@@ -43,7 +43,7 @@ export default function VerifyEmail() {
     setSuccess("");
 
     try {
-      await axios.post("http://localhost:5000/api/users/resend-otp", { email });
+      await axios.post(import.meta.env.VITE_API_URL + "/api/users/resend-otp", { email });
       setSuccess("New OTP sent to your email!");
     } catch (err) {
       setError(err.response?.data?.error || "Failed to resend OTP.");

@@ -51,7 +51,7 @@ export default function ProductDetails() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`http://localhost:5000/api/products/${id}`)
+    fetch(`${import.meta.env.VITE_API_URL}/api/products/${id}`)
       .then(res => res.json())
       .then(data => {
         setProduct(data);
@@ -66,7 +66,7 @@ export default function ProductDetails() {
         const wishlistProductIds = wishlist.map(item => item._id).join(",");
         const userId = user?.id || "guest";
 
-        fetch(`http://localhost:5000/api/products/recommend/${id}/${userId}?cartProductIds=${cartProductIds}&wishlistProductIds=${wishlistProductIds}`)
+        fetch(`${import.meta.env.VITE_API_URL}/api/products/recommend/${id}/${userId}?cartProductIds=${cartProductIds}&wishlistProductIds=${wishlistProductIds}`)
           .then(res => res.json())
           .then(list => {
             setRelated(list);
@@ -115,7 +115,7 @@ export default function ProductDetails() {
 
     setReviewLoading(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/products/${id}/reviews`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/products/${id}/reviews`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -129,7 +129,7 @@ export default function ProductDetails() {
         setToast("Review submitted successfully! ✅");
         setTimeout(() => setToast(""), 2500);
         setReviewForm({ rating: 5, comment: "" });
-        const prodRes = await fetch(`http://localhost:5000/api/products/${id}`);
+        const prodRes = await fetch(`${import.meta.env.VITE_API_URL}/api/products/${id}`);
         const prodData = await prodRes.json();
         setProduct(prodData);
       } else {

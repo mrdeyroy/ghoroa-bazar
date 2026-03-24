@@ -21,7 +21,7 @@ export default function AdminMessages() {
   const [searchTerm, setSearchTerm] = useState("");
 
   const fetchMessages = () => {
-    fetch("http://localhost:5000/api/contact")
+    fetch(import.meta.env.VITE_API_URL + "/api/contact")
       .then(res => res.json())
       .then(data => {
         setMessages(data);
@@ -34,7 +34,7 @@ export default function AdminMessages() {
   }, []);
 
   const markAsRead = async (id, refreshUnread) => {
-    await fetch(`http://localhost:5000/api/contact/${id}/read`, {
+    await fetch(`${import.meta.env.VITE_API_URL}/api/contact/${id}/read`, {
       method: "PATCH"
     });
 
@@ -50,7 +50,7 @@ export default function AdminMessages() {
   const deleteMessage = async (id, refreshUnread) => {
     if (!window.confirm("Delete this message?")) return;
 
-    await fetch(`http://localhost:5000/api/contact/${id}`, {
+    await fetch(`${import.meta.env.VITE_API_URL}/api/contact/${id}`, {
       method: "DELETE"
     });
 

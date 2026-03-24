@@ -50,7 +50,7 @@ export default function ChatBot() {
 
     try {
       let res, data;
-      const baseUrl = "http://localhost:5000/api/products";
+      const baseUrl = import.meta.env.VITE_API_URL + "/api/products";
       
       if (option === "Show best products") {
         res = await fetch(`${baseUrl}?featured=true&limit=4`);

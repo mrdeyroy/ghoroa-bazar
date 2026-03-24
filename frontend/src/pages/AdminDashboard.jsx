@@ -26,7 +26,7 @@ export default function AdminDashboard() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch("http://localhost:5000/api/admin/dashboard-stats")
+        fetch(import.meta.env.VITE_API_URL + "/api/admin/dashboard-stats")
             .then(res => res.json())
             .then(data => {
                 setStats(data);

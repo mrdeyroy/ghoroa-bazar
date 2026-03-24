@@ -8,7 +8,7 @@ export default function FeaturedProducts() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/products?featured=true&limit=4")
+    fetch(import.meta.env.VITE_API_URL + "/api/products?featured=true&limit=4")
       .then((res) => res.json())
       .then((data) => {
         setProducts(data);

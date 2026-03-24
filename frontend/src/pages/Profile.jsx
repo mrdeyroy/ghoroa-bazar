@@ -63,7 +63,7 @@ export default function Profile() {
 
   const fetchUserData = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/users/me", {
+      const res = await fetch(import.meta.env.VITE_API_URL + "/api/users/me", {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to fetch user data");
@@ -99,7 +99,7 @@ export default function Profile() {
 
     try {
       showToast("Uploading Image...");
-      const res = await fetch("http://localhost:5000/api/upload", {
+      const res = await fetch(import.meta.env.VITE_API_URL + "/api/upload", {
         method: "POST",
         body: formData
       });
@@ -108,7 +108,7 @@ export default function Profile() {
         setEditFormData({ ...editFormData, avatar: data[0].url });
         // Auto save after upload if not in edit mode, or just update form
         if (!isEditing) {
-          const updateRes = await fetch("http://localhost:5000/api/users/profile", {
+          const updateRes = await fetch(import.meta.env.VITE_API_URL + "/api/users/profile", {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
@@ -133,7 +133,7 @@ export default function Profile() {
 
   const fetchRecentOrders = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/orders/my", {
+      const res = await fetch(import.meta.env.VITE_API_URL + "/api/orders/my", {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (!res.ok) return;
@@ -152,7 +152,7 @@ export default function Profile() {
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:5000/api/users/profile", {
+      const res = await fetch(import.meta.env.VITE_API_URL + "/api/users/profile", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -178,8 +178,8 @@ export default function Profile() {
   const handleAddressAction = async (e) => {
     e.preventDefault();
     const url = addressForm.editId
-      ? `http://localhost:5000/api/users/address/${addressForm.editId}`
-      : "http://localhost:5000/api/users/address";
+      ? `${import.meta.env.VITE_API_URL}/api/users/address/${addressForm.editId}`
+      : import.meta.env.VITE_API_URL + "/api/users/address";
     const method = addressForm.editId ? "PUT" : "POST";
 
     try {
@@ -208,7 +208,7 @@ export default function Profile() {
   const handleDeleteAddress = async (id) => {
     if (!window.confirm("Delete this address?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/users/address/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/address/${id}`, {
         method: "DELETE",
         headers: { "Authorization": `Bearer ${token}` }
       });

@@ -38,7 +38,7 @@ export default function AdminOrders() {
 
   const fetchOrders = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/orders");
+      const res = await fetch(import.meta.env.VITE_API_URL + "/api/orders");
       const data = await res.json();
       setOrders(Array.isArray(data) ? data : []);
       setLoading(false);
@@ -58,7 +58,7 @@ export default function AdminOrders() {
     if (newStatus === "Delivered") updateData.paymentStatus = "Paid";
 
     try {
-      await fetch(`http://localhost:5000/api/orders/${id}`, {
+      await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updateData)

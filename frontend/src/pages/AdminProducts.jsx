@@ -53,7 +53,7 @@ export default function AdminProducts() {
   const [previews, setPreviews] = useState([]); 
 
   const fetchProducts = () => {
-    fetch("http://localhost:5000/api/products")
+    fetch(import.meta.env.VITE_API_URL + "/api/products")
       .then(res => res.json())
       .then((data) => {
         console.log("Fetched products, first item category:", data[0]?.category);
@@ -127,7 +127,7 @@ export default function AdminProducts() {
         const formData = new FormData();
         selectedFiles.forEach(file => formData.append("images", file));
 
-        const uploadRes = await fetch("http://localhost:5000/api/upload", {
+        const uploadRes = await fetch(import.meta.env.VITE_API_URL + "/api/upload", {
           method: "POST",
           body: formData
         });
@@ -159,8 +159,8 @@ export default function AdminProducts() {
 
       console.log("FINAL PAYLOAD:", payload);
       const url = editingId
-        ? `http://localhost:5000/api/products/${editingId}`
-        : "http://localhost:5000/api/products";
+        ? `${import.meta.env.VITE_API_URL}/api/products/${editingId}`
+        : import.meta.env.VITE_API_URL + "/api/products";
 
       const method = editingId ? "PUT" : "POST";
       console.log("Sending request:", method, url);
@@ -224,7 +224,7 @@ export default function AdminProducts() {
 
   const deleteProduct = async (id) => {
     if (!window.confirm("Delete this product?")) return;
-    await fetch(`http://localhost:5000/api/products/${id}`, {
+    await fetch(`${import.meta.env.VITE_API_URL}/api/products/${id}`, {
       method: "DELETE"
     });
     fetchProducts();

@@ -28,7 +28,7 @@ export default function Invoice() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`http://localhost:5000/api/orders/${orderId}`)
+    fetch(`${import.meta.env.VITE_API_URL}/api/orders/${orderId}`)
       .then(res => res.json())
       .then(data => {
         setOrder(data);
