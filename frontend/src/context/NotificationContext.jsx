@@ -74,6 +74,99 @@ export const NotificationProvider = ({ children }) => {
   }, [showToast]);
 
   // ═══════════════════════════════════════════
+  // RECENT ACTIVITY FETCH (PERSISTENCE SIMULATION)
+  // ═══════════════════════════════════════════
+  useEffect(() => {
+    const isAdmin = localStorage.getItem("adminLoggedIn");
+    const isUser = token && user;
+
+    if (isAdmin) {
+      fetch(import.meta.env.VITE_API_URL + "/api/orders")
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            const recent = data.slice(0, 15).map(order => ({
+              id: `history_${order._id}_placed`,
+              orderId: order._id,
+              type: "new_order",
+              message: `New order from ${order.customerDetails?.firstName || 'Customer'}`,
+              totalAmount: order.totalAmount,
+              timestamp: order.createdAt,
+              read: true,
+              icon: "🔔"
+            }));
+            
+            const cancelled = data.filter(o => o.orderStatus === "Cancelled").slice(0, 5).map(order => ({
+              id: `history_${order._id}_cancelled`,
+              orderId: order._id,
+              message: `Order cancelled by ${order.customerDetails?.firstName || 'Customer'}`,
+              totalAmount: order.totalAmount,
+              timestamp: order.cancelledAt || order.createdAt,
+              read: true,
+              type: "order_cancelled",
+              icon: "❌"
+            }));
+
+            // Stealth merge so we don't overwrite live unread notifications
+            setNotifications(prev => {
+              const prevMap = new Map(prev.map(n => [n.id || `${n.orderId}_${n.type}_${n.status||"new"}`, n]));
+              [...recent, ...cancelled].forEach(n => {
+                if (!prevMap.has(n.id) && !prevMap.has(`${n.orderId}_${n.type}_new`)) {
+                  prevMap.set(n.id, n);
+                }
+              });
+              return Array.from(prevMap.values())
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                .slice(0, 50);
+            });
+          }
+        })
+        .catch(console.error);
+    } else if (isUser) {
+      fetch(import.meta.env.VITE_API_URL + "/api/orders/my", {
+        headers: { "Authorization": `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            const recent = data.slice(0, 10).map(order => {
+              const statusMessages = {
+                  Packed: "Your order is being packed 📦",
+                  Shipped: "Your order is on the way! 🚚",
+                  Delivered: "Your order has been delivered! 🎉",
+                  Cancelled: "Your order has been cancelled ❌",
+                  Placed: "Order successfully placed! 🛍️"
+              };
+              return {
+                  id: `history_${order._id}_${order.orderStatus}`,
+                  orderId: order._id,
+                  type: "order_status",
+                  status: order.orderStatus,
+                  message: statusMessages[order.orderStatus] || `Order status: ${order.orderStatus}`,
+                  timestamp: order.orderHistory?.[order.orderHistory?.length - 1]?.date || order.createdAt,
+                  read: true,
+                  icon: order.orderStatus === "Cancelled" ? "❌" : "📦"
+              };
+            });
+            
+            setNotifications(prev => {
+              const prevMap = new Map(prev.map(n => [n.id || `${n.orderId}_${n.type}_${n.status||"new"}`, n]));
+              recent.forEach(n => {
+                if (!prevMap.has(n.id) && !prevMap.has(`${n.orderId}_${n.type}_${n.status}`)) {
+                  prevMap.set(n.id, n);
+                }
+              });
+              return Array.from(prevMap.values())
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                .slice(0, 50);
+            });
+          }
+        })
+        .catch(console.error);
+    }
+  }, [token, user]);
+
+  // ═══════════════════════════════════════════
   // SOCKET LIFECYCLE — connect, join rooms, listen
   // ═══════════════════════════════════════════
   useEffect(() => {
