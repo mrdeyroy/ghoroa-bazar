@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
+import { useNotifications } from "../context/NotificationContext";
 import { useState, useEffect, useRef } from "react";
 import CartSidebar from "./CartSidebar";
 import SearchModal from "./SearchModal";
@@ -14,6 +15,7 @@ import {
   User,
   LogOut,
   ShoppingBag,
+  Bell,
   Menu,
   Phone,
   Facebook,
@@ -23,6 +25,90 @@ import {
   X,
   MapPin
 } from "lucide-react";
+
+// ── Notification Bell Component (local to Navbar) ──
+function NotificationBell() {
+  const { unreadCount: notifCount, notifications, markAllRead, clearNotifications } = useNotifications();
+  const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+
+  return (
+    <div className="relative">
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen(!isOpen);
+          if (!isOpen && notifCount > 0) markAllRead();
+        }}
+        className="relative group p-2 text-green-800 hover:bg-green-100 rounded-full transition-all"
+      >
+        <Bell size={24} className="group-hover:scale-110 group-active:scale-95 transition-transform" />
+        <AnimatePresence>
+          {notifCount > 0 && (
+            <motion.span 
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white shadow-md animate-bounce"
+            >
+              {notifCount > 9 ? "9+" : notifCount}
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </button>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-[190]" onClick={() => setIsOpen(false)} />
+          <div className="absolute right-0 mt-3 w-80 bg-white rounded-3xl shadow-2xl border border-green-100 z-[200] overflow-hidden animate-in fade-in slide-in-from-top-4 duration-200">
+            <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-black text-gray-900">Notifications</h4>
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Order Updates</p>
+              </div>
+              {notifications.length > 0 && (
+                <button 
+                  onClick={() => { clearNotifications(); setIsOpen(false); }}
+                  className="text-[10px] font-black text-gray-400 hover:text-red-500 transition-colors uppercase tracking-wider"
+                >
+                  Clear All
+                </button>
+              )}
+            </div>
+            <div className="max-h-[320px] overflow-y-auto">
+              {notifications.length === 0 ? (
+                <div className="px-5 py-10 text-center">
+                  <Bell className="w-8 h-8 text-gray-200 mx-auto mb-3" />
+                  <p className="text-xs text-gray-400 font-medium">No order updates yet</p>
+                </div>
+              ) : (
+                notifications.slice(0, 10).map((notif) => (
+                  <button
+                    key={notif.id}
+                    onClick={() => {
+                      setIsOpen(false);
+                      if (notif.type === "order_status") navigate("/my-orders");
+                    }}
+                    className="w-full flex items-start gap-3 px-5 py-4 hover:bg-green-50 transition-colors text-left border-b border-gray-50 last:border-0"
+                  >
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-sm bg-green-100 text-green-700">
+                      {notif.icon || "📦"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-gray-800 line-clamp-2">{notif.message}</p>
+                      <p className="text-[9px] font-bold text-gray-400 mt-1">
+                        {new Date(notif.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function Navbar() {
   const { cart } = useCart();
@@ -183,6 +269,9 @@ export default function Navbar() {
               >
                 <Search size={22} />
               </button>
+
+              {/* Notification Bell */}
+              {user && <NotificationBell />}
 
               {/* Wishlist Icon */}
               <Link to="/wishlist" className="relative group p-2 text-green-800 hover:bg-green-100 rounded-full transition-all">

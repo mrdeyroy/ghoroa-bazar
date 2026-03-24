@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ScrollToTop from "./components/ScrollToTop";
+import NotificationToast from "./components/NotificationToast";
 
 // ---------- CUSTOMER PAGES ----------
 import Home from "./pages/Home";
@@ -33,11 +34,40 @@ import AdminProducts from "./pages/AdminProducts";
 import AdminRoute from "./components/AdminRoute";
 import AdminMessages from "./pages/AdminMessages";
 
+import { Toaster } from "react-hot-toast";
+
 export default function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <Toaster 
+        position="top-center"
+        toastOptions={{
+          style: {
+            borderRadius: '16px',
+            background: '#fff',
+            color: '#111827',
+            fontSize: '14px',
+            fontWeight: '800',
+            padding: '16px 24px',
+            boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)',
+            border: '1px solid #f3f4f6'
+          },
+          success: {
+            iconTheme: {
+              primary: '#1F7A3B',
+              secondary: '#fff',
+            },
+            duration: 4000
+          },
+          error: {
+            duration: 4000
+          }
+        }}
+      />
+      <NotificationToast />
       <Routes>
+
 
         {/* ---------- Pages WITH Navbar + Footer ---------- */}
         <Route element={<MainLayout />}>

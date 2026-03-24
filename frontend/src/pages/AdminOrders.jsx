@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import AdminLayout from "../components/AdminLayout";
 import { 
   Package, 
@@ -25,6 +25,7 @@ import {
   CreditCard as PaymentIcon
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import socket from "../utils/socket";
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
@@ -36,7 +37,7 @@ export default function AdminOrders() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       const res = await fetch(import.meta.env.VITE_API_URL + "/api/orders");
       const data = await res.json();
@@ -47,11 +48,30 @@ export default function AdminOrders() {
       setOrders([]);
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [fetchOrders]);
+
+  // ⚡ Auto-refresh when a new order notification or cancellation comes in
+  useEffect(() => {
+    const onNewOrder = () => {
+      fetchOrders(); // Re-fetch the full list
+    };
+    
+    const onOrderCancelled = () => {
+      fetchOrders();
+    }
+
+    socket.on("newOrderNotification", onNewOrder);
+    socket.on("orderCancelled", onOrderCancelled);
+
+    return () => {
+      socket.off("newOrderNotification", onNewOrder);
+      socket.off("orderCancelled", onOrderCancelled);
+    };
+  }, [fetchOrders]);
 
   const updateStatus = async (id, newStatus) => {
     const updateData = { orderStatus: newStatus };
@@ -218,18 +238,26 @@ export default function AdminOrders() {
                       </td>
                       <td className="px-6 py-6">
                         <div className="relative w-fit">
-                            <select 
-                                value={order.orderStatus || "Placed"}
-                                onChange={(e) => updateStatus(order._id, e.target.value)}
-                                className={`appearance-none font-black text-[10px] uppercase tracking-widest pl-3 pr-8 py-2 rounded-full border transition-all cursor-pointer outline-none ${getStatusStyle(order.orderStatus)}`}
-                            >
-                                <option value="Placed">Placed</option>
-                                <option value="Packed">Packed</option>
-                                <option value="Shipped">Shipped</option>
-                                <option value="Delivered">Delivered</option>
-                                <option value="Cancelled">Cancelled</option>
-                            </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none opacity-50" />
+                            {order.orderStatus === "Cancelled" ? (
+                                <div className="font-black text-[10px] uppercase tracking-widest px-4 py-2 rounded-full border bg-red-100 text-red-700 border-red-200 opacity-80 cursor-not-allowed">
+                                    ❌ Order Cancelled
+                                </div>
+                            ) : (
+                                <>
+                                    <select 
+                                        value={order.orderStatus || "Placed"}
+                                        onChange={(e) => updateStatus(order._id, e.target.value)}
+                                        className={`appearance-none font-black text-[10px] uppercase tracking-widest pl-3 pr-8 py-2 rounded-full border transition-all cursor-pointer outline-none ${getStatusStyle(order.orderStatus)}`}
+                                    >
+                                        <option value="Placed">Placed</option>
+                                        <option value="Packed">Packed</option>
+                                        <option value="Shipped">Shipped</option>
+                                        <option value="Delivered">Delivered</option>
+                                        <option value="Cancelled">Cancel Order</option>
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none opacity-50" />
+                                </>
+                            )}
                         </div>
                       </td>
                       <td className="px-6 py-6 text-center">
@@ -304,18 +332,26 @@ export default function AdminOrders() {
 
                   <div className="flex items-center gap-3 pt-1">
                     <div className="relative flex-1">
-                       <select 
-                          value={order.orderStatus || "Placed"}
-                          onChange={(e) => updateStatus(order._id, e.target.value)}
-                          className={`w-full appearance-none font-black text-[10px] uppercase tracking-widest pl-3 pr-8 py-3 rounded-2xl border transition-all cursor-pointer outline-none ${getStatusStyle(order.orderStatus)}`}
-                       >
-                          <option value="Placed">Placed</option>
-                          <option value="Packed">Packed</option>
-                          <option value="Shipped">Shipped</option>
-                          <option value="Delivered">Delivered</option>
-                          <option value="Cancelled">Cancelled</option>
-                       </select>
-                       <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none opacity-50" />
+                       {order.orderStatus === "Cancelled" ? (
+                           <div className="w-full text-center font-black text-[10px] uppercase tracking-widest px-3 py-3 rounded-2xl border bg-red-100 text-red-700 border-red-200 opacity-80 cursor-not-allowed">
+                               ❌ Order Cancelled
+                           </div>
+                       ) : (
+                           <>
+                               <select 
+                                  value={order.orderStatus || "Placed"}
+                                  onChange={(e) => updateStatus(order._id, e.target.value)}
+                                  className={`w-full appearance-none font-black text-[10px] uppercase tracking-widest pl-3 pr-8 py-3 rounded-2xl border transition-all cursor-pointer outline-none ${getStatusStyle(order.orderStatus)}`}
+                               >
+                                  <option value="Placed">Placed</option>
+                                  <option value="Packed">Packed</option>
+                                  <option value="Shipped">Shipped</option>
+                                  <option value="Delivered">Delivered</option>
+                                  <option value="Cancelled">Cancel Order</option>
+                               </select>
+                               <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none opacity-50" />
+                           </>
+                       )}
                     </div>
                     <div className="flex gap-2">
                        <Link 

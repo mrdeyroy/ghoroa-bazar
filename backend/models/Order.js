@@ -56,7 +56,8 @@ const orderSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
-  }
+  },
+  cancelledAt: Date
 });
 
 module.exports = mongoose.model("Order", orderSchema);

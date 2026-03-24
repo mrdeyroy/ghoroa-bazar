@@ -257,7 +257,7 @@ export default function Profile() {
             <div className="flex flex-col items-center mb-8 pt-4">
               <div className="w-24 h-24 rounded-full bg-green-50 border-4 border-white shadow-lg overflow-hidden mb-4 relative group cursor-pointer">
                 <img
-                  src={userData?.avatar || `https://ui-avatars.com/api/?name=${userData?.name || 'Guest'}&background=1f7a3b&color=fff`}
+                  src={editFormData.avatar || userData?.avatar || `https://ui-avatars.com/api/?name=${userData?.name || 'Guest'}&background=1f7a3b&color=fff`}
                   alt={userData?.name}
                   className="w-full h-full object-cover group-hover:opacity-50 transition-opacity"
                 />

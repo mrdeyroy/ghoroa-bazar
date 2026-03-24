@@ -48,6 +48,50 @@ export default function Checkout() {
     localStorage.setItem("billing_details", JSON.stringify(customer));
   }, [customer]);
 
+  useEffect(() => {
+    const fetchDefaultAddress = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const res = await fetch(import.meta.env.VITE_API_URL + "/api/users/me", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const defaultAddress = data.addresses?.find(addr => addr.isDefault);
+          
+          if (defaultAddress) {
+            setCustomer(prev => ({
+              ...prev,
+              firstName: defaultAddress.firstName,
+              lastName: defaultAddress.lastName,
+              phone: defaultAddress.phone,
+              address: defaultAddress.address,
+              city: defaultAddress.city,
+              state: defaultAddress.state,
+              pincode: defaultAddress.pincode,
+              email: data.email || prev.email
+            }));
+          } else {
+            setCustomer(prev => ({
+              ...prev,
+              firstName: prev.firstName || data.name?.split(" ")[0] || "",
+              lastName: prev.lastName || data.name?.split(" ").slice(1).join(" ") || "",
+              email: prev.email || data.email || "",
+              phone: prev.phone || data.phone || ""
+            }));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch default address:", err);
+      }
+    };
+
+    fetchDefaultAddress();
+  }, []);
+
   const hasStockIssue = cart.some(item => item.qty > item.stock);
 
   const subTotal = cart.reduce(

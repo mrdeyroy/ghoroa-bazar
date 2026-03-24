@@ -13,6 +13,92 @@ import {
   Clock,
   ChevronRight
 } from "lucide-react";
+import { useNotifications } from "../context/NotificationContext";
+
+// ── Notification Bell Component (local to AdminLayout) ──
+function NotificationBell() {
+  const { unreadCount: notifCount, notifications, markAllRead, clearNotifications } = useNotifications();
+  const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+
+  return (
+    <div className="relative">
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen(!isOpen);
+          if (!isOpen && notifCount > 0) markAllRead();
+        }}
+        className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gray-50 hover:bg-gray-100 flex items-center justify-center transition-all active:scale-90 border border-gray-100"
+      >
+        <Bell className={`w-5 h-5 ${notifCount > 0 ? "text-amber-600" : "text-gray-400"}`} />
+        {notifCount > 0 && (
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-lg shadow-red-200 animate-bounce">
+            {notifCount > 9 ? "9+" : notifCount}
+          </span>
+        )}
+      </button>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-[190]" onClick={() => setIsOpen(false)} />
+          <div className="absolute right-0 mt-3 w-80 bg-white rounded-3xl shadow-2xl border border-gray-100 z-[200] overflow-hidden animate-in fade-in slide-in-from-top-4 duration-200">
+            <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-black text-gray-900">Notifications</h4>
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Real-time alerts</p>
+              </div>
+              {notifications.length > 0 && (
+                <button 
+                  onClick={() => { clearNotifications(); setIsOpen(false); }}
+                  className="text-[10px] font-black text-gray-400 hover:text-red-500 transition-colors uppercase tracking-wider"
+                >
+                  Clear All
+                </button>
+              )}
+            </div>
+            <div className="max-h-[320px] overflow-y-auto">
+              {notifications.length === 0 ? (
+                <div className="px-5 py-10 text-center">
+                  <Bell className="w-8 h-8 text-gray-200 mx-auto mb-3" />
+                  <p className="text-xs text-gray-400 font-medium">No notifications yet</p>
+                </div>
+              ) : (
+                notifications.slice(0, 10).map((notif) => (
+                  <button
+                    key={notif.id}
+                    onClick={() => {
+                      setIsOpen(false);
+                      if (notif.type === "new_order") navigate("/admin/orders");
+                    }}
+                    className="w-full flex items-start gap-3 px-5 py-4 hover:bg-gray-50 transition-colors text-left border-b border-gray-50 last:border-0"
+                  >
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-sm ${
+                      notif.type === "new_order" 
+                        ? "bg-amber-100 text-amber-700" 
+                        : "bg-green-100 text-green-700"
+                    }`}>
+                      {notif.icon || "🔔"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-gray-800 line-clamp-2">{notif.message}</p>
+                      {notif.totalAmount && (
+                        <p className="text-[10px] font-bold text-gray-400 mt-0.5">₹{Number(notif.totalAmount).toFixed(2)}</p>
+                      )}
+                      <p className="text-[9px] font-bold text-gray-300 mt-1">
+                        {new Date(notif.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function AdminLayout({ children }) {
   const navigate = useNavigate();
@@ -20,6 +106,7 @@ export default function AdminLayout({ children }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const { isConnected } = useNotifications();
 
   const fetchUnreadCount = async () => {
     try {
@@ -145,7 +232,11 @@ export default function AdminLayout({ children }) {
             <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-gray-50 border border-gray-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-400">
               <Clock className="w-3.5 h-3.5 text-green-600" />
               System Active
+              {isConnected && <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />}
             </div>
+
+            {/* 🔔 Notification Bell */}
+            <NotificationBell />
 
             <div className="flex items-center gap-3 pl-4 sm:pl-6 border-l border-gray-100 relative">
               <div className="hidden sm:block text-right">
