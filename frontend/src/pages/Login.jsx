@@ -31,30 +31,35 @@ export default function Login() {
         ? import.meta.env.VITE_API_URL + "/api/admin/login"
         : import.meta.env.VITE_API_URL + "/api/users/login";
 
-      const res = await fetch(endpoint, { credentials: "include",
+      const res = await fetch(endpoint, {
+        credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password })
       });
+
       const data = await res.json();
 
       if (!res.ok) {
         if (res.status === 403) {
-            setError("Please verify your email first.");
-            setTimeout(() => navigate("/verify-email", { state: { email } }), 2000);
-            return;
+          setError("Please verify your email first.");
+          setTimeout(() => navigate("/verify-email", { state: { email } }), 2000);
+          return;
         }
         throw new Error(data.error || "Login failed. Check your credentials.");
       }
 
       if (isAdmin) {
-        localStorage.setItem("token", data.token);
+        // ✅ FIX HERE
+        localStorage.setItem("adminToken", data.token);
         localStorage.setItem("adminLoggedIn", "true");
+
         navigate("/admin/dashboard");
       } else {
         login(data.user, data.accessToken);
         navigate("/");
       }
+
     } catch (err) {
       setError(err.message || "Login failed.");
     } finally {
