@@ -13,14 +13,8 @@ router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // VALIDATION (Senior Backend Engineer requirement)
-    if (!email || !password) {
-        return res.status(400).json({ error: "Email and password are required" });
-    }
-
     const admin = await Admin.findOne({ email });
     if (!admin) {
-      console.log(`ADMIN LOGIN FAIL: Email not found: ${email}`);
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
@@ -35,7 +29,6 @@ router.post("/login", async (req, res) => {
         admin.lockUntil = Date.now() + 15 * 60 * 1000;
       }
       await admin.save();
-      console.log(`ADMIN LOGIN FAIL: Password mismatch for: ${email}`);
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
@@ -44,12 +37,11 @@ router.post("/login", async (req, res) => {
     await admin.save();
 
     const token = jwt.sign(
-      { id: admin._id.toString(), role: "admin" },
+      { id: admin._id, role: "admin" },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
 
-    console.log(`ADMIN LOGIN SUCCESS: ${email}`);
     res.json({
       message: "Login successful",
       token,
@@ -60,12 +52,8 @@ router.post("/login", async (req, res) => {
       }
     });
   } catch (err) {
-    console.error("ADMIN LOGIN ERROR:", err);
-    res.status(500).json({ 
-        error: "Internal server error", 
-        details: err.message, 
-        stack: process.env.NODE_ENV === "development" ? err.stack : undefined 
-    });
+    console.error("Admin login error:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 

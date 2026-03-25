@@ -23,84 +23,82 @@ const contactRoutes = require("./routes/contact");
 const app = express();
 const server = http.createServer(app);
 
-// ──────────────────────────────────────────────
-// 1. Environment Check (Senior Backend Engineer requirement)
-// ──────────────────────────────────────────────
-console.log("ENV CHECK: MONGO_URI:", process.env.MONGO_URI ? "OK" : "MISSING");
-console.log("ENV CHECK: JWT_SECRET:", process.env.JWT_SECRET ? "OK" : "MISSING");
-
-// ──────────────────────────────────────────────
-// 2. CORS Configuration
-// ──────────────────────────────────────────────
-const ALLOWED_ORIGINS = [
-  "http://localhost:5173",
-  "https://ghoroa-bazar.vercel.app"
-];
+const ALLOWED_ORIGINS = (process.env.FRONTEND_URL || "http://localhost:5173")
+  .split(",")
+  .map(url => url.trim());
 
 const corsOptions = {
-  origin: function (origin, callback) {
-    // Normalize origin: remove trailing slash if present
-    const normalizedOrigin = origin ? origin.replace(/\/$/, "") : null;
-    const normalizedAllowed = ALLOWED_ORIGINS.map(url => url.replace(/\/$/, ""));
-
-    if (!origin || normalizedAllowed.includes(normalizedOrigin)) {
-      callback(null, true);
-    } else {
-      console.warn("CORS Attempt Blocked from origin:", origin);
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  credentials: true,
-  optionsSuccessStatus: 200
+  origin: ALLOWED_ORIGINS,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  credentials: true
 };
 
-// ──────────────────────────────────────────────
-// 3. Middlewares (Strict Order)
-// ──────────────────────────────────────────────
 app.use(cors(corsOptions));
-app.options(/.*/, cors(corsOptions)); // Regex used to avoid Express 5 PathError
-
-// REQUEST DEBUGGING
-app.use((req, res, next) => {
-  console.log("API HIT:", req.method, req.url);
-  next();
-});
-
 app.use(express.json({ limit: "10kb" })); 
-app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 app.use(cookieParser());
 
+// ──────────────────────────────────────────────
 // Security Middlewares
+// ──────────────────────────────────────────────
 app.use(helmet()); 
-app.use(xss); 
+app.use(xss); // Handles XSS, NoSQL Injection, and HPP for Express 5
 app.use(compression()); 
 
+// ──────────────────────────────────────────────
 // Rate Limiting
+// ──────────────────────────────────────────────
 app.use("/api/", globalLimiter);
 app.use("/api/users/login", authLimiter);
+app.use("/api/users/signup", authLimiter);
+app.use("/api/users/verify-email", authLimiter);
+app.use("/api/admin/login", authLimiter);
 
-// ⚡ Socket.IO
+// ──────────────────────────────────────────────
+// ⚡ Socket.IO — production-ready config
+// ──────────────────────────────────────────────
 const io = new Server(server, {
-  cors: corsOptions,
+  cors: {
+    origin: ALLOWED_ORIGINS,
+    methods: ["GET", "POST", "PUT"],
+    credentials: true
+  },
   pingTimeout: 60000,
   pingInterval: 25000,
   transports: ["websocket"],
 });
 
+// Socket.IO Connection Handler
 io.on("connection", (socket) => {
-  console.log(`🟢 Socket connected: ${socket.id}`);
-  socket.on("joinOrderRoom", (id) => socket.join(String(id)));
-  socket.on("joinUserRoom", (id) => socket.join(`user_${id}`));
-  socket.on("joinAdminRoom", () => socket.join("admin_room"));
-  socket.on("disconnect", () => console.log(`🔴 Socket disconnected: ${socket.id}`));
+  logger.info(`🟢 Socket connected: ${socket.id}`);
+
+  socket.on("joinOrderRoom", (orderId) => {
+    if (!orderId) return;
+    const roomId = String(orderId);
+    socket.join(roomId);
+    logger.info(`📦 Socket ${socket.id} joined order room: ${roomId}`);
+  });
+
+  socket.on("joinUserRoom", (userId) => {
+    if (!userId) return;
+    const roomId = `user_${userId}`;
+    socket.join(roomId);
+    logger.info(`👤 Socket ${socket.id} joined user room: ${roomId}`);
+  });
+
+  socket.on("joinAdminRoom", () => {
+    socket.join("admin_room");
+    logger.info(`🛡️ Socket ${socket.id} joined admin room`);
+  });
+
+  socket.on("disconnect", (reason) => {
+    logger.info(`🔴 Socket disconnected: ${socket.id} (${reason})`);
+  });
 });
 
 app.set("io", io);
 
 // ──────────────────────────────────────────────
-// 4. Routes
+// Routes
 // ──────────────────────────────────────────────
 app.use("/api/orders", orderRoutes);
 app.use("/api/products", productRoutes);
@@ -109,42 +107,32 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/contact", contactRoutes);
 
+// Health check
 app.get("/", (req, res) => {
   res.send("Ghoroa Bazar backend running (Secure)");
 });
 
 // ──────────────────────────────────────────────
-// 5. Falling Through (404 & Errors)
+// Global Error Handler
 // ──────────────────────────────────────────────
-
-// FALLBACK 404 ROUTE
-app.use((req, res) => {
-  console.log("Route not found:", req.originalUrl);
-  res.status(404).json({ message: "Route not found" });
-});
-
-// GLOBAL ERROR HANDLER
 app.use((err, req, res, next) => {
-  console.error("GLOBAL ERROR:", err.stack);
-  res.status(500).json({ message: "Internal Server Error" });
+  logger.error(err.stack);
+  res.status(500).json({ error: "Something went wrong! Our team has been notified." });
 });
 
 // ──────────────────────────────────────────────
-// 6. DB Connection + Start
+// Database + Server Start
 // ──────────────────────────────────────────────
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
-    console.log("MongoDB Attempting connection...");
-  })
-  .catch(err => {
-    console.error("MongoDB initial error:", err);
-    process.exit(1);
-  });
-
-mongoose.connection.once("open", () => {
-    console.log("MongoDB Connected Successfully");
+    logger.info("MongoDB connected");
     const PORT = process.env.PORT || 5000;
     server.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
+      logger.info(`🚀 Server running on port ${PORT}`);
+      logger.info(`🌐 Allowed CORS origins: ${ALLOWED_ORIGINS.join(", ")}`);
     });
-});
+  })
+  .catch(err => {
+    logger.error("MongoDB connection error:", err);
+    process.exit(1);
+  });

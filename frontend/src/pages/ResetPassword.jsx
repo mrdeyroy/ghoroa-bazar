@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Lock, Eye, EyeOff, Loader2, Save } from "lucide-react";
-
+import axios from "axios";
 
 export default function ResetPassword() {
   const [password, setPassword] = useState("");
@@ -24,20 +24,12 @@ export default function ResetPassword() {
     setError("");
     setSuccess("");
 
-
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/reset-password/${token}`, { credentials: "include",
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Link might be invalid or expired.");
-
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/users/reset-password/${token}`, { password });
       setSuccess("Password reset successfully! You can now login.");
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
-      setError(err.message || "Link might be invalid or expired.");
+      setError(err.response?.data?.error || "Link might be invalid or expired.");
     } finally {
       setLoading(false);
     }

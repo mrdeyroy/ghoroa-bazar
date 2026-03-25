@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Mail, ArrowLeft, Loader2, Send } from "lucide-react";
-
+import axios from "axios";
 import { motion } from "framer-motion";
 
-
-// Assets (Updated to Static Paths)
-const groceryFavicon = "/assets/grocery_favicon.jpg";
-const bgImage = "/assets/fruits.jpg";
+// Assets
+import groceryFavicon from "../assets/grocery_favicon.jpg";
+import bgImage from "../assets/fruits.jpg";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -21,19 +20,11 @@ export default function ForgotPassword() {
     setError("");
     setSuccess("");
 
-
     try {
-      const res = await fetch(import.meta.env.VITE_API_URL + "/api/users/forgot-password", { credentials: "include",
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Something went wrong. Please try again.");
-
+      await axios.post(import.meta.env.VITE_API_URL + "/api/users/forgot-password", { email });
       setSuccess("Password reset link sent to your email!");
     } catch (err) {
-      setError(err.message || "Something went wrong. Please try again.");
+      setError(err.response?.data?.error || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
