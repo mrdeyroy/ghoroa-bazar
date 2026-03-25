@@ -42,10 +42,10 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
-  origin: function(origin, callback) {
+  origin: function (origin, callback) {
     // allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
@@ -60,15 +60,15 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
 }));
 
-app.use(express.json({ limit: "10kb" })); 
+app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
 
 // ──────────────────────────────────────────────
 // Security Middlewares
 // ──────────────────────────────────────────────
-app.use(helmet()); 
+app.use(helmet());
 app.use(xss); // Handles XSS, NoSQL Injection, and HPP for Express 5
-app.use(compression()); 
+app.use(compression());
 
 // ──────────────────────────────────────────────
 // Rate Limiting
@@ -122,7 +122,7 @@ io.on("connection", (socket) => {
   });
 });
 
-app.set("io", io);
+app.set("trust proxy", 1);
 
 // ──────────────────────────────────────────────
 // Routes
