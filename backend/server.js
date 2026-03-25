@@ -1,4 +1,16 @@
 require("dotenv").config();
+
+// Critical Env Variable Check
+const requiredEnv = ["JWT_SECRET", "MONGO_URI"];
+requiredEnv.forEach(key => {
+  if (!process.env[key]) {
+    console.error(`❌ CRITICAL ERROR: Environment variable ${key} is missing!`);
+    if (process.env.NODE_ENV === "production") {
+      // In production, we should know if things are missing
+      logger.error(`Environment variable ${key} is missing in production!`);
+    }
+  }
+});
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
