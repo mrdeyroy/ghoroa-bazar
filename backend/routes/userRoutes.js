@@ -122,6 +122,7 @@ router.post("/resend-otp", async (req, res) => {
 
 // 4️⃣ Login API
 router.post("/login", async (req, res) => {
+  console.log("LOGIN HIT");
   try {
     const { email, password } = req.body;
 
