@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
-import axios from "axios";
+
 import { useAuth } from "../context/AuthContext";
 import { motion } from "framer-motion";
 
@@ -30,23 +30,32 @@ export default function Login() {
         ? import.meta.env.VITE_API_URL + "/api/admin/login"
         : import.meta.env.VITE_API_URL + "/api/users/login";
 
-      const res = await axios.post(endpoint, { email, password });
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (res.status === 403) {
+            setError("Please verify your email first.");
+            setTimeout(() => navigate("/verify-email", { state: { email } }), 2000);
+            return;
+        }
+        throw new Error(data.error || "Login failed. Check your credentials.");
+      }
 
       if (isAdmin) {
-        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("token", data.token);
         localStorage.setItem("adminLoggedIn", "true");
         navigate("/admin/dashboard");
       } else {
-        login(res.data.user, res.data.accessToken);
+        login(data.user, data.accessToken);
         navigate("/");
       }
     } catch (err) {
-      if (err.response?.status === 403) {
-        setError("Please verify your email first.");
-        setTimeout(() => navigate("/verify-email", { state: { email } }), 2000);
-      } else {
-        setError(err.response?.data?.error || "Login failed. Check your credentials.");
-      }
+      setError(err.message || "Login failed.");
     } finally {
       setLoading(false);
     }

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Mail, ArrowLeft, Loader2, Send } from "lucide-react";
-import axios from "axios";
+
 import { motion } from "framer-motion";
 
 // Assets
@@ -20,11 +20,19 @@ export default function ForgotPassword() {
     setError("");
     setSuccess("");
 
+
     try {
-      await axios.post(import.meta.env.VITE_API_URL + "/api/users/forgot-password", { email });
+      const res = await fetch(import.meta.env.VITE_API_URL + "/api/users/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Something went wrong. Please try again.");
+
       setSuccess("Password reset link sent to your email!");
     } catch (err) {
-      setError(err.response?.data?.error || "Something went wrong. Please try again.");
+      setError(err.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }

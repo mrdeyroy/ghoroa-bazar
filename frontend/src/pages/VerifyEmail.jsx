@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Mail, ShieldCheck, Loader2, ArrowRight } from "lucide-react";
-import axios from "axios";
 
 export default function VerifyEmail() {
   const [otp, setOtp] = useState("");
@@ -27,11 +26,18 @@ export default function VerifyEmail() {
     setSuccess("");
 
     try {
-      await axios.post(import.meta.env.VITE_API_URL + "/api/users/verify-email", { email, otp });
+      const res = await fetch(import.meta.env.VITE_API_URL + "/api/users/verify-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Verification failed.");
+      
       setSuccess("Email verified successfully! Redirecting to login...");
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
-      setError(err.response?.data?.error || "Verification failed.");
+      setError(err.message || "Verification failed.");
     } finally {
       setLoading(false);
     }
@@ -43,10 +49,17 @@ export default function VerifyEmail() {
     setSuccess("");
 
     try {
-      await axios.post(import.meta.env.VITE_API_URL + "/api/users/resend-otp", { email });
+      const res = await fetch(import.meta.env.VITE_API_URL + "/api/users/resend-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to resend OTP.");
+
       setSuccess("New OTP sent to your email!");
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to resend OTP.");
+      setError(err.message || "Failed to resend OTP.");
     } finally {
       setResending(false);
     }
