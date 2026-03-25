@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { User, Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
-
+import axios from "axios";
 import { motion } from "framer-motion";
 
-
-// Assets (Updated to Static Paths)
-const groceryFavicon = "/assets/grocery_favicon.jpg";
-const bgImage = "/assets/fruits.jpg";
+// Assets
+import groceryFavicon from "../assets/grocery_favicon.jpg";
+import bgImage from "../assets/fruits.jpg";
 
 export default function Signup() {
   const [form, setForm] = useState({ name: "", email: "", password: "", confirmPassword: "" });
@@ -29,23 +28,16 @@ export default function Signup() {
     setLoading(true);
 
     try {
-      const res = await fetch(import.meta.env.VITE_API_URL + "/api/users/signup", { credentials: "include",
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          password: form.password
-        })
+      const res = await axios.post(import.meta.env.VITE_API_URL + "/api/users/signup", {
+        name: form.name,
+        email: form.email,
+        password: form.password
       });
-      const data = await res.json();
       if (res.status === 201) {
         navigate("/verify-email", { state: { email: form.email } });
-      } else {
-        throw new Error(data.error || "Signup failed. Please try again.");
       }
     } catch (err) {
-      setError(err.message || "Signup failed. Please try again.");
+      setError(err.response?.data?.error || "Signup failed. Please try again.");
     } finally {
       setLoading(false);
     }

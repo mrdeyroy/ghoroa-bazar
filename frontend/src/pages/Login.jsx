@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
-
+import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { motion } from "framer-motion";
 
-
-// Assets (Updated to Static Paths)
-const groceryFavicon = "/assets/grocery_favicon.jpg";
-const bgImage = "/assets/fruits.jpg";
+// Assets
+import groceryFavicon from "../assets/grocery_favicon.jpg";
+import bgImage from "../assets/fruits.jpg";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -31,37 +30,23 @@ export default function Login() {
         ? import.meta.env.VITE_API_URL + "/api/admin/login"
         : import.meta.env.VITE_API_URL + "/api/users/login";
 
-      const res = await fetch(endpoint, {
-        credentials: "include",
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        if (res.status === 403) {
-          setError("Please verify your email first.");
-          setTimeout(() => navigate("/verify-email", { state: { email } }), 2000);
-          return;
-        }
-        throw new Error(data.error || "Login failed. Check your credentials.");
-      }
+      const res = await axios.post(endpoint, { email, password });
 
       if (isAdmin) {
-        // ✅ FIX HERE
-        localStorage.setItem("adminToken", data.token);
+        localStorage.setItem("token", res.data.token);
         localStorage.setItem("adminLoggedIn", "true");
-
         navigate("/admin/dashboard");
       } else {
-        login(data.user, data.accessToken);
+        login(res.data.user, res.data.accessToken);
         navigate("/");
       }
-
     } catch (err) {
-      setError(err.message || "Login failed.");
+      if (err.response?.status === 403) {
+        setError("Please verify your email first.");
+        setTimeout(() => navigate("/verify-email", { state: { email } }), 2000);
+      } else {
+        setError(err.response?.data?.error || "Login failed. Check your credentials.");
+      }
     } finally {
       setLoading(false);
     }
