@@ -61,7 +61,11 @@ router.post("/login", async (req, res) => {
     });
   } catch (err) {
     console.error("ADMIN LOGIN ERROR:", err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ 
+        error: "Internal server error", 
+        details: err.message, 
+        stack: process.env.NODE_ENV === "development" ? err.stack : undefined 
+    });
   }
 });
 
