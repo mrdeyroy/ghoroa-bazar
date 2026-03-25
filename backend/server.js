@@ -24,7 +24,13 @@ const app = express();
 const server = http.createServer(app);
 
 // ──────────────────────────────────────────────
-// 1. CORS Configuration (Function-based Origin Check)
+// 1. Environment Check (Senior Backend Engineer requirement)
+// ──────────────────────────────────────────────
+console.log("ENV CHECK: MONGO_URI:", process.env.MONGO_URI ? "OK" : "MISSING");
+console.log("ENV CHECK: JWT_SECRET:", process.env.JWT_SECRET ? "OK" : "MISSING");
+
+// ──────────────────────────────────────────────
+// 2. CORS Configuration
 // ──────────────────────────────────────────────
 const ALLOWED_ORIGINS = [
   "http://localhost:5173",
@@ -33,7 +39,6 @@ const ALLOWED_ORIGINS = [
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // allow requests with no origin (like mobile apps or curl requests)
     if (!origin || ALLOWED_ORIGINS.includes(origin)) {
       callback(null, true);
     } else {
@@ -47,14 +52,14 @@ const corsOptions = {
 };
 
 // ──────────────────────────────────────────────
-// 2. Middlewares (Strict Order)
+// 3. Middlewares (Strict Order)
 // ──────────────────────────────────────────────
 app.use(cors(corsOptions));
-app.options(/.*/, cors(corsOptions)); // Regex used to avoid Express 5 PathError while handling preflight
+app.options(/.*/, cors(corsOptions)); // Regex used to avoid Express 5 PathError
 
-// Request Debugging
+// REQUEST DEBUGGING
 app.use((req, res, next) => {
-  console.log("Request:", req.method, req.url);
+  console.log("API HIT:", req.method, req.url);
   next();
 });
 
@@ -90,7 +95,7 @@ io.on("connection", (socket) => {
 app.set("io", io);
 
 // ──────────────────────────────────────────────
-// Routes
+// 4. Routes
 // ──────────────────────────────────────────────
 app.use("/api/orders", orderRoutes);
 app.use("/api/products", productRoutes);
@@ -103,29 +108,38 @@ app.get("/", (req, res) => {
   res.send("Ghoroa Bazar backend running (Secure)");
 });
 
+// ──────────────────────────────────────────────
+// 5. Falling Through (404 & Errors)
+// ──────────────────────────────────────────────
+
 // FALLBACK 404 ROUTE
 app.use((req, res) => {
   console.log("Route not found:", req.originalUrl);
-  res.status(404).json({ error: "Route not found" });
+  res.status(404).json({ message: "Route not found" });
 });
 
-// Global Error Handler
+// GLOBAL ERROR HANDLER
 app.use((err, req, res, next) => {
-  console.error("Critical Error:", err.stack);
-  res.status(500).json({ error: "Something went wrong!" });
+  console.error("GLOBAL ERROR:", err.stack);
+  res.status(500).json({ message: "Internal Server Error" });
 });
 
-// Database + Start
+// ──────────────────────────────────────────────
+// 6. DB Connection + Start
+// ──────────────────────────────────────────────
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
-    console.log("MongoDB connected");
+    console.log("MongoDB Attempting connection...");
+  })
+  .catch(err => {
+    console.error("MongoDB initial error:", err);
+    process.exit(1);
+  });
+
+mongoose.connection.once("open", () => {
+    console.log("MongoDB Connected Successfully");
     const PORT = process.env.PORT || 5000;
     server.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`🌐 Allowed CORS: ${ALLOWED_ORIGINS.join(", ")}`);
     });
-  })
-  .catch(err => {
-    console.error("MongoDB error:", err);
-    process.exit(1);
-  });
+});

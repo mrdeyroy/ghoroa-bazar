@@ -13,8 +13,14 @@ router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // VALIDATION (Senior Backend Engineer requirement)
+    if (!email || !password) {
+        return res.status(400).json({ error: "Email and password are required" });
+    }
+
     const admin = await Admin.findOne({ email });
     if (!admin) {
+      console.log(`ADMIN LOGIN FAIL: Email not found: ${email}`);
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
@@ -29,6 +35,7 @@ router.post("/login", async (req, res) => {
         admin.lockUntil = Date.now() + 15 * 60 * 1000;
       }
       await admin.save();
+      console.log(`ADMIN LOGIN FAIL: Password mismatch for: ${email}`);
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
@@ -42,6 +49,7 @@ router.post("/login", async (req, res) => {
       { expiresIn: "1d" }
     );
 
+    console.log(`ADMIN LOGIN SUCCESS: ${email}`);
     res.json({
       message: "Login successful",
       token,
@@ -52,7 +60,7 @@ router.post("/login", async (req, res) => {
       }
     });
   } catch (err) {
-    console.error("Admin login error:", err);
+    console.error("ADMIN LOGIN ERROR:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
