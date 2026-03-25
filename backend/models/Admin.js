@@ -22,9 +22,15 @@ adminSchema.pre("save", async function (next) {
   next();
 });
 
-// Compare password
+// Compare password (Safe version for production)
 adminSchema.methods.comparePassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+  try {
+    if (!this.password) return false;
+    return await bcrypt.compare(enteredPassword, this.password);
+  } catch (err) {
+    console.error("BCRYPT COMPARE ERROR:", err);
+    return false;
+  }
 };
 
 module.exports = mongoose.model("Admin", adminSchema);
