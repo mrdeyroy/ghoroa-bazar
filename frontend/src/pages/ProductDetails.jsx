@@ -115,7 +115,7 @@ export default function ProductDetails() {
 
     setReviewLoading(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/products/${id}/reviews`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/products/${id}/reviews`, { credentials: "include",
         method: "POST",
         headers: {
           "Content-Type": "application/json",

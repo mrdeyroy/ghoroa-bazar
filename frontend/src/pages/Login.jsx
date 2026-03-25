@@ -31,7 +31,7 @@ export default function Login() {
         ? import.meta.env.VITE_API_URL + "/api/admin/login"
         : import.meta.env.VITE_API_URL + "/api/users/login";
 
-      const res = await fetch(endpoint, {
+      const res = await fetch(endpoint, { credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password })

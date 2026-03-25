@@ -78,7 +78,7 @@ export default function AdminOrders() {
     if (newStatus === "Delivered") updateData.paymentStatus = "Paid";
 
     try {
-      await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${id}`, {
+      await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${id}`, { credentials: "include",
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updateData)

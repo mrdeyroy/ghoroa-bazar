@@ -23,33 +23,43 @@ const contactRoutes = require("./routes/contact");
 const app = express();
 const server = http.createServer(app);
 
+// ──────────────────────────────────────────────
+// 1. CORS Configuration (Senior Engineer requirements)
+// ──────────────────────────────────────────────
 const ALLOWED_ORIGINS = (process.env.FRONTEND_URL || "http://localhost:5173")
   .split(",")
   .map(url => url.trim());
 
-// Include protocol for safety in origin list
 const corsOptions = {
   origin: ALLOWED_ORIGINS,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   credentials: true,
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
+  optionsSuccessStatus: 200 // Some legacy browsers choke on 204
 };
 
+// ──────────────────────────────────────────────
+// 2. Middlewares (Strict Order)
+// ──────────────────────────────────────────────
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // Handle Preflight Requests Globally
+app.options("*", cors(corsOptions)); // Handle Preflight Globally
+
+// Logging incoming requests
+app.use((req, res, next) => {
+  logger.info(`${req.method} ${req.url}`);
+  next();
+});
+
 app.use(express.json({ limit: "10kb" })); 
+app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 app.use(cookieParser());
 
-// ──────────────────────────────────────────────
 // Security Middlewares
-// ──────────────────────────────────────────────
 app.use(helmet()); 
-app.use(xss); // Handles XSS, NoSQL Injection, and HPP for Express 5
+app.use(xss); 
 app.use(compression()); 
 
-// ──────────────────────────────────────────────
 // Rate Limiting
-// ──────────────────────────────────────────────
 app.use("/api/", globalLimiter);
 app.use("/api/users/login", authLimiter);
 app.use("/api/users/signup", authLimiter);
@@ -57,45 +67,22 @@ app.use("/api/users/verify-email", authLimiter);
 app.use("/api/admin/login", authLimiter);
 
 // ──────────────────────────────────────────────
-// ⚡ Socket.IO — production-ready config
+// ⚡ Socket.IO
 // ──────────────────────────────────────────────
 const io = new Server(server, {
-  cors: {
-    origin: ALLOWED_ORIGINS,
-    methods: ["GET", "POST", "PUT"],
-    credentials: true
-  },
+  cors: corsOptions,
   pingTimeout: 60000,
   pingInterval: 25000,
   transports: ["websocket"],
 });
 
-// Socket.IO Connection Handler
+// Socket Handler
 io.on("connection", (socket) => {
   logger.info(`🟢 Socket connected: ${socket.id}`);
-
-  socket.on("joinOrderRoom", (orderId) => {
-    if (!orderId) return;
-    const roomId = String(orderId);
-    socket.join(roomId);
-    logger.info(`📦 Socket ${socket.id} joined order room: ${roomId}`);
-  });
-
-  socket.on("joinUserRoom", (userId) => {
-    if (!userId) return;
-    const roomId = `user_${userId}`;
-    socket.join(roomId);
-    logger.info(`👤 Socket ${socket.id} joined user room: ${roomId}`);
-  });
-
-  socket.on("joinAdminRoom", () => {
-    socket.join("admin_room");
-    logger.info(`🛡️ Socket ${socket.id} joined admin room`);
-  });
-
-  socket.on("disconnect", (reason) => {
-    logger.info(`🔴 Socket disconnected: ${socket.id} (${reason})`);
-  });
+  socket.on("joinOrderRoom", (id) => socket.join(String(id)));
+  socket.on("joinUserRoom", (id) => socket.join(`user_${id}`));
+  socket.on("joinAdminRoom", () => socket.join("admin_room"));
+  socket.on("disconnect", () => logger.info(`🔴 Socket disconnected: ${socket.id}`));
 });
 
 app.set("io", io);
@@ -110,32 +97,33 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/contact", contactRoutes);
 
-// Health check
 app.get("/", (req, res) => {
   res.send("Ghoroa Bazar backend running (Secure)");
 });
 
-// ──────────────────────────────────────────────
-// Global Error Handler
-// ──────────────────────────────────────────────
-app.use((err, req, res, next) => {
-  logger.error(err.stack);
-  res.status(500).json({ error: "Something went wrong! Our team has been notified." });
+// FALLBACK 404 ROUTE
+app.use((req, res) => {
+  logger.warn(`404 - Route not found: ${req.originalUrl}`);
+  res.status(404).json({ error: "Route not found" });
 });
 
-// ──────────────────────────────────────────────
-// Database + Server Start
-// ──────────────────────────────────────────────
+// Global Error Handler
+app.use((err, req, res, next) => {
+  logger.error(err.stack);
+  res.status(500).json({ error: "Something went wrong!" });
+});
+
+// Database + Start
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     logger.info("MongoDB connected");
     const PORT = process.env.PORT || 5000;
     server.listen(PORT, () => {
       logger.info(`🚀 Server running on port ${PORT}`);
-      logger.info(`🌐 Allowed CORS origins: ${ALLOWED_ORIGINS.join(", ")}`);
+      logger.info(`🌐 Allowed CORS: ${ALLOWED_ORIGINS.join(", ")}`);
     });
   })
   .catch(err => {
-    logger.error("MongoDB connection error:", err);
+    logger.error("MongoDB error:", err);
     process.exit(1);
   });

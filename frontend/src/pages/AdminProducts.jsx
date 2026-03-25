@@ -127,7 +127,7 @@ export default function AdminProducts() {
         const formData = new FormData();
         selectedFiles.forEach(file => formData.append("images", file));
 
-        const uploadRes = await fetch(import.meta.env.VITE_API_URL + "/api/upload", {
+        const uploadRes = await fetch(import.meta.env.VITE_API_URL + "/api/upload", { credentials: "include",
           method: "POST",
           body: formData
         });
@@ -167,7 +167,7 @@ export default function AdminProducts() {
 
       console.log("Submitting payload:", payload);
       console.log("Updating product:", editingId, "with body:", payload); // Added frontend log for update
-      const res = await fetch(url, {
+      const res = await fetch(url, { credentials: "include",
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -224,7 +224,7 @@ export default function AdminProducts() {
 
   const deleteProduct = async (id) => {
     if (!window.confirm("Delete this product?")) return;
-    await fetch(`${import.meta.env.VITE_API_URL}/api/products/${id}`, {
+    await fetch(`${import.meta.env.VITE_API_URL}/api/products/${id}`, { credentials: "include",
       method: "DELETE"
     });
     fetchProducts();

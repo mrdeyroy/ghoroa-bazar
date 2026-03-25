@@ -54,7 +54,7 @@ export default function Checkout() {
         const token = localStorage.getItem("token");
         if (!token) return;
 
-        const res = await fetch(import.meta.env.VITE_API_URL + "/api/users/me", {
+        const res = await fetch(import.meta.env.VITE_API_URL + "/api/users/me", { credentials: "include",
           headers: { "Authorization": `Bearer ${token}` }
         });
 

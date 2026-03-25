@@ -26,7 +26,7 @@ export default function VerifyEmail() {
     setSuccess("");
 
     try {
-      const res = await fetch(import.meta.env.VITE_API_URL + "/api/users/verify-email", {
+      const res = await fetch(import.meta.env.VITE_API_URL + "/api/users/verify-email", { credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp })
@@ -49,7 +49,7 @@ export default function VerifyEmail() {
     setSuccess("");
 
     try {
-      const res = await fetch(import.meta.env.VITE_API_URL + "/api/users/resend-otp", {
+      const res = await fetch(import.meta.env.VITE_API_URL + "/api/users/resend-otp", { credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email })

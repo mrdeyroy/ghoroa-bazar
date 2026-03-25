@@ -62,7 +62,7 @@ export default function MyOrders() {
       return;
     }
 
-    fetch(import.meta.env.VITE_API_URL + "/api/orders/my", {
+    fetch(import.meta.env.VITE_API_URL + "/api/orders/my", { credentials: "include",
       headers: { "Authorization": `Bearer ${token}` }
     })
       .then(res => res.json())
@@ -130,7 +130,7 @@ export default function MyOrders() {
   const executeCancelOrder = async (orderId) => {
     setCancellingId(orderId);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/cancel/${orderId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/cancel/${orderId}`, { credentials: "include",
         method: "PUT",
         headers: {
           "Authorization": `Bearer ${token}`

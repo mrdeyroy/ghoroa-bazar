@@ -123,7 +123,7 @@ export const NotificationProvider = ({ children }) => {
         })
         .catch(console.error);
     } else if (isUser) {
-      fetch(import.meta.env.VITE_API_URL + "/api/orders/my", {
+      fetch(import.meta.env.VITE_API_URL + "/api/orders/my", { credentials: "include",
         headers: { "Authorization": `Bearer ${token}` }
       })
         .then(res => res.json())

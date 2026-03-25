@@ -34,7 +34,7 @@ export default function AdminMessages() {
   }, []);
 
   const markAsRead = async (id, refreshUnread) => {
-    await fetch(`${import.meta.env.VITE_API_URL}/api/contact/${id}/read`, {
+    await fetch(`${import.meta.env.VITE_API_URL}/api/contact/${id}/read`, { credentials: "include",
       method: "PATCH"
     });
 
@@ -50,7 +50,7 @@ export default function AdminMessages() {
   const deleteMessage = async (id, refreshUnread) => {
     if (!window.confirm("Delete this message?")) return;
 
-    await fetch(`${import.meta.env.VITE_API_URL}/api/contact/${id}`, {
+    await fetch(`${import.meta.env.VITE_API_URL}/api/contact/${id}`, { credentials: "include",
       method: "DELETE"
     });
 
