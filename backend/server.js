@@ -42,7 +42,7 @@ const corsOptions = {
 // 2. Middlewares (Strict Order)
 // ──────────────────────────────────────────────
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // Handle Preflight Globally
+app.options(/.*/, cors(corsOptions)); // Handle Preflight Globally
 
 // Logging incoming requests
 app.use((req, res, next) => {
