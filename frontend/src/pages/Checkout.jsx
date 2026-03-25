@@ -51,7 +51,7 @@ export default function Checkout() {
   useEffect(() => {
     const fetchDefaultAddress = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("adminToken");
         if (!token) return;
 
         const res = await fetch(import.meta.env.VITE_API_URL + "/api/users/me", { credentials: "include",

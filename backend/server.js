@@ -23,17 +23,31 @@ const contactRoutes = require("./routes/contact");
 const app = express();
 const server = http.createServer(app);
 
-const ALLOWED_ORIGINS = (process.env.FRONTEND_URL || "http://localhost:5173")
-  .split(",")
-  .map(url => url.trim());
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5000",
+  "https://ghoroa-bazar.vercel.app"
+];
 
-const corsOptions = {
-  origin: ALLOWED_ORIGINS,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  credentials: true
-};
+app.use(cors({
+  origin: function(origin, callback) {
+    // allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.warn(`⚠️ CORS blocked for origin: ${origin}`);
+      // Don't pass an error to callback, just say 'false' to allow the 
+      // CORS middleware to handle the rejection properly.
+      callback(null, false);
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
+}));
 
-app.use(cors(corsOptions));
 app.use(express.json({ limit: "10kb" })); 
 app.use(cookieParser());
 
@@ -58,10 +72,11 @@ app.use("/api/admin/login", authLimiter);
 // ──────────────────────────────────────────────
 const io = new Server(server, {
   cors: {
-    origin: ALLOWED_ORIGINS,
+    origin: allowedOrigins,
     methods: ["GET", "POST", "PUT"],
     credentials: true
   },
+
   pingTimeout: 60000,
   pingInterval: 25000,
   transports: ["websocket"],
@@ -129,7 +144,8 @@ mongoose.connect(process.env.MONGO_URI)
     const PORT = process.env.PORT || 5000;
     server.listen(PORT, () => {
       logger.info(`🚀 Server running on port ${PORT}`);
-      logger.info(`🌐 Allowed CORS origins: ${ALLOWED_ORIGINS.join(", ")}`);
+      logger.info(`🌐 Allowed CORS origins: ${allowedOrigins.join(", ")}`);
+
     });
   })
   .catch(err => {

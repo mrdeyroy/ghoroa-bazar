@@ -101,6 +101,9 @@ export default function Profile() {
       showToast("Uploading Image...");
       const res = await fetch(import.meta.env.VITE_API_URL + "/api/upload", { credentials: "include",
         method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        },
         body: formData
       });
       const data = await res.json();

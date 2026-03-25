@@ -53,7 +53,12 @@ export default function AdminProducts() {
   const [previews, setPreviews] = useState([]); 
 
   const fetchProducts = () => {
-    fetch(import.meta.env.VITE_API_URL + "/api/products")
+    const token = localStorage.getItem("adminToken");
+    fetch(import.meta.env.VITE_API_URL + "/api/products", {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
       .then(res => res.json())
       .then((data) => {
         console.log("Fetched products, first item category:", data[0]?.category);
@@ -127,8 +132,12 @@ export default function AdminProducts() {
         const formData = new FormData();
         selectedFiles.forEach(file => formData.append("images", file));
 
+        const token = localStorage.getItem("adminToken");
         const uploadRes = await fetch(import.meta.env.VITE_API_URL + "/api/upload", { credentials: "include",
           method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
           body: formData
         });
         const uploadData = await uploadRes.json();
@@ -167,9 +176,13 @@ export default function AdminProducts() {
 
       console.log("Submitting payload:", payload);
       console.log("Updating product:", editingId, "with body:", payload); // Added frontend log for update
+      const token = localStorage.getItem("adminToken");
       const res = await fetch(url, { credentials: "include",
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
         body: JSON.stringify(payload)
       });
 
@@ -224,8 +237,12 @@ export default function AdminProducts() {
 
   const deleteProduct = async (id) => {
     if (!window.confirm("Delete this product?")) return;
+    const token = localStorage.getItem("adminToken");
     await fetch(`${import.meta.env.VITE_API_URL}/api/products/${id}`, { credentials: "include",
-      method: "DELETE"
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     });
     fetchProducts();
   };

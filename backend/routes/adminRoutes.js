@@ -22,19 +22,34 @@ router.post("/login", async (req, res) => {
       return res.status(423).json({ error: "Admin account locked. Reset via database or wait 15m." });
     }
 
-    const isMatch = await admin.comparePassword(password);
+    let isMatch = false;
+    try {
+      isMatch = await admin.comparePassword(password);
+    } catch (passwordErr) {
+      console.error("CRITICAL: Error during admin password comparison:", passwordErr);
+      return res.status(500).json({ error: "Password verification failed" });
+    }
+
     if (!isMatch) {
-      admin.failedLoginAttempts += 1;
+      admin.failedLoginAttempts = (admin.failedLoginAttempts || 0) + 1;
       if (admin.failedLoginAttempts >= 5) {
         admin.lockUntil = Date.now() + 15 * 60 * 1000;
       }
-      await admin.save();
+      try {
+        await admin.save();
+      } catch (saveErr) {
+        console.error("Error saving admin failed attempts:", saveErr);
+      }
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
     admin.failedLoginAttempts = 0;
     admin.lockUntil = undefined;
-    await admin.save();
+    try {
+      await admin.save();
+    } catch (saveErr) {
+      console.error("Error saving admin success state:", saveErr);
+    }
 
     const token = jwt.sign(
       { id: admin._id, role: "admin" },

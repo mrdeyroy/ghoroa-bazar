@@ -110,7 +110,12 @@ export default function AdminLayout({ children }) {
 
   const fetchUnreadCount = async () => {
     try {
-      const res = await fetch(import.meta.env.VITE_API_URL + "/api/contact/unread-count");
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(import.meta.env.VITE_API_URL + "/api/contact/unread-count", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       const data = await res.json();
       setUnreadCount(data.count);
     } catch (err) {

@@ -21,7 +21,12 @@ export default function AdminMessages() {
   const [searchTerm, setSearchTerm] = useState("");
 
   const fetchMessages = () => {
-    fetch(import.meta.env.VITE_API_URL + "/api/contact")
+    const token = localStorage.getItem("adminToken");
+    fetch(import.meta.env.VITE_API_URL + "/api/contact", {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
       .then(res => res.json())
       .then(data => {
         setMessages(data);
@@ -34,8 +39,12 @@ export default function AdminMessages() {
   }, []);
 
   const markAsRead = async (id, refreshUnread) => {
+    const token = localStorage.getItem("adminToken");
     await fetch(`${import.meta.env.VITE_API_URL}/api/contact/${id}/read`, { credentials: "include",
-      method: "PATCH"
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     });
 
     setMessages(prev =>
@@ -49,9 +58,12 @@ export default function AdminMessages() {
 
   const deleteMessage = async (id, refreshUnread) => {
     if (!window.confirm("Delete this message?")) return;
-
+    const token = localStorage.getItem("adminToken");
     await fetch(`${import.meta.env.VITE_API_URL}/api/contact/${id}`, { credentials: "include",
-      method: "DELETE"
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     });
 
     setMessages(prev => prev.filter(m => m._id !== id));

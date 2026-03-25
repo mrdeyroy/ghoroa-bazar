@@ -18,17 +18,23 @@ import {
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import BackButton from "../components/BackButton";
+import { useAuth } from "../context/AuthContext";
 
 export default function Invoice() {
   const { orderId } = useParams();
   const navigate = useNavigate();
+  const { token } = useAuth();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const invoiceRef = useRef(null);
 
   useEffect(() => {
     setLoading(true);
-    fetch(`${import.meta.env.VITE_API_URL}/api/orders/${orderId}`)
+    fetch(`${import.meta.env.VITE_API_URL}/api/orders/${orderId}`, {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    })
       .then(res => res.json())
       .then(data => {
         setOrder(data);

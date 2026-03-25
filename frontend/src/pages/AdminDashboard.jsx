@@ -89,7 +89,7 @@ export default function AdminDashboard() {
         },
         {
             title: "Total Orders",
-            value: stats.totalOrders.toLocaleString(),
+            value: (stats.totalOrders || 0).toLocaleString(),
             icon: ShoppingBag,
             trend: "+5.4%",
             trendUp: true,
@@ -99,7 +99,7 @@ export default function AdminDashboard() {
         },
         {
             title: "Inventory Items",
-            value: stats.totalProducts.toLocaleString(),
+            value: (stats.totalProducts || 0).toLocaleString(),
             icon: Package,
             trend: "0.2%",
             trendUp: false,
@@ -109,7 +109,7 @@ export default function AdminDashboard() {
         },
         {
             title: "Registered Users",
-            value: stats.totalUsers.toLocaleString(),
+            value: (stats.totalUsers || 0).toLocaleString(),
             icon: Users,
             trend: "+1.2%",
             trendUp: true,

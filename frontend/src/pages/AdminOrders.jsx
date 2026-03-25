@@ -39,7 +39,12 @@ export default function AdminOrders() {
 
   const fetchOrders = useCallback(async () => {
     try {
-      const res = await fetch(import.meta.env.VITE_API_URL + "/api/orders");
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(import.meta.env.VITE_API_URL + "/api/orders", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       const data = await res.json();
       setOrders(Array.isArray(data) ? data : []);
       setLoading(false);
@@ -78,9 +83,13 @@ export default function AdminOrders() {
     if (newStatus === "Delivered") updateData.paymentStatus = "Paid";
 
     try {
+      const token = localStorage.getItem("adminToken");
       await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${id}`, { credentials: "include",
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
         body: JSON.stringify(updateData)
       });
       fetchOrders();
