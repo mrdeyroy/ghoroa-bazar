@@ -27,13 +27,16 @@ const ALLOWED_ORIGINS = (process.env.FRONTEND_URL || "http://localhost:5173")
   .split(",")
   .map(url => url.trim());
 
+// Include protocol for safety in origin list
 const corsOptions = {
   origin: ALLOWED_ORIGINS,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  credentials: true
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
 };
 
 app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // Handle Preflight Requests Globally
 app.use(express.json({ limit: "10kb" })); 
 app.use(cookieParser());
 
