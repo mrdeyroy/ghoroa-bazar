@@ -196,8 +196,8 @@ export default function Payment() {
                       <p className="text-sm text-gray-500 font-medium">Pay via Card, UPI, Netbanking or Wallet</p>
 
                       <div className="flex items-center gap-2 mt-2 opacity-60">
-                        <img src="/src/assets/mastercard.png" className="h-4 object-contain grayscale" alt="" />
-                        <img src="/src/assets/gpay.png" className="h-4 object-contain grayscale" alt="" />
+                        <img src="/assets/mastercard.png" className="h-4 object-contain grayscale" alt="" />
+                        <img src="/assets/gpay.png" className="h-4 object-contain grayscale" alt="" />
                         <span className="text-[10px] font-black text-gray-400">VISA • UPI</span>
                       </div>
                     </div>

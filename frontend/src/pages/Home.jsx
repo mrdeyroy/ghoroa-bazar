@@ -260,15 +260,15 @@ return (
 
 <div className="flex flex-wrap justify-center gap-4 md:gap-8 mb-12 md:mb-16">
   {[
-    "/src/assets/fpo.avif",
-    "/src/assets/gmo.png",
-    "/src/assets/iec.png",
-    "/src/assets/lactosefree.png",
-    "/src/assets/apeda.png",
-    "/src/assets/iso.png",
-    "/src/assets/madeinindia.png",
-    "/src/assets/msme.png",
-    "/src/assets/farmers.png",
+    "/assets/fpo.avif",
+    "/assets/gmo.png",
+    "/assets/iec.png",
+    "/assets/lactosefree.png",
+    "/assets/apeda.png",
+    "/assets/iso.png",
+    "/assets/madeinindia.png",
+    "/assets/msme.png",
+    "/assets/farmers.png",
   ].map((img, i) => (
     <div
       key={i}
@@ -295,12 +295,12 @@ return (
 
   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 md:gap-8 max-w-6xl mx-auto px-4">
     {[
-      { icon: "/src/assets/flag.avif", title: "100% Made in India" },
-      { icon: "/src/assets/premium.png", title: "Premium Quality" },
-      { icon: "/src/assets/iso.png", title: "ISO Certified Company" },
-      { icon: "/src/assets/delivery.png", title: "Fast Track Delivery" },
-      { icon: "/src/assets/secure.png", title: "100% Secure Payment" },
-      { icon: "/src/assets/satisfaction.png", title: "Satisfaction Guarantee" }
+      { icon: "/assets/flag.avif", title: "100% Made in India" },
+      { icon: "/assets/premium.png", title: "Premium Quality" },
+      { icon: "/assets/iso.png", title: "ISO Certified Company" },
+      { icon: "/assets/delivery.png", title: "Fast Track Delivery" },
+      { icon: "/assets/secure.png", title: "100% Secure Payment" },
+      { icon: "/assets/satisfaction.png", title: "Satisfaction Guarantee" }
     ].map((f, i) => (
       <div key={i} className="flex flex-col items-center group">
         <div className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center p-4 transition-transform group-hover:scale-110 mb-3">
@@ -336,10 +336,10 @@ return (
   {/* Stats Row */}
   <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 max-w-5xl mx-auto mb-10 md:mb-16">
     {[
-      { icon: "/src/assets/vector.svg", num: "8+", label: "Year of Experience" },
-      { icon: "/src/assets/city.svg", num: "45+", label: "City" },
-      { icon: "/src/assets/happy.svg", num: "120+", label: "Happy Families" },
-      { icon: "/src/assets/export.svg", num: "8+", label: "Export Country" }
+      { icon: "/assets/vector.svg", num: "8+", label: "Year of Experience" },
+      { icon: "/assets/city.svg", num: "45+", label: "City" },
+      { icon: "/assets/happy.svg", num: "120+", label: "Happy Families" },
+      { icon: "/assets/export.svg", num: "8+", label: "Export Country" }
     ].map((s, i) => (
       <div key={i} className="flex flex-col items-center">
         <div className="w-12 h-12 md:w-16 md:h-16 bg-green-50 rounded-2xl flex items-center justify-center mb-4">
@@ -367,7 +367,7 @@ return (
       <div key={i} className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all group">
         <div className="relative overflow-hidden h-48 md:h-56">
           <img
-            src="/src/assets/grandopening.webp"
+            src="/assets/grandopening.webp"
             alt="News"
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           />
@@ -537,7 +537,7 @@ return (
                   </div>
                 </div>
 
-                <img src="/src/assets/google.png" style={{ height: 24 }} />
+                <img src="/assets/google.png" style={{ height: 24 }} />
               </div>
 
               {/* STARS */}
@@ -602,12 +602,12 @@ return (
     }}
   >
    {[
-    "/src/assets/amazon.avif",
-    "/src/assets/big_basket.avif",
-    "/src/assets/flipkart.avif",
-    "/src/assets/jio-mart.avif",
-    "/src/assets/blinkit-logo.avif",
-    "/src/assets/tata-mg.avif",
+    "/assets/amazon.avif",
+    "/assets/big_basket.avif",
+    "/assets/flipkart.avif",
+    "/assets/jio-mart.avif",
+    "/assets/blinkit-logo.avif",
+    "/assets/tata-mg.avif",
   ].map((path, i) => (
     <img
       key={i}

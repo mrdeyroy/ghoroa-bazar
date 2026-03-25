@@ -4,9 +4,10 @@ import { Mail, ArrowLeft, Loader2, Send } from "lucide-react";
 
 import { motion } from "framer-motion";
 
-// Assets
-import groceryFavicon from "../assets/grocery_favicon.jpg";
-import bgImage from "../assets/fruits.jpg";
+
+// Assets (Updated to Static Paths)
+const groceryFavicon = "/assets/grocery_favicon.jpg";
+const bgImage = "/assets/fruits.jpg";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");

@@ -153,9 +153,9 @@ export default function Footer() {
           <div className="flex items-center gap-3">
             <span className="text-[10px] text-[#E0FFC2]/60 font-black uppercase tracking-widest mr-1">We Accept</span>
             <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-xl border border-white/5">
-              <img src="/src/assets/gpay.png" alt="Google Pay" className="h-4 object-contain" />
-              <img src="/src/assets/cod.png" alt="Cash on Delivery" className="h-4 object-contain opacity-90" />
-              <img src="/src/assets/mastercard.png" alt="Mastercard" className="h-4 object-contain" />
+              <img src="/assets/gpay.png" alt="Google Pay" className="h-4 object-contain" />
+              <img src="/assets/cod.png" alt="Cash on Delivery" className="h-4 object-contain opacity-90" />
+              <img src="/assets/mastercard.png" alt="Mastercard" className="h-4 object-contain" />
             </div>
           </div>
         </div>

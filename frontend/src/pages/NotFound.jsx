@@ -20,7 +20,7 @@ export default function NotFound() {
             fontSize: "160px",
             fontWeight: 900,
             lineHeight: 1,
-            backgroundImage: "url(/src/assets/fruits.jpg)", // 👈 add image
+            backgroundImage: "url(/assets/fruits.jpg)", // 👈 add image
             backgroundSize: "cover",
             backgroundPosition: "center",
             WebkitBackgroundClip: "text",

@@ -4,9 +4,10 @@ import { User, Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 
 import { motion } from "framer-motion";
 
-// Assets
-import groceryFavicon from "../assets/grocery_favicon.jpg";
-import bgImage from "../assets/fruits.jpg";
+
+// Assets (Updated to Static Paths)
+const groceryFavicon = "/assets/grocery_favicon.jpg";
+const bgImage = "/assets/fruits.jpg";
 
 export default function Signup() {
   const [form, setForm] = useState({ name: "", email: "", password: "", confirmPassword: "" });

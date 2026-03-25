@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars */
 import { motion, AnimatePresence } from "framer-motion";
-import logoSrc from "../assets/grocery_favicon.jpg";
+
+const logoSrc = "/assets/grocery_favicon.jpg";
 
 export default function Loader({ isLoading }) {
   return (

@@ -206,7 +206,7 @@ export default function Hero() {
             
             <div className="relative w-full h-full rounded-[40px] md:rounded-[60px] lg:rounded-[80px] overflow-hidden shadow-[0_20px_60px_-15px_rgba(31,122,59,0.3)] ring-4 md:ring-8 ring-white/60">
               <img 
-                src="/src/assets/banner.png" 
+                src="/assets/banner.png" 
                 alt="Fresh Groceries" 
                 className="w-full h-full object-cover object-center scale-105"
               />

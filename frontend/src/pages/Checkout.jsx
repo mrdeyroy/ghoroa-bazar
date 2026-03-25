@@ -452,8 +452,8 @@ export default function Checkout() {
                 
                 <div className="flex flex-wrap items-center justify-center gap-4 opacity-70 grayscale hover:grayscale-0 transition-all">
                     {/* Placeholder for payment logos - normally you'd use icons or svgs here */}
-                    <img src="/src/assets/mastercard.png" className="h-4 object-contain" alt="Mastercard" />
-                    <img src="/src/assets/gpay.png" className="h-5 object-contain" alt="GPay" />
+                    <img src="/assets/mastercard.png" className="h-4 object-contain" alt="Mastercard" />
+                    <img src="/assets/gpay.png" className="h-5 object-contain" alt="GPay" />
                     <div className="text-[10px] font-black text-gray-300">UPI • VISA • COD</div>
                 </div>
 

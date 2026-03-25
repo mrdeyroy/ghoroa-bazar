@@ -5,9 +5,10 @@ import { Mail, Lock, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { motion } from "framer-motion";
 
-// Assets
-import groceryFavicon from "../assets/grocery_favicon.jpg";
-import bgImage from "../assets/fruits.jpg";
+
+// Assets (Updated to Static Paths)
+const groceryFavicon = "/assets/grocery_favicon.jpg";
+const bgImage = "/assets/fruits.jpg";
 
 export default function Login() {
   const [email, setEmail] = useState("");
