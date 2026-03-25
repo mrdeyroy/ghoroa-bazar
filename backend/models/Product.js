@@ -91,4 +91,9 @@ const productSchema = new mongoose.Schema({
   }
 });
 
+// Add indexing for common search queries
+productSchema.index({ category: 1 });
+productSchema.index({ featured: 1 });
+productSchema.index({ name: "text" }); // Text search for products
+
 module.exports = mongoose.model("Product", productSchema);

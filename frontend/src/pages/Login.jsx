@@ -33,10 +33,11 @@ export default function Login() {
       const res = await axios.post(endpoint, { email, password });
 
       if (isAdmin) {
+        localStorage.setItem("token", res.data.token);
         localStorage.setItem("adminLoggedIn", "true");
         navigate("/admin/dashboard");
       } else {
-        login(res.data.user, res.data.token);
+        login(res.data.user, res.data.accessToken);
         navigate("/");
       }
     } catch (err) {

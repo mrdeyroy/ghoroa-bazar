@@ -4,70 +4,94 @@ const Product = require("../models/Product");
 const Order = require("../models/Order");
 const cloudinary = require("../utils/cloudinary");
 
-// 1️⃣ ADD product
-router.post("/", async (req, res) => {
-  try {
-    const product = new Product(req.body);
-    await product.save();
-    res.status(201).json(product);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to add product" });
-  }
+const adminMiddleware = require("../middleware/adminMiddleware");
+const { body, validationResult } = require("express-validator");
+
+// 1️⃣ ADD product (Admin Protected + Validated)
+router.post("/", 
+  adminMiddleware,
+  [
+    body("name").notEmpty().withMessage("Name is required"),
+    body("price").isNumeric().withMessage("Price must be a number"),
+    body("category").notEmpty().withMessage("Category is required"),
+    body("stock").isNumeric().withMessage("Stock must be a number")
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    try {
+      const product = new Product(req.body);
+      await product.save();
+      res.status(201).json(product);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Failed to add product" });
+    }
 });
 
-// 2️⃣ GET all products with optional filters
+// 2️⃣ GET ALL products (Public)
 router.get("/", async (req, res) => {
   try {
-    const { category, featured, limit } = req.query;
-    let query = {};
+    const { category, search, featured, minPrice, maxPrice } = req.query;
+    const query = {};
 
-    if (category) {
-      query.category = category;
+    if (category) query.category = category;
+    if (featured) query.featured = (featured === "true");
+    if (search) query.name = { $regex: search, $options: "i" };
+    
+    if (minPrice || maxPrice) {
+      query.price = {};
+      if (minPrice) query.price.$gte = Number(minPrice);
+      if (maxPrice) query.price.$lte = Number(maxPrice);
     }
 
-    if (featured === "true") {
-      query.featured = true;
-    }
-
-    let productsQuery = Product.find(query).sort({ createdAt: -1 });
-
-    if (limit) {
-      productsQuery = productsQuery.limit(parseInt(limit));
-    }
-
-    const products = await productsQuery;
+    const products = await Product.find(query).sort({ createdAt: -1 });
     res.json(products);
   } catch (err) {
-    console.error("Fetch products error:", err);
     res.status(500).json({ error: "Failed to fetch products" });
   }
 });
 
-// 3️⃣ GET single product by ID (🔥 REQUIRED for product page)
+// 3️⃣ GET SINGLE product (Public)
 router.get("/:id", async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
     }
-
     res.json(product);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch product" });
   }
 });
 
-// 4️⃣ UPDATE product
-router.put("/:id", async (req, res) => {
+// Categories list
+router.get("/all/categories", async (req, res) => {
+  try {
+    const categories = await Product.distinct("category");
+    res.json(categories);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch categories" });
+  }
+});
+
+// 4️⃣ UPDATE product (Admin Protected)
+router.put("/:id", adminMiddleware, async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
     }
 
-    // Check for removed images to delete from Cloudinary
+    if (req.body.name) product.name = req.body.name;
+    if (req.body.price) product.price = req.body.price;
+    if (req.body.category) product.category = req.body.category;
+    if (req.body.stock !== undefined) product.stock = req.body.stock;
+    if (req.body.description) product.description = req.body.description;
+    if (req.body.featured !== undefined) product.featured = req.body.featured;
+
     if (req.body.images && product.images) {
       const currentPublicIds = req.body.images.map(img => img.public_id);
       const removedImages = product.images.filter(img => !currentPublicIds.includes(img.public_id));
@@ -80,38 +104,28 @@ router.put("/:id", async (req, res) => {
       }
     }
 
-    console.log("Updating product:", req.params.id, " - New category:", req.body.category);
-    
-    const existingProduct = await Product.findById(req.params.id);
-    if (!existingProduct) {
-      return res.status(404).json({ error: "Product not found" });
-    }
-
-    // Update all fields from body except protected ones
     Object.keys(req.body).forEach(key => {
       if (key !== "_id" && key !== "__v") {
-        existingProduct[key] = req.body[key];
+        product[key] = req.body[key];
       }
     });
 
-    await existingProduct.save();
-    console.log("Successfully saved category:", existingProduct.category);
-    res.json(existingProduct);
+    await product.save();
+    res.json(product);
   } catch (err) {
     console.error("Update error:", err);
     res.status(500).json({ error: "Failed to update product" });
   }
 });
 
-// 5️⃣ DELETE product
-router.delete("/:id", async (req, res) => {
+// 5️⃣ DELETE product (Admin Protected)
+router.delete("/:id", adminMiddleware, async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
     }
 
-    // Delete images from Cloudinary
     if (product.images && product.images.length > 0) {
       const deletePromises = product.images.map(img => 
         cloudinary.uploader.destroy(img.public_id)

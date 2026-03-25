@@ -1,26 +1,64 @@
 const express = require("express");
+const jwt = require("jsonwebtoken");
 const router = express.Router();
 const Admin = require("../models/Admin");
-
-// admin login
-router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-
-  const admin = await Admin.findOne({ email, password });
-
-  if (!admin) {
-    return res.status(401).json({ error: "Invalid credentials" });
-  }
-
-  res.json({ message: "Login successful" });
-});
-
-// GET dashboard stats
 const Order = require("../models/Order");
 const Product = require("../models/Product");
 const User = require("../models/User");
+require("dotenv").config();
+const adminMiddleware = require("../middleware/adminMiddleware");
 
-router.get("/dashboard-stats", async (req, res) => {
+// Admin Login
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const admin = await Admin.findOne({ email });
+    if (!admin) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    if (admin.isLocked) {
+      return res.status(423).json({ error: "Admin account locked. Reset via database or wait 15m." });
+    }
+
+    const isMatch = await admin.comparePassword(password);
+    if (!isMatch) {
+      admin.failedLoginAttempts += 1;
+      if (admin.failedLoginAttempts >= 5) {
+        admin.lockUntil = Date.now() + 15 * 60 * 1000;
+      }
+      await admin.save();
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    admin.failedLoginAttempts = 0;
+    admin.lockUntil = undefined;
+    await admin.save();
+
+    const token = jwt.sign(
+      { id: admin._id, role: "admin" },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    res.json({
+      message: "Login successful",
+      token,
+      admin: {
+        id: admin._id,
+        email: admin.email,
+        role: "admin"
+      }
+    });
+  } catch (err) {
+    console.error("Admin login error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// GET dashboard stats (Admin Protected)
+router.get("/dashboard-stats", adminMiddleware, async (req, res) => {
   try {
     const totalOrders = await Order.countDocuments();
     const totalProducts = await Product.countDocuments();

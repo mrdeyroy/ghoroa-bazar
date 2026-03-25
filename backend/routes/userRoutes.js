@@ -134,15 +134,40 @@ router.post("/login", async (req, res) => {
       return res.status(403).json({ error: "Please verify your email first" });
     }
 
+    // Check if account is locked
+    if (user.isLocked) {
+      return res.status(423).json({ error: "Account locked due to multiple failed attempts. Try again later." });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      user.failedLoginAttempts += 1;
+      if (user.failedLoginAttempts >= 5) {
+        user.lockUntil = Date.now() + 15 * 60 * 1000; // Lock for 15 minutes
+      }
+      await user.save();
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    // Reset login attempts on success
+    user.failedLoginAttempts = 0;
+    user.lockUntil = undefined;
+
+    const accessToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "15m" });
+    const refreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "7d" });
+
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // only send over HTTPS in production
+      sameSite: "Strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
 
     res.json({
-      token,
+      accessToken,
       user: {
         id: user._id,
         name: user.name,
@@ -154,6 +179,25 @@ router.post("/login", async (req, res) => {
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// 4.1️⃣ Refresh Token API
+router.post("/refresh-token", async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+  if (!refreshToken) return res.status(401).json({ error: "No refresh token provided" });
+
+  try {
+    const user = await User.findOne({ refreshToken });
+    if (!user) return res.status(403).json({ error: "Invalid refresh token" });
+
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+    if (decoded.id !== user._id.toString()) return res.status(403).json({ error: "Token mismatch" });
+
+    const accessToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "15m" });
+    res.json({ accessToken });
+  } catch (err) {
+    res.status(403).json({ error: "Invalid or expired refresh token" });
   }
 });
 
@@ -174,7 +218,8 @@ router.post("/forgot-password", async (req, res) => {
     user.resetPasswordExpires = resetExpires;
     await user.save();
 
-    const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const resetLink = `${frontendUrl}/reset-password/${resetToken}`;
 
     await sendEmail(
       email,

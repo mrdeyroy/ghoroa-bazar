@@ -60,4 +60,9 @@ const orderSchema = new mongoose.Schema({
   cancelledAt: Date
 });
 
+// Indexes for performance
+orderSchema.index({ userId: 1 });
+orderSchema.index({ createdAt: -1 });
+orderSchema.index({ orderStatus: 1 });
+
 module.exports = mongoose.model("Order", orderSchema);
