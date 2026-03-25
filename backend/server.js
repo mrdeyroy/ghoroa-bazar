@@ -39,9 +39,14 @@ const ALLOWED_ORIGINS = [
 
 const corsOptions = {
   origin: function (origin, callback) {
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+    // Normalize origin: remove trailing slash if present
+    const normalizedOrigin = origin ? origin.replace(/\/$/, "") : null;
+    const normalizedAllowed = ALLOWED_ORIGINS.map(url => url.replace(/\/$/, ""));
+
+    if (!origin || normalizedAllowed.includes(normalizedOrigin)) {
       callback(null, true);
     } else {
+      console.warn("CORS Attempt Blocked from origin:", origin);
       callback(new Error("Not allowed by CORS"));
     }
   },
