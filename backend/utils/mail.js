@@ -1,69 +1,85 @@
 const nodemailer = require("nodemailer");
+const axios = require("axios");
 require("dotenv").config();
 
-// ✅ Brevo transporter (PRIMARY)
-const brevoTransporter = nodemailer.createTransport({
-  host: "smtp-relay.brevo.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.BREVO_SMTP_KEY,
-  },
-  connectionTimeout: 10000,
-});
+const isProduction = process.env.NODE_ENV === "production";
 
-// ✅ Gmail transporter (BACKUP)
-const gmailTransporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.GMAIL_APP_PASS,
-  },
-  family: 4, // 🔥 force IPv4 (Render issue fix)
-  connectionTimeout: 10000,
-});
+// =======================
+// ✅ Nodemailer (LOCAL ONLY)
+// =======================
 
-// ✅ Verify both SMTP connections (startup debug)
-brevoTransporter.verify((err) => {
-  if (err) {
-    console.log("❌ Brevo SMTP ERROR:", err.message);
-  } else {
-    console.log("✅ Brevo SMTP READY");
-  }
-});
+let transporter;
 
-gmailTransporter.verify((err) => {
-  if (err) {
-    console.log("❌ Gmail SMTP ERROR:", err.message);
-  } else {
-    console.log("✅ Gmail SMTP READY");
-  }
-});
+if (!isProduction) {
+  transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS, // ✅ same name
+    },
+  });
 
-// ✅ Main send function with fallback
+  // Debug (only local)
+  transporter.verify((err) => {
+    if (err) {
+      console.log("❌ LOCAL SMTP ERROR:", err.message);
+    } else {
+      console.log("✅ LOCAL SMTP READY");
+    }
+  });
+}
+
+// =======================
+// ✅ Main Send Function
+// =======================
+
 const sendEmail = async (to, subject, html) => {
-  const mailOptions = {
-    from: `"Ghoroa Bazar" <${process.env.EMAIL_USER}>`,
-    to,
-    subject,
-    html,
-  };
-
-  try {
-    // 🔥 Try Brevo first
-    await brevoTransporter.sendMail(mailOptions);
-    console.log("✅ Email sent via Brevo");
-  } catch (brevoError) {
-    console.log("⚠️ Brevo failed:", brevoError.message);
-
+  // 🚀 PRODUCTION → Brevo API
+  if (isProduction) {
     try {
-      // 🔁 Fallback Gmail
-      await gmailTransporter.sendMail(mailOptions);
-      console.log("✅ Email sent via Gmail");
-    } catch (gmailError) {
-      console.error("❌ Both email services failed:", gmailError);
-      throw new Error("All email services failed");
+      await axios.post(
+        "https://api.brevo.com/v3/smtp/email",
+        {
+          sender: {
+            name: "Ghoroa Bazar",
+            email: process.env.EMAIL_USER,
+          },
+          to: [{ email: to }],
+          subject: subject,
+          htmlContent: html,
+        },
+        {
+          headers: {
+            "api-key": process.env.BREVO_API_KEY,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("✅ Email sent via Brevo API");
+    } catch (error) {
+      console.error(
+        "❌ Brevo API ERROR:",
+        error.response?.data || error.message
+      );
+      throw new Error("Email failed");
+    }
+  }
+
+  // 🧪 LOCAL → Nodemailer
+  else {
+    try {
+      await transporter.sendMail({
+        from: `"Ghoroa Bazar" <${process.env.EMAIL_USER}>`,
+        to,
+        subject,
+        html,
+      });
+
+      console.log("✅ Email sent via Nodemailer (local)");
+    } catch (error) {
+      console.error("❌ LOCAL EMAIL ERROR:", error);
+      throw new Error("Email failed");
     }
   }
 };
