@@ -1,39 +1,70 @@
 const nodemailer = require("nodemailer");
 require("dotenv").config();
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
+// ✅ Brevo transporter (PRIMARY)
+const brevoTransporter = nodemailer.createTransport({
+  host: "smtp-relay.brevo.com",
   port: 587,
   secure: false,
-  family: 4, // 👈 VERY IMPORTANT (force IPv4)
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    pass: process.env.BREVO_SMTP_KEY,
   },
+  connectionTimeout: 10000,
 });
 
-transporter.verify((err, success) => {
+// ✅ Gmail transporter (BACKUP)
+const gmailTransporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.GMAIL_APP_PASS,
+  },
+  family: 4, // 🔥 force IPv4 (Render issue fix)
+  connectionTimeout: 10000,
+});
+
+// ✅ Verify both SMTP connections (startup debug)
+brevoTransporter.verify((err) => {
   if (err) {
-    console.log("SMTP ERROR:", err);
+    console.log("❌ Brevo SMTP ERROR:", err.message);
   } else {
-    console.log("SMTP READY");
+    console.log("✅ Brevo SMTP READY");
   }
 });
 
-const sendEmail = async (to, subject, html) => {
-  try {
-    const mailOptions = {
-      from: '"Ghoroa Bazar" <' + process.env.EMAIL_USER + '>',
-      to,
-      subject,
-      html,
-    };
+gmailTransporter.verify((err) => {
+  if (err) {
+    console.log("❌ Gmail SMTP ERROR:", err.message);
+  } else {
+    console.log("✅ Gmail SMTP READY");
+  }
+});
 
-    await transporter.sendMail(mailOptions);
-    console.log("Email sent successfully to:", to);
-  } catch (error) {
-    console.error("FULL EMAIL ERROR:", error);
-    throw new Error("Failed to send email");
+// ✅ Main send function with fallback
+const sendEmail = async (to, subject, html) => {
+  const mailOptions = {
+    from: `"Ghoroa Bazar" <${process.env.EMAIL_USER}>`,
+    to,
+    subject,
+    html,
+  };
+
+  try {
+    // 🔥 Try Brevo first
+    await brevoTransporter.sendMail(mailOptions);
+    console.log("✅ Email sent via Brevo");
+  } catch (brevoError) {
+    console.log("⚠️ Brevo failed:", brevoError.message);
+
+    try {
+      // 🔁 Fallback Gmail
+      await gmailTransporter.sendMail(mailOptions);
+      console.log("✅ Email sent via Gmail");
+    } catch (gmailError) {
+      console.error("❌ Both email services failed:", gmailError);
+      throw new Error("All email services failed");
+    }
   }
 };
 
