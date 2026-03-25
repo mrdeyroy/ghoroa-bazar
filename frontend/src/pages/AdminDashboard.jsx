@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
 import AdminLayout from "../components/AdminLayout";
 import { Link } from "react-router-dom";
-import { 
-  ShoppingBag, 
-  Users, 
-  Package, 
-  CreditCard, 
-  ArrowUpRight, 
-  TrendingUp, 
-  Clock,
-  ArrowRight,
-  ChevronRight,
-  TrendingDown
+import {
+    ShoppingBag,
+    Users,
+    Package,
+    CreditCard,
+    ArrowUpRight,
+    TrendingUp,
+    Clock,
+    ArrowRight,
+    ChevronRight,
+    TrendingDown
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -26,16 +26,43 @@ export default function AdminDashboard() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch(import.meta.env.VITE_API_URL + "/api/admin/dashboard-stats")
-            .then(res => res.json())
-            .then(data => {
-                setStats(data);
-                setLoading(false);
-            })
-            .catch(err => {
+        const fetchStats = async () => {
+            try {
+                const token = localStorage.getItem("adminToken");
+
+                const res = await fetch(
+                    import.meta.env.VITE_API_URL + "/api/admin/dashboard-stats",
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+
+                // handle unauthorized
+                if (!res.ok) {
+                    throw new Error(`Request failed: ${res.status}`);
+                }
+
+                const data = await res.json();
+
+                // safe fallback to prevent crashes
+                setStats({
+                    totalOrders: data.totalOrders || 0,
+                    totalProducts: data.totalProducts || 0,
+                    totalUsers: data.totalUsers || 0,
+                    totalRevenue: data.totalRevenue || 0,
+                    recentOrders: data.recentOrders || []
+                });
+
+            } catch (err) {
                 console.error("Failed to load stats", err);
+            } finally {
                 setLoading(false);
-            });
+            }
+        };
+
+        fetchStats();
     }, []);
 
     if (loading) {
@@ -50,41 +77,41 @@ export default function AdminDashboard() {
     }
 
     const statCards = [
-        { 
-            title: "Total Revenue", 
-            value: `₹${stats.totalRevenue.toLocaleString()}`, 
-            icon: CreditCard, 
-            trend: "+12.5%", 
+        {
+            title: "Total Revenue",
+            value: `₹${(stats.totalRevenue || 0).toLocaleString()}`,
+            icon: CreditCard,
+            trend: "+12.5%",
             trendUp: true,
             color: "text-emerald-600",
             bg: "bg-emerald-50",
             border: "border-emerald-100"
         },
-        { 
-            title: "Total Orders", 
-            value: stats.totalOrders.toLocaleString(), 
-            icon: ShoppingBag, 
-            trend: "+5.4%", 
+        {
+            title: "Total Orders",
+            value: stats.totalOrders.toLocaleString(),
+            icon: ShoppingBag,
+            trend: "+5.4%",
             trendUp: true,
             color: "text-blue-600",
             bg: "bg-blue-50",
             border: "border-blue-100"
         },
-        { 
-            title: "Inventory Items", 
-            value: stats.totalProducts.toLocaleString(), 
-            icon: Package, 
-            trend: "0.2%", 
+        {
+            title: "Inventory Items",
+            value: stats.totalProducts.toLocaleString(),
+            icon: Package,
+            trend: "0.2%",
             trendUp: false,
             color: "text-orange-600",
             bg: "bg-orange-50",
             border: "border-orange-100"
         },
-        { 
-            title: "Registered Users", 
-            value: stats.totalUsers.toLocaleString(), 
-            icon: Users, 
-            trend: "+1.2%", 
+        {
+            title: "Registered Users",
+            value: stats.totalUsers.toLocaleString(),
+            icon: Users,
+            trend: "+1.2%",
             trendUp: true,
             color: "text-purple-600",
             bg: "bg-purple-50",
@@ -115,7 +142,7 @@ export default function AdminDashboard() {
                         className="bg-white p-6 sm:p-8 rounded-[28px] sm:rounded-[32px] shadow-sm border border-gray-100 relative overflow-hidden group transition-all hover:shadow-xl hover:-translate-y-1"
                     >
                         <div className={`absolute -right-4 -top-4 w-24 h-24 ${card.bg} rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-500`} />
-                        
+
                         <div className="relative z-10">
                             <div className="flex items-center justify-between mb-4 sm:mb-6">
                                 <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl ${card.bg} ${card.color} flex items-center justify-center transition-transform group-hover:scale-110`}>
@@ -126,7 +153,7 @@ export default function AdminDashboard() {
                                     {card.trend}
                                 </div>
                             </div>
-                            
+
                             <p className="text-[9px] sm:text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">{card.title}</p>
                             <h3 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tighter">{card.value}</h3>
                         </div>
@@ -150,7 +177,7 @@ export default function AdminDashboard() {
                         </Link>
                     </div>
 
-                    {stats.recentOrders.length === 0 ? (
+                    {!stats.recentOrders || stats.recentOrders.length === 0 ? (
                         <div className="py-20 text-center border-2 border-dashed border-gray-50 rounded-[32px]">
                             <p className="text-gray-400 font-medium">System reports zero recent transactions.</p>
                         </div>
@@ -186,11 +213,10 @@ export default function AdminDashboard() {
                                                 </td>
                                                 <td className="px-6 py-5 bg-white border-y border-r border-gray-50 rounded-r-3xl first:border-r-0 text-center">
                                                     <span
-                                                        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                                                            order.orderStatus === "Delivered" ? "bg-green-100 text-green-700" : 
-                                                            order.orderStatus === "Cancelled" ? "bg-red-100 text-red-700" : 
-                                                            "bg-blue-100 text-blue-700"
-                                                        }`}
+                                                        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${order.orderStatus === "Delivered" ? "bg-green-100 text-green-700" :
+                                                            order.orderStatus === "Cancelled" ? "bg-red-100 text-red-700" :
+                                                                "bg-blue-100 text-blue-700"
+                                                            }`}
                                                     >
                                                         {order.orderStatus || "Placed"}
                                                     </span>
@@ -210,7 +236,7 @@ export default function AdminDashboard() {
                         <div className="absolute top-0 right-0 w-32 h-32 bg-green-500 rounded-full blur-[100px] opacity-30" />
                         <h4 className="text-xl font-black mb-2 relative z-10">Admin Access</h4>
                         <p className="text-gray-400 text-sm mb-10 relative z-10 line-clamp-2 sm:line-clamp-none">Your operational control panel is active. Perform batch updates directly from order logs.</p>
-                        
+
                         <div className="space-y-4 relative z-10">
                             <Link to="/admin/products" className="flex items-center justify-between p-4 bg-white/10 rounded-2xl hover:bg-white/20 transition-all group">
                                 <span className="text-sm font-bold">Manage Products</span>
