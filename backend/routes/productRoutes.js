@@ -1,7 +1,9 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const router = express.Router();
 const Product = require("../models/Product");
 const Order = require("../models/Order");
+const Notification = require("../models/Notification");
 const cloudinary = require("../utils/cloudinary");
 
 const adminMiddleware = require("../middleware/adminMiddleware");
@@ -24,6 +26,12 @@ router.post("/",
     try {
       const product = new Product(req.body);
       await product.save();
+      
+      const io = req.app.get("io");
+      if (io) {
+        io.emit("stockUpdated", { productId: product._id, stock: product.stock });
+      }
+      
       res.status(201).json(product);
     } catch (err) {
       console.error(err);
@@ -31,12 +39,17 @@ router.post("/",
     }
 });
 
-// 2️⃣ GET ALL products (Public)
+// 2️⃣ GET ALL products (Public) — Extended with filters, sorting, smart filters
 router.get("/", async (req, res) => {
   try {
-    const { category, search, featured, minPrice, maxPrice } = req.query;
+    const { category, search, featured, minPrice, maxPrice, rating, stock, sort, smart } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
     const query = {};
 
+    // ── Existing filters (preserved) ──
     if (category) query.category = category;
     if (featured) query.featured = (featured === "true");
     if (search) query.name = { $regex: search, $options: "i" };
@@ -47,9 +60,104 @@ router.get("/", async (req, res) => {
       if (maxPrice) query.price.$lte = Number(maxPrice);
     }
 
-    const products = await Product.find(query).sort({ createdAt: -1 });
-    res.json(products);
+    // ── NEW: Rating filter ──
+    if (rating) {
+      const ratingVal = Number(rating);
+      if (!isNaN(ratingVal)) {
+        query.rating = { $gte: ratingVal };
+      }
+    }
+
+    // ── NEW: Stock filter ──
+    if (stock === "in") {
+      query.stock = { $gt: 0 };
+    } else if (stock === "out") {
+      query.stock = { $lte: 0 };
+    }
+
+    // ── NEW: Smart filter pre-processing ──
+    if (smart === "best_value") {
+      query.rating = { ...(query.rating || {}), $gte: 4.2 };
+    }
+
+    // ── Determine sort order ──
+    let sortOption = { createdAt: -1 };
+    
+    if (sort) {
+      switch (sort) {
+        case "price_low_high":
+          sortOption = { price: 1 };
+          break;
+        case "price_high_low":
+          sortOption = { price: -1 };
+          break;
+        case "best_selling":
+          sortOption = { purchaseCount: -1 };
+          break;
+        case "new_arrivals":
+          sortOption = { createdAt: -1 };
+          break;
+        case "top_rated":
+          sortOption = { rating: -1 };
+          break;
+        default:
+          sortOption = { createdAt: -1 };
+      }
+    }
+
+    if (smart === "trending") sortOption = { purchaseCount: -1 };
+    if (smart === "best_value") sortOption = { rating: -1, price: 1 };
+    if (smart === "recommended") sortOption = { rating: -1, purchaseCount: -1 };
+
+    const totalItems = await Product.countDocuments(query);
+    const products = await Product.find(query)
+      .sort(sortOption)
+      .skip(skip)
+      .limit(limit);
+
+    // ── Compute dynamic tags for each product ──
+    let data = products;
+    if (products.length > 0) {
+      const categoryStats = await Product.aggregate([
+        { $group: {
+          _id: "$category",
+          avgPrice: { $avg: "$price" },
+          maxRating: { $max: "$rating" }
+        }}
+      ]);
+      const categoryMap = {};
+      categoryStats.forEach(c => { categoryMap[c._id] = c; });
+
+      const totalProductsCount = await Product.countDocuments();
+      const trendingLimit = Math.max(1, Math.ceil(totalProductsCount * 0.2));
+      const topProducts = await Product.find({}, { purchaseCount: 1 })
+        .sort({ purchaseCount: -1 })
+        .limit(trendingLimit);
+      
+      const trendingThreshold = topProducts.length > 0 
+        ? Math.max(1, topProducts[topProducts.length - 1].purchaseCount) 
+        : 1;
+
+      data = products.map(p => {
+        const pObj = p.toObject();
+        pObj.tags = [];
+        if (pObj.purchaseCount >= trendingThreshold) pObj.tags.push("trending");
+        const catStats = categoryMap[pObj.category];
+        if (catStats && pObj.rating >= 4.0 && pObj.price <= catStats.avgPrice) {
+          pObj.tags.push("best_value");
+        }
+        return pObj;
+      });
+    }
+
+    res.json({
+      data,
+      currentPage: page,
+      totalPages: Math.ceil(totalItems / limit),
+      totalItems
+    });
   } catch (err) {
+    console.error("Product fetch error:", err);
     res.status(500).json({ error: "Failed to fetch products" });
   }
 });
@@ -85,12 +193,16 @@ router.put("/:id", adminMiddleware, async (req, res) => {
       return res.status(404).json({ error: "Product not found" });
     }
 
+    const oldStock = product.stock;
     if (req.body.name) product.name = req.body.name;
     if (req.body.price) product.price = req.body.price;
     if (req.body.category) product.category = req.body.category;
     if (req.body.stock !== undefined) product.stock = req.body.stock;
     if (req.body.description) product.description = req.body.description;
     if (req.body.featured !== undefined) product.featured = req.body.featured;
+
+    // Check for stock refill notification (0 -> >0)
+    const isRefilled = oldStock === 0 && product.stock > 0;
 
     if (req.body.images && product.images) {
       const currentPublicIds = req.body.images.map(img => img.public_id);
@@ -111,6 +223,29 @@ router.put("/:id", adminMiddleware, async (req, res) => {
     });
 
     await product.save();
+
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("stockUpdated", { productId: product._id, stock: product.stock });
+      
+      if (isRefilled) {
+        const notificationData = {
+          message: `🔥 ${product.name} is back in stock!`,
+          type: "stock",
+          role: "user"
+        };
+        const notification = new Notification(notificationData);
+        await notification.save();
+
+        io.emit("stock:update", {
+          ...notificationData,
+          _id: notification._id,
+          productId: product._id,
+          createdAt: notification.createdAt
+        });
+      }
+    }
+
     res.json(product);
   } catch (err) {
     console.error("Update error:", err);
@@ -259,6 +394,37 @@ router.get("/recommend/:productId/:userId", async (req, res) => {
   } catch (err) {
     console.error("Recommendation error:", err);
     res.status(500).json({ error: "Failed to fetch recommendations" });
+  }
+});
+
+// 8️⃣ SYNC purchaseCount from historical orders (Admin Only)
+router.post("/stats/purchase-sync", adminMiddleware, async (req, res) => {
+  try {
+    const orders = await Order.find({ orderStatus: { $nin: ["Cancelled", "pending_verification"] } });
+    
+    // Reset all purchaseCounts
+    await Product.updateMany({}, { $set: { purchaseCount: 0 } });
+    
+    const productCounts = {};
+    orders.forEach(order => {
+      order.items.forEach(item => {
+        const pid = item.productId.toString();
+        productCounts[pid] = (productCounts[pid] || 0) + (item.qty || 0);
+      });
+    });
+    
+    const updatePromises = Object.entries(productCounts)
+      .filter(([id]) => mongoose.Types.ObjectId.isValid(id))
+      .map(([id, count]) => 
+        Product.findByIdAndUpdate(id, { $set: { purchaseCount: count } })
+      );
+      
+    await Promise.all(updatePromises);
+    
+    res.json({ message: "Purchase counts synchronized successfully", updatedCount: updatePromises.length });
+  } catch (err) {
+    console.error("Sync error:", err);
+    res.status(500).json({ error: "Failed to sync purchase counts" });
   }
 });
 

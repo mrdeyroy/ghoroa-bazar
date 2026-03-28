@@ -31,6 +31,9 @@ export default function AdminProducts() {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
   const [dragActive, setDragActive] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
 
   const emptyForm = {
     name: "",
@@ -54,21 +57,26 @@ export default function AdminProducts() {
 
   const fetchProducts = () => {
     const token = localStorage.getItem("adminToken");
-    fetch(import.meta.env.VITE_API_URL + "/api/products", {
+    fetch(`${import.meta.env.VITE_API_URL}/api/products?page=${currentPage}&limit=10`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
     })
       .then(res => res.json())
-      .then((data) => {
-        console.log("Fetched products, first item category:", data[0]?.category);
-        setProducts(data);
+      .then((result) => {
+        if (result && result.data) {
+          setProducts(result.data);
+          setTotalPages(result.totalPages || 1);
+          setTotalItems(result.totalItems || 0);
+        } else {
+          setProducts(Array.isArray(result) ? result : []);
+        }
       });
   };
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [currentPage]);
 
   const [submitting, setSubmitting] = useState(false);
 
@@ -569,7 +577,7 @@ export default function AdminProducts() {
              Registry Records
            </h3>
            <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-              Total Managed: {products.length}
+              Total Records: {totalItems}
            </div>
         </div>
 
@@ -632,6 +640,54 @@ export default function AdminProducts() {
             </div>
           ))}
         </div>
+
+        {/* PAGINATION UI */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 py-12 border-t border-gray-100 mt-6">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="w-12 h-12 rounded-2xl flex items-center justify-center border border-gray-100 bg-white text-gray-400 hover:text-green-700 hover:border-green-200 transition-all disabled:opacity-30 disabled:cursor-not-allowed group active:scale-95 shadow-sm"
+            >
+              <ChevronRight size={20} className="rotate-180 group-hover:-translate-x-1 transition-transform" />
+            </button>
+            
+            <div className="flex items-center gap-1.5 px-4 bg-gray-50/50 py-2 rounded-3xl border border-gray-100">
+              {[...Array(totalPages)].map((_, idx) => {
+                const pageNum = idx + 1;
+                // Simple pagination truncation
+                if (totalPages > 5) {
+                    if (pageNum !== 1 && pageNum !== totalPages && Math.abs(pageNum - currentPage) > 1) {
+                        if (pageNum === 2 && currentPage > 3) return <span key={pageNum} className="text-gray-300 px-1">...</span>;
+                        if (pageNum === totalPages - 1 && currentPage < totalPages - 2) return <span key={pageNum} className="text-gray-300 px-1">...</span>;
+                        return null;
+                    }
+                }
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`w-10 h-10 rounded-xl text-xs font-black transition-all ${
+                      currentPage === pageNum 
+                        ? "bg-[#1F7A3B] text-white shadow-lg shadow-green-100" 
+                        : "bg-white text-gray-400 border border-gray-100 hover:border-green-200 hover:text-green-700"
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="w-12 h-12 rounded-2xl flex items-center justify-center border border-gray-100 bg-white text-gray-400 hover:text-green-700 hover:border-green-200 transition-all disabled:opacity-30 disabled:cursor-not-allowed group active:scale-95 shadow-sm"
+            >
+              <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );

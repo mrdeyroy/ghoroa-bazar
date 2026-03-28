@@ -30,6 +30,9 @@ import socket from "../utils/socket";
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   
@@ -39,21 +42,29 @@ export default function AdminOrders() {
 
   const fetchOrders = useCallback(async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem("adminToken");
-      const res = await fetch(import.meta.env.VITE_API_URL + "/api/orders", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders?page=${currentPage}&limit=7`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
-      const data = await res.json();
-      setOrders(Array.isArray(data) ? data : []);
+      const result = await res.json();
+      
+      if (result && result.data) {
+        setOrders(result.data);
+        setTotalPages(result.totalPages || 1);
+        setTotalItems(result.totalItems || 0);
+      } else {
+        setOrders(Array.isArray(result) ? result : []);
+      }
       setLoading(false);
     } catch (err) {
       console.error("Failed to fetch orders", err);
       setOrders([]);
       setLoading(false);
     }
-  }, []);
+  }, [currentPage]);
 
   useEffect(() => {
     fetchOrders();
@@ -102,6 +113,8 @@ export default function AdminOrders() {
     }
   };
 
+  // Note: With server-side pagination, we would ideally move these filters to the backend
+  // For now, we filter the current page's results
   const filteredOrders = orders.filter(order => {
     const matchesSearch = 
         order._id.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -135,7 +148,10 @@ export default function AdminOrders() {
   return (
     <AdminLayout>
       <div className="mb-8 sm:mb-10">
-        <h1 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">System Order Registry</h1>
+        <h1 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight flex items-center gap-3">
+          System Order Registry
+          <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-black -translate-y-1">{totalItems}</span>
+        </h1>
         <p className="text-gray-400 font-medium mt-1 uppercase tracking-widest text-[8px] sm:text-[10px] pl-1">Global management of all customer transactions</p>
       </div>
 
@@ -383,6 +399,55 @@ export default function AdminOrders() {
             })
           )}
         </div>
+
+        {/* PAGINATION UI */}
+        {totalPages > 1 && (
+          <div className="p-6 border-t border-gray-50 flex items-center justify-between bg-gray-50/30 font-black">
+            <p className="hidden sm:block text-[10px] uppercase text-gray-400 tracking-widest">
+              Showing page {currentPage} of {totalPages} ({totalItems} total orders)
+            </p>
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-center">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1 || loading}
+                className="w-10 h-10 rounded-xl flex items-center justify-center border border-gray-200 bg-white text-gray-400 hover:text-green-700 hover:border-green-200 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm active:scale-95"
+              >
+                <div className="rotate-90">
+                  <ChevronDown className="w-4 h-4" />
+                </div>
+              </button>
+              
+              <div className="flex items-center gap-1.5">
+                {[...Array(totalPages)].map((_, idx) => {
+                  const pageNum = idx + 1;
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`w-10 h-10 rounded-xl text-[10px] transition-all shadow-sm ${
+                        currentPage === pageNum 
+                          ? "bg-[#0F1E11] text-white scale-110 shadow-green-900/10" 
+                          : "bg-white text-gray-400 border border-gray-200 hover:border-green-200 hover:text-[#0F1E11]"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages || loading}
+                className="w-10 h-10 rounded-xl flex items-center justify-center border border-gray-200 bg-white text-gray-400 hover:text-green-700 hover:border-green-200 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm active:scale-95"
+              >
+                <div className="-rotate-90">
+                  <ChevronDown className="w-4 h-4" />
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* OVERLOOK MODAL - FULLY RESPONSIVE */}

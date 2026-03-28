@@ -2,9 +2,11 @@ import { useCart } from "../context/CartContext";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useStock } from "../context/StockContext";
 
 export default function CartSidebar({ open, onClose }) {
   const { cart, increaseQty, decreaseQty, removeItem } = useCart();
+  const { getStock } = useStock();
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -24,7 +26,10 @@ export default function CartSidebar({ open, onClose }) {
 
 
   const hasStockIssue = cart.some(
-    item => !item.stock || item.qty >= item.stock
+    item => {
+      const currentStock = getStock(item.id, item.stock);
+      return currentStock !== undefined && item.qty > currentStock;
+    }
   );
 
   const triggerToast = (msg) => {
@@ -103,9 +108,10 @@ export default function CartSidebar({ open, onClose }) {
           )}
 
           {cart.map(item => {
-  const maxReached = item.qty >= item.stock;
+            const currentStock = getStock(item.id, item.stock);
+            const maxReached = currentStock !== undefined && item.qty >= currentStock;
 
-  return (
+            return (
     <div
       key={`${item.id}-${item.selectedWeight}`}
       style={{
@@ -201,8 +207,8 @@ export default function CartSidebar({ open, onClose }) {
                   </div>
 
                   {maxReached && (
-                    <div style={{ fontSize: 12, color: "red" }}>
-                      Stock limit reached
+                    <div style={{ fontSize: 11, color: "#1f7a3b", fontWeight: "bold", marginTop: 4 }}>
+                      Maximum available stock reached
                     </div>
                   )}
                 </div>

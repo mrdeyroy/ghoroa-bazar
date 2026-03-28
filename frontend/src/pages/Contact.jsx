@@ -130,7 +130,7 @@ export default function Contact() {
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            className="text-5xl md:text-6xl font-black text-gray-900 tracking-tight"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 tracking-tight"
           >
             Let's Start a <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-green-800">Conversation</span>
           </motion.h1>
@@ -201,7 +201,7 @@ export default function Contact() {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
-              className="bg-white rounded-[50px] p-8 md:p-14 shadow-2xl shadow-green-100/30 border border-gray-100"
+              className="bg-white rounded-3xl md:rounded-[50px] p-6 sm:p-8 md:p-14 shadow-2xl shadow-green-100/30 border border-gray-100"
             >
               <div className="mb-12">
                 <span className="flex items-center gap-3 text-green-600 font-black uppercase text-xs tracking-[0.2em] mb-4">
@@ -280,7 +280,7 @@ export default function Contact() {
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
-          className="mt-24 rounded-[60px] overflow-hidden h-[450px] shadow-2xl shadow-green-50 border-8 border-white"
+          className="mt-16 md:mt-24 rounded-3xl md:rounded-[60px] overflow-hidden h-[280px] md:h-[450px] shadow-2xl shadow-green-50 border-4 md:border-8 border-white"
         >
           <iframe
             title="map"

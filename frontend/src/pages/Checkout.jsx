@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useCart } from "../context/CartContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { 
   User, 
@@ -444,6 +444,10 @@ export default function Checkout() {
                 )}
               </button>
               
+              <p className="text-[10px] text-gray-400 mt-4 text-center leading-relaxed px-4">
+                By clicking "Proceed to Payment", you agree to our <Link to="/refund-policy" className="text-[#1F7A3B] hover:underline font-bold">Refund & Return Policy</Link>.
+              </p>
+
               <div className="mt-8 pt-8 border-t border-gray-100">
                 <div className="flex items-center justify-center gap-3 mb-6">
                     <Lock className="w-4 h-4 text-green-600" />

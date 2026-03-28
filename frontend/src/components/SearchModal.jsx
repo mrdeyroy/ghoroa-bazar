@@ -7,45 +7,46 @@ const RECENT_KEY = "gb_recent_searches";
 
 export default function SearchModal({ open, onClose }) {
   const [query, setQuery] = useState("");
-  const [products, setProducts] = useState([]);
-  const [filtered, setFiltered] = useState([]);
+  const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [recent, setRecent] = useState([]);
 
   const inputRef = useRef(null);
   const navigate = useNavigate();
 
-  /* fetch products (same as Home) */
+  // Load recent searches and focus on open
   useEffect(() => {
     if (!open) return;
-
-    setLoading(true);
-    fetch(import.meta.env.VITE_API_URL + "/api/products")
-      .then(res => res.json())
-      .then(data => setProducts(data))
-      .catch(() => setProducts([]))
-      .finally(() => setLoading(false));
-
     const stored = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
     setRecent(stored);
-
     setTimeout(() => inputRef.current?.focus(), 100);
   }, [open]);
 
-  /* filter logic */
+  // Server-side debounced search logic
   useEffect(() => {
+    if (!open) return;
+    
     if (!query.trim()) {
-      setFiltered([]);
+      setResults([]);
       return;
     }
 
-    const q = query.toLowerCase();
-    setFiltered(
-      products.filter(p =>
-        p.name.toLowerCase().includes(q)
-      )
-    );
-  }, [query, products]);
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/products?search=${encodeURIComponent(query)}&limit=8`);
+        const result = await res.json();
+        setResults(result.data || (Array.isArray(result) ? result : []));
+      } catch (err) {
+        console.error("Search error:", err);
+        setResults([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 400); // 400ms debounce
+
+    return () => clearTimeout(timer);
+  }, [query, open]);
 
   /* ESC close */
   useEffect(() => {
@@ -117,20 +118,26 @@ export default function SearchModal({ open, onClose }) {
 
         {/* RESULTS */}
         <div className="results">
-          {loading && <p>Loading products...</p>}
-
-          {!loading && filtered.length > 0 && (
+          {loading ? (
+            <div className="flex flex-col items-center py-10">
+              <div className="w-8 h-8 border-2 border-green-100 border-t-green-600 rounded-full animate-spin mb-3"></div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Searching Warehouse...</p>
+            </div>
+          ) : results.length > 0 ? (
             <div className="product-grid">
-              {filtered.map(p => (
+              {results.map(p => (
                 <div key={p._id} onClick={onClose}>
                   <ProductCard product={p} />
                 </div>
               ))}
             </div>
-          )}
-
-          {!loading && query && filtered.length === 0 && (
-            <p className="empty">No products found</p>
+          ) : query && (
+            <div className="py-12 text-center">
+              <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Search size={32} className="text-gray-200" />
+              </div>
+              <p className="text-sm font-bold text-gray-400">No matching products found</p>
+            </div>
           )}
         </div>
       </div>

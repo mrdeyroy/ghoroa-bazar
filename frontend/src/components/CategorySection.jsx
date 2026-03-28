@@ -22,7 +22,7 @@ export default function CategorySection() {
           {CATEGORIES.map((cat) => (
             <div
               key={cat.slug}
-              onClick={() => navigate(`/products?category=${cat.name}`)}
+              onClick={() => navigate(`/products?category=${encodeURIComponent(cat.name)}`)}
               className="flex-shrink-0 w-24 md:w-32 cursor-pointer group"
             >
               <div className="aspect-square rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center mb-3 transition-all duration-300 group-hover:shadow-xl group-hover:shadow-green-100 overflow-hidden">

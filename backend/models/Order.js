@@ -40,8 +40,16 @@ const orderSchema = new mongoose.Schema({
 
   orderStatus: {
     type: String,
+    enum: ["pending_verification", "Placed", "Packed", "Shipped", "Delivered", "Cancelled"],
     default: "Placed"
   },
+
+  // COD OTP Verification
+  codOTP: String,
+  codOtpExpiry: Date,
+  codOtpAttempts: { type: Number, default: 0 },
+
+  shippingMethod: String,
 
   orderHistory: [
     {

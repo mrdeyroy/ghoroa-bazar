@@ -10,8 +10,8 @@ export default function FeaturedProducts() {
   useEffect(() => {
     fetch(import.meta.env.VITE_API_URL + "/api/products?featured=true&limit=4")
       .then((res) => res.json())
-      .then((data) => {
-        setProducts(data);
+      .then((result) => {
+        setProducts(result.data || (Array.isArray(result) ? result : []));
         setLoading(false);
       })
       .catch((err) => {

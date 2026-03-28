@@ -31,6 +31,8 @@ const uploadRoutes = require("./routes/uploadRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const userRoutes = require("./routes/userRoutes");
 const contactRoutes = require("./routes/contact");
+const broadcastRoutes = require("./routes/broadcastRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 
 const app = express();
 const server = http.createServer(app);
@@ -94,6 +96,8 @@ const io = new Server(server, {
   transports: ["websocket"],
 });
 
+app.set("io", io);
+
 // Socket.IO Connection Handler
 io.on("connection", (socket) => {
   logger.info(`🟢 Socket connected: ${socket.id}`);
@@ -110,6 +114,18 @@ io.on("connection", (socket) => {
     const roomId = `user_${userId}`;
     socket.join(roomId);
     logger.info(`👤 Socket ${socket.id} joined user room: ${roomId}`);
+  });
+
+  // Instruction-specific join handler
+  socket.on("join", ({ userId, role }) => {
+    if (role === "admin") {
+      socket.join("admin_room");
+      logger.info(`🛡️ Socket ${socket.id} (admin) joined admin room via generic join`);
+    } else if (userId) {
+      const roomId = `user_${userId}`;
+      socket.join(roomId);
+      logger.info(`👤 Socket ${socket.id} (user) joined room ${roomId} via generic join`);
+    }
   });
 
   socket.on("joinAdminRoom", () => {
@@ -133,6 +149,8 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/contact", contactRoutes);
+app.use("/api/admin/broadcast", broadcastRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Health check
 app.get("/", (req, res) => {

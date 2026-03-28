@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { User, Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import axios from "axios";
@@ -15,6 +15,44 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const turnstileRef = useRef(null);
+  const isRendered = useRef(false);
+
+  useEffect(() => {
+    const renderWidget = () => {
+      if (window.turnstile && turnstileRef.current && !isRendered.current) {
+        try {
+          window.turnstile.render(turnstileRef.current, {
+            sitekey: import.meta.env.VITE_TURNSTILE_SITE_KEY,
+            theme: "light",
+            callback: (token) => {
+              // Optional: can handle token here if needed
+            },
+            "error-callback": () => {
+              setError("CAPTCHA failed to load. Please refresh the page.");
+            }
+          });
+          isRendered.current = true;
+        } catch (err) {
+          console.error("Turnstile error:", err);
+        }
+      }
+    };
+
+    // If Turnstile is already loaded
+    if (window.turnstile) {
+      renderWidget();
+    } else {
+      // Polling for Turnstile availability (script is async/defer)
+      const interval = setInterval(() => {
+        if (window.turnstile) {
+          renderWidget();
+          clearInterval(interval);
+        }
+      }, 500);
+      return () => clearInterval(interval);
+    }
+  }, []);
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -27,11 +65,20 @@ export default function Signup() {
 
     setLoading(true);
 
+    // Get Turnstile token
+    const captchaToken = window.turnstile?.getResponse();
+    if (!captchaToken) {
+      setError("Please complete the CAPTCHA verification.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await axios.post(import.meta.env.VITE_API_URL + "/api/users/signup", {
         name: form.name,
         email: form.email,
-        password: form.password
+        password: form.password,
+        "cf-turnstile-response": captchaToken
       });
       if (res.status === 201) {
         navigate("/verify-email", { state: { email: form.email } });
@@ -180,6 +227,13 @@ export default function Signup() {
                   </button>
                 </div>
               </div>
+
+              {/* Cloudflare Turnstile CAPTCHA Container */}
+              <div 
+                ref={turnstileRef}
+                className="mb-4 flex justify-center" 
+                id="turnstile-container"
+              ></div>
 
               <motion.button
                 whileHover={{ scale: 1.02, y: -2 }}

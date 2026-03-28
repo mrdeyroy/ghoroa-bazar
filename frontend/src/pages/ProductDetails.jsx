@@ -3,14 +3,15 @@ import { useEffect, useState, useRef } from "react";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useWishlist } from "../context/WishlistContext";
-import { 
-  Star, 
-  MessageSquare, 
-  Send, 
-  User, 
-  ChevronDown, 
-  ChevronUp, 
-  Heart, 
+import { useStock } from "../context/StockContext";
+import {
+  Star,
+  MessageSquare,
+  Send,
+  User,
+  ChevronDown,
+  ChevronUp,
+  Heart,
   ShoppingCart,
   Loader2,
   Plus,
@@ -18,7 +19,8 @@ import {
   ShieldCheck,
   Leaf,
   Truck,
-  ThumbsUp
+  ThumbsUp,
+  AlertCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Skeleton from "../components/Skeleton";
@@ -31,6 +33,7 @@ export default function ProductDetails() {
   const { cart, addToCart } = useCart();
   const { user, token } = useAuth();
   const { wishlist, addToWishlist, removeFromWishlist, isWishlisted } = useWishlist();
+  const { getStock } = useStock();
 
   const [loading, setLoading] = useState(true);
   const [product, setProduct] = useState(null);
@@ -192,12 +195,15 @@ export default function ProductDetails() {
   if (!product) return <div className="p-20 text-center text-gray-500">Product not found</div>;
 
   const finalPrice = selectedWeight ? selectedWeight.price : product.price;
+  const currentLiveStock = getStock(product._id, product.stock);
+  const isOutOfStock = currentLiveStock === 0;
+  const isLowStock = currentLiveStock > 0 && currentLiveStock <= 5;
 
   return (
     <div className="min-h-screen bg-white">
       {/* TOAST NOTIFICATION */}
       {toast && (
-        <div className="fixed top-24 right-6 bg-green-600 text-white px-6 py-3 rounded-xl shadow-2xl z-[100] animate-in fade-in slide-in-from-right-10 duration-300">
+        <div className="fixed top-24 right-4 left-4 sm:left-auto sm:right-6 bg-green-600 text-white px-6 py-3 rounded-xl shadow-2xl z-[100] animate-in fade-in slide-in-from-right-10 duration-300 text-sm">
           {toast}
         </div>
       )}
@@ -230,8 +236,8 @@ export default function ProductDetails() {
                 animate={{ opacity: 1, x: 0 }}
                 src={product.images?.[activeImage]?.url || product.image}
                 alt={product.name}
-                className={`w-full h-full object-contain transition-transform duration-200 ${isZoomed ? 'scale-[2]' : 'scale-100'}`}
-                style={isZoomed ? { transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` } : {}}
+                className={`w-full h-full object-contain transition-all duration-500 ${isZoomed ? 'scale-[2]' : 'scale-100'} ${isOutOfStock ? 'grayscale opacity-60' : 'grayscale-0 opacity-100'}`}
+                style={isZoomed && !isOutOfStock ? { transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` } : {}}
               />
               
               {/* MOBILE SWIPE INDICATOR */}
@@ -265,7 +271,7 @@ export default function ProductDetails() {
               <p className="text-sm font-bold text-green-600 uppercase tracking-widest mb-2">
                 {product.brand || product.category}
               </p>
-              <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
                 {product.name}
               </h1>
               
@@ -279,6 +285,17 @@ export default function ProductDetails() {
                   {product.numReviews || 0} Ratings & Reviews
                 </span>
               </div>
+
+              {isLowStock && (
+                <motion.div 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="flex items-center gap-2 mt-4 px-4 py-2 bg-amber-50 rounded-2xl border border-amber-100 animate-pulse"
+                >
+                  <AlertCircle size={18} className="text-amber-600" />
+                  <span className="text-sm font-black text-amber-800 uppercase tracking-tight">Only {currentLiveStock} left in stock - Order Soon!</span>
+                </motion.div>
+              )}
             </div>
 
             <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100 space-y-4">
@@ -319,7 +336,7 @@ export default function ProductDetails() {
             )}
 
             {/* ACTION BUTTONS */}
-            <div className="flex gap-4 pt-2">
+            <div className="flex flex-wrap gap-3 sm:gap-4 pt-2">
               <div className="flex-1 flex items-center bg-gray-100 rounded-2xl overflow-hidden border border-gray-200">
                 <button 
                   onClick={() => setQty(Math.max(1, qty - 1))}
@@ -338,10 +355,21 @@ export default function ProductDetails() {
 
               <button
                 onClick={handleAddToCart}
-                className="flex-[2] bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-green-200 transition-all flex items-center justify-center gap-3 active:scale-95"
+                disabled={isOutOfStock}
+                className={`flex-[2] min-w-[140px] py-3.5 sm:py-4 rounded-2xl font-black text-base shadow-lg transition-all flex items-center justify-center gap-3 active:scale-95 min-h-[44px] ${
+                  isOutOfStock
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed border-2 border-gray-200 shadow-none"
+                    : "bg-green-600 hover:bg-green-700 text-white shadow-green-200"
+                }`}
               >
-                <ShoppingCart size={22} />
-                Add to Cart
+                {isOutOfStock ? (
+                  "OUT OF STOCK"
+                ) : (
+                  <>
+                    <ShoppingCart size={22} />
+                    Add to Cart
+                  </>
+                )}
               </button>
 
               <button 
@@ -404,7 +432,7 @@ export default function ProductDetails() {
         {/* CUSTOMER REVIEWS SECTION */}
         <div className="mt-20 lg:mt-32 space-y-12">
           <div className="text-center space-y-2">
-            <h2 className="text-3xl font-black text-gray-900 tracking-tight">Customer Reviews</h2>
+            <h2 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Customer Reviews</h2>
             <div className="flex justify-center items-center gap-2">
               {renderStars(product.rating || 4.5)}
               <span className="text-gray-500 text-sm font-bold">Based on {product.numReviews || 0} verified reviews</span>
@@ -455,7 +483,7 @@ export default function ProductDetails() {
             </div>
 
             {/* REVIEW FORM */}
-            <div className="sticky top-24 h-fit bg-gray-50 p-8 rounded-[40px] border border-gray-100 shadow-sm">
+            <div className="lg:sticky lg:top-24 h-fit bg-gray-50 p-5 sm:p-8 rounded-3xl md:rounded-[40px] border border-gray-100 shadow-sm">
               {user ? (
                 <form onSubmit={handleReviewSubmit} className="space-y-6">
                   <h3 className="text-xl font-black text-gray-900">Share your thoughts</h3>
@@ -511,7 +539,7 @@ export default function ProductDetails() {
 
         {/* RECOMMENDATIONS SECTION */}
         <div className="mt-20 lg:mt-32 border-t border-gray-100 pt-20">
-          <h2 className="text-3xl font-black text-gray-900 mb-10 text-center tracking-tight">You May Also Like</h2>
+          <h2 className="text-2xl md:text-3xl font-black text-gray-900 mb-10 text-center tracking-tight">You May Also Like</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-8">
             {related.length > 0 ? (
               related.map(p => (

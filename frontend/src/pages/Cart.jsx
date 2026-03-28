@@ -4,9 +4,11 @@ import { useState } from "react";
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, ShieldCheck, Truck, RotateCcw } from "lucide-react";
 import BackButton from "../components/BackButton";
 import ProductCard from "../components/ProductCard";
+import { useStock } from "../context/StockContext";
 
 export default function Cart() {
   const { cart, increaseQty, decreaseQty, removeItem } = useCart();
+  const { getStock } = useStock();
   const navigate = useNavigate();
 
   const [showToast, setShowToast] = useState(false);
@@ -18,7 +20,10 @@ export default function Cart() {
   );
 
   const hasStockIssue = cart.some(
-    item => !item.stock || item.qty >= item.stock
+    item => {
+      const currentStock = getStock(item.id, item.stock);
+      return currentStock !== undefined && item.qty > currentStock;
+    }
   );
 
   const triggerToast = (text) => {
@@ -88,7 +93,8 @@ export default function Cart() {
             {/* ITEM LIST */}
             <div className="space-y-4">
               {cart.map(item => {
-                const maxReached = item.stock !== undefined && item.qty >= item.stock;
+                const currentStock = getStock(item.id, item.stock);
+                const maxReached = currentStock !== undefined && item.qty >= currentStock;
 
                 return (
                   <div
@@ -202,7 +208,7 @@ export default function Cart() {
                 <RotateCcw className="w-6 h-6 text-green-600" />
                 <div>
                   <p className="text-xs font-bold text-gray-800">Easy Returns</p>
-                  <p className="text-[10px] text-gray-500">7-day policy</p>
+                  <p className="text-[10px] text-gray-500">24-48h policy</p>
                 </div>
               </div>
             </div>

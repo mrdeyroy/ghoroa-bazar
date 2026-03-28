@@ -4,24 +4,15 @@ import socket from "../utils/socket";
 
 const NotificationContext = createContext();
 
-/**
- * Global notification provider.
- * 
- * - Manages socket connection lifecycle for both user and admin
- * - Listens for `orderNotification` (user) and `newOrderNotification` (admin)
- * - Provides toast queue + unread badge count to the entire app
- * - Deduplicates joins via refs; cleans up on unmount
- */
 export const NotificationProvider = ({ children }) => {
-  const [notifications, setNotifications] = useState([]); // full history
+  const [notifications, setNotifications] = useState([]); 
   const [unreadCount, setUnreadCount] = useState(0);
   const [toast, setToast] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const { user, token } = useAuth();
 
   const toastTimerRef = useRef(null);
-  const hasJoinedRef = useRef(false);
-  const processedIdsRef = useRef(new Set()); // prevent duplicate notifications
+  const processedIdsRef = useRef(new Set()); 
 
   // ── Show toast (auto-dismiss) ──
   const showToast = useCallback((notification) => {
@@ -36,245 +27,184 @@ export const NotificationProvider = ({ children }) => {
     setToast(null);
   }, []);
 
-  // ── Mark all as read ──
-  const markAllRead = useCallback(() => {
-    setUnreadCount(0);
-  }, []);
+  // ── Mark single notification as read ──
+  const markAsRead = useCallback(async (id) => {
+    try {
+      const adminToken = localStorage.getItem("adminToken");
+      const activeToken = adminToken || token;
+      
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notifications/${id}/read`, {
+        method: "PUT",
+        headers: { "Authorization": `Bearer ${activeToken}` }
+      });
+      if (res.ok) {
+        setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
+    } catch (err) {
+      console.error("Failed to mark as read:", err);
+    }
+  }, [token]);
 
-  // ── Clear notification history ──
+  // ── Mark all as read ──
+  const markAllRead = useCallback(async () => {
+    const isAdmin = localStorage.getItem("adminLoggedIn");
+    const adminToken = localStorage.getItem("adminToken");
+    const activeToken = adminToken || token;
+    const endpoint = isAdmin ? "/api/notifications/admin/read-all" : "/api/notifications/read-all";
+    
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
+        method: "PUT",
+        headers: { "Authorization": `Bearer ${activeToken}` }
+      });
+      if (res.ok) {
+        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+        setUnreadCount(0);
+      }
+    } catch (err) {
+      console.error("Failed to mark all as read:", err);
+    }
+  }, [token]);
+
+  // ── Clear notification history (Frontend only UI reset) ──
   const clearNotifications = useCallback(() => {
     setNotifications([]);
     setUnreadCount(0);
     processedIdsRef.current.clear();
   }, []);
 
-  // ── Add notification (deduplicated) ──
-  const addNotification = useCallback((notification) => {
-    // Create a unique key to prevent duplicates
-    const notifKey = `${notification.orderId}_${notification.type}_${notification.status || "new"}`;
-    if (processedIdsRef.current.has(notifKey)) return;
-    processedIdsRef.current.add(notifKey);
+  // ═══════════════════════════════════════════
+  // INITIAL FETCH & SOCKET SYNC
+  // ═══════════════════════════════════════════
+  const prevRoleRef = useRef(null);
 
-    // Keep max 50 notifications
-    if (processedIdsRef.current.size > 50) {
-      const first = processedIdsRef.current.values().next().value;
-      processedIdsRef.current.delete(first);
+  useEffect(() => {
+    const adminToken = localStorage.getItem("adminToken");
+    const isAdminMode = window.location.pathname.startsWith("/admin");
+    const role = isAdminMode ? "admin" : "user";
+    const activeToken = isAdminMode ? adminToken : token;
+    
+    // Only fetch if we have a token AND it matches the current environment
+    // AND we haven't already fetched for this role/auth state (unless auth changed)
+    // CRITICAL: On refresh, AuthContext takes a moment to set the 'user' state from localStorage.
+    // If we fetch now (user=null) and again in 50ms (user=defined), we trigger redundant calls.
+    // We only fetch once we have both the token AND the user object (unless it's an admin path).
+    if (!isAdminMode && activeToken && !user) {
+        return; 
     }
 
-    const enriched = {
-      ...notification,
-      id: notifKey,
-      timestamp: new Date().toISOString(),
-      read: false
-    };
+    if (!activeToken || (prevRoleRef.current === role && activeToken === (isAdminMode ? adminToken : token) && notifications.length > 0)) {
+        return;
+    }
 
-    setNotifications(prev => [enriched, ...prev].slice(0, 50));
-    setUnreadCount(prev => prev + 1);
-    showToast(enriched);
-  }, [showToast]);
+    // Update role ref
+    prevRoleRef.current = role;
 
-  // ═══════════════════════════════════════════
-  // RECENT ACTIVITY FETCH (PERSISTENCE SIMULATION)
-  // ═══════════════════════════════════════════
-  useEffect(() => {
-    const isAdmin = localStorage.getItem("adminLoggedIn");
-    const isUser = token && user;
+    const endpoint = isAdminMode ? "/api/notifications/admin" : "/api/notifications";
 
-    if (isAdmin) {
-      fetch(import.meta.env.VITE_API_URL + "/api/orders")
-        .then(res => res.json())
-        .then(data => {
-          if (Array.isArray(data)) {
-            const recent = data.slice(0, 15).map(order => ({
-              id: `history_${order._id}_placed`,
-              orderId: order._id,
-              type: "new_order",
-              message: `New order from ${order.customerDetails?.firstName || 'Customer'}`,
-              totalAmount: order.totalAmount,
-              timestamp: order.createdAt,
-              read: true,
-              icon: "🔔"
-            }));
-            
-            const cancelled = data.filter(o => o.orderStatus === "Cancelled").slice(0, 5).map(order => ({
-              id: `history_${order._id}_cancelled`,
-              orderId: order._id,
-              message: `Order cancelled by ${order.customerDetails?.firstName || 'Customer'}`,
-              totalAmount: order.totalAmount,
-              timestamp: order.cancelledAt || order.createdAt,
-              read: true,
-              type: "order_cancelled",
-              icon: "❌"
-            }));
-
-            // Stealth merge so we don't overwrite live unread notifications
-            setNotifications(prev => {
-              const prevMap = new Map(prev.map(n => [n.id || `${n.orderId}_${n.type}_${n.status||"new"}`, n]));
-              [...recent, ...cancelled].forEach(n => {
-                if (!prevMap.has(n.id) && !prevMap.has(`${n.orderId}_${n.type}_new`)) {
-                  prevMap.set(n.id, n);
-                }
-              });
-              return Array.from(prevMap.values())
-                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-                .slice(0, 50);
-            });
-          }
-        })
-        .catch(console.error);
-    } else if (isUser) {
-      fetch(import.meta.env.VITE_API_URL + "/api/orders/my", { credentials: "include",
-        headers: { "Authorization": `Bearer ${token}` }
+    // 1. Fetch History
+    fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
+      headers: { "Authorization": `Bearer ${activeToken}` }
+    })
+      .then(res => {
+        if (res.status === 429) {
+          console.warn("Notifications fetch rate limited (429)");
+          return null; // Don't return [] as it wipes notifications state
+        }
+        return res.json();
       })
-        .then(res => res.json())
-        .then(data => {
-          if (Array.isArray(data)) {
-            const recent = data.slice(0, 10).map(order => {
-              const statusMessages = {
-                  Packed: "Your order is being packed 📦",
-                  Shipped: "Your order is on the way! 🚚",
-                  Delivered: "Your order has been delivered! 🎉",
-                  Cancelled: "Your order has been cancelled ❌",
-                  Placed: "Order successfully placed! 🛍️"
-              };
-              return {
-                  id: `history_${order._id}_${order.orderStatus}`,
-                  orderId: order._id,
-                  type: "order_status",
-                  status: order.orderStatus,
-                  message: statusMessages[order.orderStatus] || `Order status: ${order.orderStatus}`,
-                  timestamp: order.orderHistory?.[order.orderHistory?.length - 1]?.date || order.createdAt,
-                  read: true,
-                  icon: order.orderStatus === "Cancelled" ? "❌" : "📦"
-              };
-            });
-            
-            setNotifications(prev => {
-              const prevMap = new Map(prev.map(n => [n.id || `${n.orderId}_${n.type}_${n.status||"new"}`, n]));
-              recent.forEach(n => {
-                if (!prevMap.has(n.id) && !prevMap.has(`${n.orderId}_${n.type}_${n.status}`)) {
-                  prevMap.set(n.id, n);
-                }
-              });
-              return Array.from(prevMap.values())
-                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-                .slice(0, 50);
-            });
-          }
-        })
-        .catch(console.error);
-    }
-  }, [token, user]);
+      .then(data => {
+        if (data && Array.isArray(data)) {
+          const enriched = data.map(n => ({ 
+            ...n, 
+            id: n._id, 
+            timestamp: n.createdAt,
+            icon: n.type === "stock" ? "🔥" : n.type === "broadcast" ? "📢" : "📦"
+          }));
+          setNotifications(enriched);
+          setUnreadCount(enriched.filter(n => !n.isRead).length);
+          enriched.forEach(n => processedIdsRef.current.add(n._id));
+        }
+      })
+      .catch(err => console.error("History fetch error:", err));
 
-  // ═══════════════════════════════════════════
-  // SOCKET LIFECYCLE — connect, join rooms, listen
-  // ═══════════════════════════════════════════
-  useEffect(() => {
-    const isAdmin = localStorage.getItem("adminLoggedIn");
-    const isUser = token && user;
+    // 2. Setup Socket
+    if (!socket.connected) socket.connect();
 
-    // Need at least one role to connect
-    if (!isAdmin && !isUser) return;
+    const onConnect = () => setIsConnected(true);
+    const onDisconnect = () => setIsConnected(false);
 
-    // Connect if not already
-    if (!socket.connected) {
-      socket.connect();
-    }
+    const onNewNotification = (notification) => {
+      const notifId = notification._id || notification.id;
+      if (!notifId || processedIdsRef.current.has(notifId)) return;
 
-    // ── Join appropriate rooms ──
-    const joinRooms = () => {
-      if (hasJoinedRef.current) return;
-      hasJoinedRef.current = true;
+      processedIdsRef.current.add(notifId);
+      const enriched = {
+        ...notification,
+        _id: notifId,
+        id: notifId, 
+        createdAt: notification.createdAt || new Date().toISOString(),
+        timestamp: notification.createdAt || new Date().toISOString(),
+        isRead: false,
+        icon: notification.icon || (notification.type === "stock" ? "🔥" : notification.type === "broadcast" ? "📢" : "📦")
+      };
 
-      if (isUser) {
-        const userId = user._id || user.id;
-        if (userId) socket.emit("joinUserRoom", userId);
-      }
-
-      if (isAdmin) {
-        socket.emit("joinAdminRoom");
-      }
+      setNotifications(prev => [enriched, ...prev]);
+      setUnreadCount(prev => prev + 1);
+      showToast(enriched);
     };
 
-    if (socket.connected) {
-      joinRooms();
-      setIsConnected(true);
-    }
-
-    // ── Event handlers ──
-    const onConnect = () => {
-      setIsConnected(true);
-      hasJoinedRef.current = false;
-      joinRooms();
-    };
-
-    const onDisconnect = () => {
-      setIsConnected(false);
-      hasJoinedRef.current = false;
-    };
-
-    // User notification: order status changed by admin
-    const onOrderNotification = (data) => {
-      // FIX: Don't show user-facing order update toasts if we are currently using the admin panel
-      if (window.location.pathname.startsWith("/admin")) return;
-
-      addNotification({
-        ...data,
-        type: "order_status",
-        icon: "📦"
-      });
-    };
-
-    // Admin notification: new order placed by user
-    const onNewOrderNotification = (data) => {
-      // FIX: Don't show admin-facing new order toasts if we are currently browsing the user storefront
-      if (!window.location.pathname.startsWith("/admin")) return;
-
-      addNotification({
-        ...data,
-        type: "new_order",
-        icon: "🔔"
-      });
-    };
-
-    // Admin notification: order cancelled by user
-    const onOrderCancelled = (order) => {
-      if (!window.location.pathname.startsWith("/admin")) return;
-      
-      const customerName = order.customerDetails?.firstName || "Customer";
-      
-      addNotification({
-        orderId: order._id,
-        message: `Order cancelled by ${customerName}`,
-        totalAmount: order.totalAmount,
-        type: "order_cancelled",
-        icon: "❌"
-      });
-    };
-
-    // ── Register ──
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
-    
-    if (isUser) {
-      socket.on("orderNotification", onOrderNotification);
-    }
-    if (isAdmin) {
-      socket.on("newOrderNotification", onNewOrderNotification);
-      socket.on("orderCancelled", onOrderCancelled);
-    }
+    setIsConnected(socket.connected);
 
-    // ── Cleanup ──
+    if (isAdminMode && adminToken) {
+      socket.emit("join", { role: "admin" });
+      socket.on("admin:notification", onNewNotification);
+    } else if (user) {
+      socket.emit("join", { userId: user?._id || user?.id, role: "user" });
+      socket.on("user:notification", onNewNotification);
+      socket.on("orderNotification", onNewNotification); // Legacy fallback
+      socket.on("broadcast:new", onNewNotification);
+    }
+    
     return () => {
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
-      socket.off("orderNotification", onOrderNotification);
-      socket.off("newOrderNotification", onNewOrderNotification);
-      socket.off("orderCancelled", onOrderCancelled);
-      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-      hasJoinedRef.current = false;
+      socket.off("admin:notification", onNewNotification);
+      socket.off("user:notification", onNewNotification);
+      socket.off("orderNotification", onNewNotification);
+      socket.off("broadcast:new", onNewNotification);
     };
-  }, [token, user, addNotification]);
+  }, [token, user, window.location.pathname.startsWith("/admin")]); // Only depend on admin mode change, not every path change
+
+  const deleteNotification = useCallback(async (id) => {
+    try {
+      const isAdminMode = window.location.pathname.startsWith("/admin");
+      const adminToken = localStorage.getItem("adminToken");
+      const activeToken = isAdminMode ? adminToken : token;
+
+      if (!activeToken) return;
+
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notifications/${id}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${activeToken}` }
+      });
+
+      if (res.ok) {
+        setNotifications(prev => {
+          const target = prev.find(n => (n._id || n.id) === id);
+          if (target && !target.isRead) {
+            setUnreadCount(count => Math.max(0, count - 1));
+          }
+          return prev.filter(n => (n._id || n.id) !== id);
+        });
+      }
+    } catch (err) {
+      console.error("Delete notification failed:", err);
+    }
+  }, [token]);
 
   return (
     <NotificationContext.Provider value={{
@@ -282,11 +212,12 @@ export const NotificationProvider = ({ children }) => {
       unreadCount,
       toast,
       isConnected,
-      showToast,
-      dismissToast,
+      markAsRead,
       markAllRead,
       clearNotifications,
-      addNotification
+      showToast,
+      dismissToast,
+      deleteNotification
     }}>
       {children}
     </NotificationContext.Provider>

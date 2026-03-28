@@ -85,6 +85,11 @@ const productSchema = new mongoose.Schema({
     default: false
   },
 
+  purchaseCount: {
+    type: Number,
+    default: 0
+  },
+
   createdAt: {
     type: Date,
     default: Date.now
@@ -95,5 +100,11 @@ const productSchema = new mongoose.Schema({
 productSchema.index({ category: 1 });
 productSchema.index({ featured: 1 });
 productSchema.index({ name: "text" }); // Text search for products
+productSchema.index({ rating: -1 });
+productSchema.index({ price: 1 });
+productSchema.index({ purchaseCount: -1 });
+productSchema.index({ createdAt: -1 });
+productSchema.index({ stock: 1 });
+productSchema.index({ category: 1, rating: -1, price: 1 }); // Best Value compound index
 
 module.exports = mongoose.model("Product", productSchema);

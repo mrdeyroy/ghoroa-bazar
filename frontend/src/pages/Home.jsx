@@ -175,9 +175,18 @@ return (
         line-height: 1.5;
       }
 
+      .testimonial-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+
       /* Tablet */
       @media (max-width: 1023px) {
         .core-values-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .testimonial-grid {
           grid-template-columns: repeat(2, 1fr);
         }
       }
@@ -187,9 +196,8 @@ return (
         .core-values-grid {
           grid-template-columns: 1fr;
         }
-
-        section {
-          padding: 50px 6%;
+        .testimonial-grid {
+          grid-template-columns: 1fr;
         }
       }
     `}
@@ -402,7 +410,7 @@ return (
 {/* ================================
     🟢 TESTIMONIAL CARDS (STATIC + SLIDER)
 ================================= */}
-<section style={{ padding: "60px 8%", background: "#ffffff" }}>
+<section className="section" style={{ background: "#ffffff" }}>
   {(() => {
     const testimonials = [
       { name: "Emily Clark", date: "Aug 15, 2024", text: "Nice products but delivery was a bit slow." },
@@ -497,12 +505,8 @@ return (
         <div
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 18,
-            marginBottom: 18
-          }}
+          className="testimonial-grid"
+          style={{ marginBottom: 18 }}
         >
           {currentItems.map((t, i) => (
             <div
@@ -596,9 +600,10 @@ return (
     style={{
       display: "flex",
       justifyContent: "center",
-      gap: "30px",
+      gap: "20px",
       flexWrap: "wrap",
-      marginBottom: 50
+      marginBottom: 50,
+      padding: "0 16px"
     }}
   >
    {[
@@ -613,7 +618,7 @@ return (
       key={i}
       src={path}
       alt="Partner logo"
-      style={{ height: 32 }}
+      style={{ height: 28, maxWidth: "100%", objectFit: "contain" }}
     />
   ))}
 </div>

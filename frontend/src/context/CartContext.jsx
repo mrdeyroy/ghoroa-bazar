@@ -65,7 +65,14 @@ export function CartProvider({ children }) {
         return prev.map(item =>
           item.id === normalizedProduct.id &&
             item.selectedWeight === normalizedProduct.selectedWeight
-            ? { ...normalizedProduct, ...item, image: normalizedProduct.image || item.image, qty: item.qty + normalizedProduct.qty }
+            ? { 
+                ...normalizedProduct, 
+                ...item, 
+                image: normalizedProduct.image || item.image, 
+                qty: normalizedProduct.stock !== undefined 
+                  ? Math.min(item.qty + normalizedProduct.qty, normalizedProduct.stock) 
+                  : item.qty + normalizedProduct.qty 
+              }
             : item
         );
       }
@@ -78,7 +85,12 @@ export function CartProvider({ children }) {
     setCart(prev =>
       prev.map(item =>
         item.id === id && item.selectedWeight === weight
-          ? { ...item, qty: item.qty + 1 }
+          ? { 
+              ...item, 
+              qty: item.stock !== undefined 
+                ? Math.min(item.qty + 1, item.stock) 
+                : item.qty + 1 
+            }
           : item
       )
     );

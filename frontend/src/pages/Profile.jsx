@@ -316,11 +316,11 @@ export default function Profile() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="bg-white rounded-[40px] p-8 md:p-12 shadow-sm border border-gray-100 items-start flex flex-col w-full"
+                className="bg-white rounded-3xl md:rounded-[40px] p-5 sm:p-8 md:p-12 shadow-sm border border-gray-100 items-start flex flex-col w-full"
               >
-                <div className="flex justify-between items-center w-full mb-10">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full mb-8 md:mb-10 gap-4">
                   <div>
-                    <h2 className="text-3xl font-black text-gray-900 tracking-tight">Profile Information</h2>
+                    <h2 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Profile Information</h2>
                     <p className="text-gray-400 font-medium mt-1">Manage your account details and settings.</p>
                   </div>
                   {!isEditing && (
@@ -426,10 +426,10 @@ export default function Profile() {
                 exit={{ opacity: 0, x: -20 }}
                 className="items-start flex flex-col"
               >
-                <div className="bg-white rounded-[40px] p-8 md:p-12 shadow-sm border border-gray-100 w-full mb-8">
-                  <div className="flex justify-between items-center w-full mb-10">
+                <div className="bg-white rounded-3xl md:rounded-[40px] p-5 sm:p-8 md:p-12 shadow-sm border border-gray-100 w-full mb-8">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full mb-8 md:mb-10 gap-4">
                     <div>
-                      <h2 className="text-3xl font-black text-gray-900 tracking-tight">Address Book</h2>
+                      <h2 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Address Book</h2>
                       <p className="text-gray-400 font-medium mt-1">Manage your shipping and billing addresses.</p>
                     </div>
                     <button
@@ -490,11 +490,11 @@ export default function Profile() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="bg-white rounded-[40px] p-8 md:p-12 shadow-sm border border-gray-100 items-start flex flex-col"
+                className="bg-white rounded-3xl md:rounded-[40px] p-5 sm:p-8 md:p-12 shadow-sm border border-gray-100 items-start flex flex-col"
               >
                 <div className="flex justify-between items-center w-full mb-10">
                   <div>
-                    <h2 className="text-3xl font-black text-gray-900 tracking-tight">Recent Orders</h2>
+                    <h2 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Recent Orders</h2>
                     <p className="text-gray-400 font-medium mt-1">Preview of your last 3 orders.</p>
                   </div>
                   <button
@@ -566,7 +566,7 @@ export default function Profile() {
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-white rounded-[40px] shadow-2xl relative w-full max-w-2xl overflow-hidden"
+              className="bg-white rounded-3xl md:rounded-[40px] shadow-2xl relative w-full max-w-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
             >
               <div className="p-8 md:p-10">
                 <div className="flex justify-between items-center mb-10">

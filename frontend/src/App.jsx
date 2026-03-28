@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ScrollToTop from "./components/ScrollToTop";
 import NotificationToast from "./components/NotificationToast";
+import BroadcastPopup from "./components/BroadcastPopup";
 import Loader from "./components/Loader";
 // ---------- CUSTOMER PAGES ----------
 import Home from "./pages/Home";
@@ -19,6 +20,7 @@ import Invoice from "./pages/Invoice";
 import NotFound from "./pages/NotFound";
 import Faq from "./pages/Faq";
 import Contact from "./pages/Contact";
+import RefundPolicy from "./pages/RefundPolicy";
 
 // ---------- AUTH ----------
 import Login from "./pages/Login";
@@ -34,6 +36,7 @@ import AdminOrders from "./pages/AdminOrders";
 import AdminProducts from "./pages/AdminProducts";
 import AdminRoute from "./components/AdminRoute";
 import AdminMessages from "./pages/AdminMessages";
+import AdminBroadcast from "./pages/AdminBroadcast";
 
 import { Toaster } from "react-hot-toast";
 
@@ -78,6 +81,7 @@ export default function App() {
         }}
       />
       <NotificationToast />
+      <BroadcastPopup />
       <Routes>
 
 
@@ -88,6 +92,8 @@ export default function App() {
           <Route path="/faq" element={<Faq />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/products" element={<Products />} />
+          <Route path="/refund-policy" element={<RefundPolicy />} />
+          <Route path="/return-policy" element={<RefundPolicy />} />
 
           <Route path="/product/:id" element={<ProductDetails />} />
           <Route 
@@ -121,6 +127,7 @@ export default function App() {
         <Route path="/admin/messages" element={<AdminRoute><AdminMessages /></AdminRoute>} />
         <Route path="/admin/orders" element={<AdminRoute><AdminOrders /></AdminRoute>} />
         <Route path="/admin/products" element={<AdminRoute><AdminProducts /></AdminRoute>} />
+        <Route path="/admin/broadcast" element={<AdminRoute><AdminBroadcast /></AdminRoute>} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

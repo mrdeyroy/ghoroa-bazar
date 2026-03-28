@@ -26,6 +26,7 @@ const userSchema = new mongoose.Schema({
   refreshToken: String,
   failedLoginAttempts: { type: Number, default: 0 },
   lockUntil: Date,
+  cancelledOrders: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
 

@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
-
 :root {
   --green: #0c7a43;
   --yellow: #fff7cc;
@@ -15,11 +13,30 @@
   --font: "Poppins", "Inter", sans-serif;
 }
 
-body {
-  font-family: var(--font);
+/* ===== GLOBAL RESET ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-/* Sections */
+html {
+  overflow-x: clip;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font);
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ===== SECTIONS ===== */
 .section {
   padding: 70px 9%;
 }
@@ -30,12 +47,12 @@ body {
 
 .section-title {
   text-align: center;
-  font-size: 30px;
+  font-size: clamp(1.5rem, 4vw, 1.875rem);
   font-weight: 700;
   margin-bottom: 28px;
 }
 
-/* Hero */
+/* ===== HERO ===== */
 .hero {
   background: linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)),
               url(/assets/hero-banner.png) center/cover no-repeat;
@@ -52,29 +69,29 @@ body {
   font-weight: 700;
   color: #fff;
   box-shadow: var(--shadow);
+  min-height: 44px;
 }
 
-/* Product grid */
+/* ===== PRODUCT GRID ===== */
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(4,1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 22px;
 }
 
 .product-card {
-  height: 260px;
   border-radius: var(--radius);
   background: #fff;
   box-shadow: var(--shadow);
 }
 
-/* Banners */
+/* ===== BANNERS ===== */
 .banner-box {
   border-radius: var(--radius);
   background: #111;
 }
 
-/* Value cards */
+/* ===== VALUE CARDS ===== */
 .value-box {
   background: #fff;
   border-radius: var(--radius);
@@ -82,27 +99,27 @@ body {
   box-shadow: var(--shadow);
 }
 
-/* Stats */
+/* ===== STATS ===== */
 .stat-box h2 {
   color: var(--green);
-  font-size: 34px;
+  font-size: clamp(1.5rem, 4vw, 2.125rem);
   margin: 0;
 }
 
-/* Reviews */
+/* ===== REVIEWS ===== */
 .review-box {
   background: #fff;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }
 
-/* Footer */
+/* ===== FOOTER ===== */
 .footer {
   background: var(--green);
   border-radius: var(--radius) var(--radius) 0 0;
 }
 
-/* Spinner and Loader */
+/* ===== SPINNER / LOADER ===== */
 .spinner {
   width: 24px;
   height: 24px;
@@ -118,6 +135,7 @@ body {
   100% { transform: rotate(360deg); }
 }
 
+/* ===== NOTIFICATION POPUP ===== */
 .notification-popup {
   position: fixed;
   top: 20px;
@@ -132,9 +150,73 @@ body {
   align-items: center;
   gap: 10px;
   animation: slideIn 0.3s ease-out;
+  max-width: calc(100vw - 40px);
 }
 
 @keyframes slideIn {
   from { transform: translateX(100%); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
-}
+}
+
+/* ===== SCROLLBAR HIDE (for horizontal carousels) ===== */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ===== RESPONSIVE MEDIA QUERIES ===== */
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .section {
+    padding: 50px 6%;
+  }
+
+  .hero {
+    padding: 80px 6%;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+}
+
+/* Mobile Landscape / Small Tablet */
+@media (max-width: 768px) {
+  .section {
+    padding: 40px 5%;
+  }
+
+  .hero {
+    padding: 60px 5%;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .section {
+    padding: 30px 4%;
+  }
+
+  .hero {
+    padding: 40px 4%;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .section-title {
+    font-size: 1.25rem;
+  }
+}

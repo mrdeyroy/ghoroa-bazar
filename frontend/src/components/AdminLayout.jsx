@@ -1,12 +1,13 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { 
-  Menu, 
-  X, 
-  LayoutDashboard, 
-  ShoppingBag, 
-  Package, 
-  MessageSquare, 
+import {
+  Menu,
+  X,
+  LayoutDashboard,
+  ShoppingBag,
+  Package,
+  MessageSquare,
+  Megaphone,
   LogOut,
   Bell,
   User,
@@ -17,7 +18,7 @@ import { useNotifications } from "../context/NotificationContext";
 
 // ── Notification Bell Component (local to AdminLayout) ──
 function NotificationBell() {
-  const { unreadCount: notifCount, notifications, markAllRead, clearNotifications } = useNotifications();
+  const { unreadCount: notifCount, notifications, markAllRead, clearNotifications, deleteNotification } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -49,7 +50,7 @@ function NotificationBell() {
                 <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Real-time alerts</p>
               </div>
               {notifications.length > 0 && (
-                <button 
+                <button
                   onClick={() => { clearNotifications(); setIsOpen(false); }}
                   className="text-[10px] font-black text-gray-400 hover:text-red-500 transition-colors uppercase tracking-wider"
                 >
@@ -65,31 +66,45 @@ function NotificationBell() {
                 </div>
               ) : (
                 notifications.slice(0, 10).map((notif) => (
-                  <button
-                    key={notif.id}
-                    onClick={() => {
-                      setIsOpen(false);
-                      if (notif.type === "new_order") navigate("/admin/orders");
-                    }}
-                    className="w-full flex items-start gap-3 px-5 py-4 hover:bg-gray-50 transition-colors text-left border-b border-gray-50 last:border-0"
+                  <div 
+                    key={notif._id || notif.id}
+                    className="relative group/notif w-full flex items-start gap-3 px-5 py-4 hover:bg-gray-50 transition-colors text-left border-b border-gray-50 last:border-0"
                   >
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-sm ${
-                      notif.type === "new_order" 
-                        ? "bg-amber-100 text-amber-700" 
-                        : "bg-green-100 text-green-700"
-                    }`}>
-                      {notif.icon || "🔔"}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-gray-800 line-clamp-2">{notif.message}</p>
-                      {notif.totalAmount && (
-                        <p className="text-[10px] font-bold text-gray-400 mt-0.5">₹{Number(notif.totalAmount).toFixed(2)}</p>
-                      )}
-                      <p className="text-[9px] font-bold text-gray-300 mt-1">
-                        {new Date(notif.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    </div>
-                  </button>
+                    <button
+                      onClick={() => {
+                        setIsOpen(false);
+                        if (notif.type === "new_order") navigate("/admin/orders");
+                      }}
+                      className="flex items-start gap-3 flex-1 min-w-0"
+                    >
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-sm ${notif.type === "new_order"
+                          ? "bg-amber-100 text-amber-700"
+                          : "bg-green-100 text-green-700"
+                        }`}>
+                        {notif.icon || "🔔"}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-gray-800 line-clamp-2">{notif.message}</p>
+                        {notif.totalAmount && (
+                          <p className="text-[10px] font-bold text-gray-400 mt-0.5">₹{Number(notif.totalAmount).toFixed(2)}</p>
+                        )}
+                        <p className="text-[9px] font-bold text-gray-300 mt-1">
+                          {new Date(notif.createdAt || notif.timestamp || Date.now()).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteNotification(notif._id || notif.id);
+                      }}
+                      className="opacity-0 group-hover/notif:opacity-100 p-2 text-gray-300 hover:text-red-500 transition-all font-black"
+                      title="Delete"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
                 ))
               )}
             </div>
@@ -141,25 +156,25 @@ export default function AdminLayout({ children }) {
     { name: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
     { name: "Orders", path: "/admin/orders", icon: ShoppingBag },
     { name: "Products", path: "/admin/products", icon: Package },
-    { name: "Messages", path: "/admin/messages", icon: MessageSquare }
+    { name: "Messages", path: "/admin/messages", icon: MessageSquare },
+    { name: "Broadcast", path: "/admin/broadcast", icon: Megaphone }
   ];
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex font-sans text-gray-900">
-      
+
       {/* MOBILE OVERLAY */}
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] lg:hidden transition-opacity duration-300"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
       {/* SIDEBAR */}
-      <aside 
-        className={`fixed inset-y-0 left-0 w-[280px] bg-[#0F1E11] text-white z-[110] transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:static lg:block shadow-2xl`}
+      <aside
+        className={`fixed inset-y-0 left-0 w-[280px] bg-[#0F1E11] text-white z-[110] transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } lg:static lg:block shadow-2xl`}
       >
         <div className="h-full flex flex-col">
           {/* Logo Section */}
@@ -168,7 +183,7 @@ export default function AdminLayout({ children }) {
               <h2 className="text-xl font-black text-[#66FF99] tracking-tighter">Ghoroa Bazar</h2>
               <p className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] mt-0.5">Management Pro</p>
             </div>
-            <button 
+            <button
               className="lg:hidden p-2 hover:bg-white/10 rounded-xl transition-colors"
               onClick={() => setIsSidebarOpen(false)}
             >
@@ -181,16 +196,15 @@ export default function AdminLayout({ children }) {
             {menuItems.map((item) => {
               const isActive = location.pathname.startsWith(item.path);
               const Icon = item.icon;
-              
+
               return (
                 <Link
                   key={item.name}
                   to={item.path}
-                  className={`flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-200 group relative ${
-                    isActive 
-                      ? "bg-[#66FF99]/10 text-[#66FF99] font-black" 
+                  className={`flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-200 group relative ${isActive
+                      ? "bg-[#66FF99]/10 text-[#66FF99] font-black"
                       : "text-white/60 hover:text-white hover:bg-white/5 font-medium"
-                  }`}
+                    }`}
                 >
                   {isActive && (
                     <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-[#66FF99] rounded-r-full shadow-[0_0_15px_rgba(102,255,153,0.5)]" />
@@ -199,7 +213,7 @@ export default function AdminLayout({ children }) {
                     <Icon className={`w-5 h-5 ${isActive ? "text-[#66FF99]" : "text-white/40 group-hover:text-white/80"}`} />
                   </div>
                   <span className="flex-1">{item.name}</span>
-                  
+
                   {item.name === "Messages" && unreadCount > 0 && (
                     <span className="bg-[#66FF99] text-[#0F1E11] text-[10px] font-black px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(102,255,153,0.4)] animate-pulse">
                       {unreadCount}
@@ -216,11 +230,11 @@ export default function AdminLayout({ children }) {
 
       {/* MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col relative" onClick={() => isProfileOpen && setIsProfileOpen(false)}>
-        
+
         {/* TOP HEADER */}
         <header className="h-20 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-4 sm:px-8 sticky top-0 z-50">
           <div className="flex items-center gap-4">
-            <button 
+            <button
               className="lg:hidden p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-all shadow-sm active:scale-95"
               onClick={() => setIsSidebarOpen(true)}
             >
@@ -248,9 +262,9 @@ export default function AdminLayout({ children }) {
                 <p className="text-sm font-black text-gray-900 leading-none">Admin Official</p>
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Super Manager</p>
               </div>
-              
+
               <div className="relative">
-                <button 
+                <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsProfileOpen(!isProfileOpen);
@@ -265,8 +279,8 @@ export default function AdminLayout({ children }) {
                 {isProfileOpen && (
                   <div className="absolute right-0 mt-3 w-56 bg-white rounded-3xl shadow-2xl border border-gray-100 p-2 animate-in fade-in slide-in-from-top-4 duration-200 z-[200]">
                     <div className="px-4 py-3 border-b border-gray-50 mb-1 sm:hidden">
-                       <p className="text-sm font-black text-gray-900 leading-none">Admin Official</p>
-                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Super Manager</p>
+                      <p className="text-sm font-black text-gray-900 leading-none">Admin Official</p>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Super Manager</p>
                     </div>
                     <button
                       onClick={logout}

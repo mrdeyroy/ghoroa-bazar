@@ -15,7 +15,10 @@ import {
   ShieldAlert,
   Zap,
   Tag,
-  ArrowRight
+  ArrowRight,
+  AlertTriangle,
+  KeyRound,
+  RotateCcw
 } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
@@ -36,11 +39,57 @@ export default function Payment() {
   const [paymentStep, setPaymentStep] = useState("selection"); // 'selection', 'processing', 'success'
   const [selectedOnlineMethod, setSelectedOnlineMethod] = useState("upi");
 
+  // COD OTP State
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [codOtp, setCodOtp] = useState("");
+  const [codOrderId, setCodOrderId] = useState(null);
+  const [codLoading, setCodLoading] = useState(false);
+  const [codError, setCodError] = useState("");
+  const [codSuccess, setCodSuccess] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  // COD Eligibility State
+  const [codEligible, setCodEligible] = useState(true);
+  const [codBlockReason, setCodBlockReason] = useState(null);
+
   useEffect(() => {
     if (!customer) {
       navigate("/checkout");
     }
   }, [customer, navigate]);
+
+  // Check COD eligibility on load
+  useEffect(() => {
+    const checkCodEligibility = async () => {
+      if (!token) return;
+      try {
+        const res = await fetch(import.meta.env.VITE_API_URL + "/api/orders/cod-eligibility", {
+          credentials: "include",
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+          if (res.status === 401) console.warn("Session expired. Please log in again.");
+          return; // Skip update if not OK (allow by default)
+        }
+
+        const data = await res.json();
+        if (data.eligible !== undefined) setCodEligible(data.eligible);
+        if (data.reason !== undefined) setCodBlockReason(data.reason);
+      } catch (err) {
+        console.error("COD check error:", err);
+      }
+    };
+    checkCodEligibility();
+  }, [token]);
+
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
 
   if (!customer) return null;
 
@@ -68,6 +117,9 @@ export default function Payment() {
     shippingMethod
   };
 
+  // ============================================
+  // ONLINE PAYMENT — Place order directly
+  // ============================================
   const handlePlaceOrder = async (finalMethod, finalStatus, txnId = null) => {
     try {
       const res = await fetch(import.meta.env.VITE_API_URL + "/api/orders", { credentials: "include",
@@ -94,12 +146,133 @@ export default function Payment() {
     }
   };
 
+  // ============================================
+  // COD FLOW — Send OTP then show verification
+  // ============================================
+  const handleCodOrder = async () => {
+    setPaymentStep("processing");
+    setCodError("");
+
+    try {
+      const res = await fetch(import.meta.env.VITE_API_URL + "/api/orders", {
+        credentials: "include",
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...baseOrderData,
+          paymentMethod: "COD",
+          paymentStatus: "Pending"
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setPaymentStep("selection");
+        if (data.codBlocked) {
+          setCodEligible(false);
+          setCodBlockReason(data.reason);
+          setPaymentMethod("online");
+        }
+        setCodError(data.error || "Failed to place COD order.");
+        return;
+      }
+
+      if (data.requiresVerification) {
+        setCodOrderId(data.orderId);
+        setShowOtpModal(true);
+        setPaymentStep("selection");
+        setResendCooldown(30);
+      }
+    } catch {
+      setPaymentStep("selection");
+      setCodError("Network error. Please try again.");
+    }
+  };
+
+  // ============================================
+  // VERIFY COD OTP
+  // ============================================
+  const handleVerifyCodOtp = async () => {
+    if (!codOtp || codOtp.length !== 6) {
+      setCodError("Please enter a valid 6-digit OTP.");
+      return;
+    }
+
+    setCodLoading(true);
+    setCodError("");
+
+    try {
+      const res = await fetch(import.meta.env.VITE_API_URL + "/api/orders/verify-cod", {
+        credentials: "include",
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ otp: codOtp, orderId: codOrderId })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setCodError(data.error || "Verification failed.");
+        setCodLoading(false);
+        return;
+      }
+
+      // Success!
+      setCodSuccess(true);
+      setCodLoading(false);
+
+      setTimeout(() => {
+        clearCart();
+        navigate("/order-success", { state: { order: data.order } });
+      }, 1500);
+    } catch {
+      setCodError("Network error. Please try again.");
+      setCodLoading(false);
+    }
+  };
+
+  // ============================================
+  // RESEND COD OTP
+  // ============================================
+  const handleResendCodOtp = async () => {
+    if (resendCooldown > 0) return;
+
+    setCodError("");
+    try {
+      const res = await fetch(import.meta.env.VITE_API_URL + "/api/orders/resend-cod-otp", {
+        credentials: "include",
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ orderId: codOrderId })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setCodError(data.error || "Failed to resend OTP.");
+        return;
+      }
+
+      setCodOtp("");
+      setResendCooldown(30);
+      setCodError("");
+    } catch {
+      setCodError("Failed to resend OTP.");
+    }
+  };
+
   const startPayment = () => {
     if (paymentMethod === "cod") {
-      setPaymentStep("processing");
-      setTimeout(() => {
-        handlePlaceOrder("COD", "Pending");
-      }, 1000);
+      handleCodOrder();
     } else {
       setShowModal(true);
       setPaymentStep("selection");
@@ -134,6 +307,12 @@ export default function Payment() {
     return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
   };
 
+  const codBlockMessage = codBlockReason === "first_order"
+    ? "COD is not available for first-time orders. Build trust with your first online payment!"
+    : codBlockReason === "cancellations"
+      ? "COD has been disabled for your account due to multiple cancelled orders."
+      : null;
+
   return (
     <div className="min-h-screen bg-[#fbfcfa] pb-20">
       {/* Progress Indicator */}
@@ -164,6 +343,14 @@ export default function Payment() {
           <h1 className="text-2xl md:text-3xl font-black text-gray-900 mt-2">Almost There!</h1>
           <p className="text-gray-500 font-medium">Choose your preferred payment method to complete the order.</p>
         </div>
+
+        {/* COD Error Banner */}
+        {codError && !showOtpModal && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-start gap-3 animate-in fade-in">
+            <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+            <p className="text-sm font-semibold text-red-700">{codError}</p>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
 
@@ -210,25 +397,50 @@ export default function Payment() {
 
                 {/* COD Card */}
                 <div
-                  onClick={() => setPaymentMethod("cod")}
-                  className={`group relative p-6 rounded-3xl border-2 transition-all cursor-pointer flex items-center justify-between ${paymentMethod === "cod"
-                      ? "border-[#1F7A3B] bg-green-50/30 ring-4 ring-green-50"
-                      : "border-gray-100 bg-white hover:border-gray-200"
-                    }`}
+                  onClick={() => codEligible && setPaymentMethod("cod")}
+                  className={`group relative p-6 rounded-3xl border-2 transition-all flex items-center justify-between ${
+                    !codEligible 
+                      ? "border-gray-100 bg-gray-50/50 cursor-not-allowed opacity-60" 
+                      : paymentMethod === "cod"
+                        ? "border-[#1F7A3B] bg-green-50/30 ring-4 ring-green-50 cursor-pointer"
+                        : "border-gray-100 bg-white hover:border-gray-200 cursor-pointer"
+                  }`}
                 >
                   <div className="flex items-center gap-4 md:gap-6">
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${paymentMethod === "cod" ? "bg-[#1F7A3B] text-white" : "bg-gray-100 text-gray-500"
-                      }`}>
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${
+                      !codEligible 
+                        ? "bg-gray-200 text-gray-400" 
+                        : paymentMethod === "cod" ? "bg-[#1F7A3B] text-white" : "bg-gray-100 text-gray-500"
+                    }`}>
                       <Smartphone className="w-6 h-6" />
                     </div>
                     <div>
-                      <h4 className="font-extrabold text-gray-900">Cash on Delivery</h4>
-                      <p className="text-sm text-gray-500 font-medium">Pay securely with cash or UPI at your doorstep</p>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-extrabold text-gray-900">Cash on Delivery</h4>
+                        {!codEligible && (
+                          <span className="text-[9px] font-black text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full uppercase">
+                            Unavailable
+                          </span>
+                        )}
+                      </div>
+                      {codEligible ? (
+                        <p className="text-sm text-gray-500 font-medium">Pay securely with cash or UPI at your doorstep</p>
+                      ) : (
+                        <p className="text-xs text-orange-600 font-medium mt-1">{codBlockMessage}</p>
+                      )}
+                      {codEligible && (
+                        <p className="text-[10px] text-amber-600 font-bold mt-1.5 flex items-center gap-1">
+                          <KeyRound className="w-3 h-3" /> OTP verification required
+                        </p>
+                      )}
                     </div>
                   </div>
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${paymentMethod === "cod" ? "border-[#1F7A3B] bg-[#1F7A3B]" : "border-gray-200"
-                    }`}>
-                    {paymentMethod === "cod" && <div className="w-2 h-2 rounded-full bg-white" />}
+                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                    !codEligible 
+                      ? "border-gray-200" 
+                      : paymentMethod === "cod" ? "border-[#1F7A3B] bg-[#1F7A3B]" : "border-gray-200"
+                  }`}>
+                    {paymentMethod === "cod" && codEligible && <div className="w-2 h-2 rounded-full bg-white" />}
                   </div>
                 </div>
               </div>
@@ -334,7 +546,98 @@ export default function Payment() {
         </div>
       </div>
 
-      {/* RAZORPAY SIMULATED MODAL */}
+      {/* ============================================ */}
+      {/* COD OTP VERIFICATION MODAL */}
+      {/* ============================================ */}
+      {showOtpModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1000] p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in slide-in-from-bottom-10 duration-500">
+            {/* Header */}
+            <div className="bg-[#064734] p-6 md:p-8 text-center">
+              <div className="w-14 h-14 bg-[#E0FFC2] rounded-full mx-auto flex items-center justify-center mb-4">
+                <KeyRound className="w-7 h-7 text-[#064734]" />
+              </div>
+              <h3 className="text-xl font-black text-[#E0FFC2]">Verify Your COD Order</h3>
+              <p className="text-[#E0FFC2]/70 text-sm mt-1">A 6-digit OTP has been sent to your email</p>
+            </div>
+
+            {/* Body */}
+            <div className="p-8">
+              {codSuccess ? (
+                <div className="text-center animate-in zoom-in py-8">
+                  <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-green-600 mx-auto shadow-inner">
+                    <CheckCircle2 className="w-10 h-10" />
+                  </div>
+                  <h3 className="mt-6 text-2xl font-black text-green-600">Order Confirmed!</h3>
+                  <p className="mt-2 text-sm text-gray-400 font-medium">Redirecting to your order...</p>
+                </div>
+              ) : (
+                <>
+                  {codError && (
+                    <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                      <p className="text-sm font-semibold text-red-700">{codError}</p>
+                    </div>
+                  )}
+
+                  <div className="space-y-2 mb-6">
+                    <label className="text-sm font-bold text-gray-700">Enter OTP</label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={codOtp}
+                      onChange={(e) => setCodOtp(e.target.value.replace(/\D/g, ""))}
+                      placeholder="• • • • • •"
+                      className="w-full text-center text-3xl font-black tracking-[0.5em] py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-4 focus:ring-green-100 focus:border-[#1F7A3B] outline-none transition-all text-[#064734] placeholder:text-gray-300"
+                    />
+                    <p className="text-xs text-gray-400 text-center mt-1">OTP expires in 5 minutes</p>
+                  </div>
+
+                  <button
+                    onClick={handleVerifyCodOtp}
+                    disabled={codLoading || codOtp.length !== 6}
+                    className="w-full bg-[#064734] text-[#E0FFC2] py-4 rounded-2xl font-black text-lg shadow-lg hover:bg-[#053d2d] transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {codLoading ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <>
+                        <ShieldCheck className="w-5 h-5" />
+                        Verify & Confirm Order
+                      </>
+                    )}
+                  </button>
+
+                  <div className="mt-4 flex items-center justify-between">
+                    <button
+                      onClick={handleResendCodOtp}
+                      disabled={resendCooldown > 0}
+                      className="text-sm font-bold text-[#1F7A3B] hover:underline disabled:opacity-40 disabled:no-underline flex items-center gap-1"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend OTP"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowOtpModal(false);
+                        setCodOtp("");
+                        setCodError("");
+                      }}
+                      className="text-sm font-bold text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      Cancel Order
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================ */}
+      {/* RAZORPAY SIMULATED MODAL (Online Payment) */}
+      {/* ============================================ */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1000] p-4 animate-in fade-in duration-300">
           <div className="w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in slide-in-from-bottom-10 duration-500">

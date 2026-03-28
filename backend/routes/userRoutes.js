@@ -6,18 +6,17 @@ const router = express.Router();
 const User = require("../models/User");
 const { sendEmail } = require("../utils/mail");
 const { otpTemplate } = require("../utils/templates");
+const { registerLimiter } = require("../middleware/rateLimiter");
+const captchaVerify = require("../middleware/captchaVerify");
+const emailValidator = require("../middleware/emailValidator");
 require("dotenv").config();
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // 1️⃣ Signup API
-router.post("/signup", async (req, res) => {
+router.post("/signup", registerLimiter, captchaVerify, emailValidator, async (req, res) => {
   try {
     const { name, email, password } = req.body;
-
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ error: "Invalid email format" });
-    }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
