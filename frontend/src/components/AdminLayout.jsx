@@ -149,6 +149,7 @@ export default function AdminLayout({ children }) {
 
   const logout = () => {
     localStorage.removeItem("adminLoggedIn");
+    localStorage.removeItem("adminToken");
     navigate("/");
   };
 
@@ -229,7 +230,7 @@ export default function AdminLayout({ children }) {
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <div className="flex-1 flex flex-col relative" onClick={() => isProfileOpen && setIsProfileOpen(false)}>
+      <div className="flex-1 flex flex-col relative min-w-0" onClick={() => isProfileOpen && setIsProfileOpen(false)}>
 
         {/* TOP HEADER */}
         <header className="h-20 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-4 sm:px-8 sticky top-0 z-50">

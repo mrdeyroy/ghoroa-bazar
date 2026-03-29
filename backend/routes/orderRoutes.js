@@ -6,6 +6,7 @@ const User = require("../models/User");
 const Notification = require("../models/Notification");
 const authMiddleware = require("../middleware/authMiddleware");
 const adminMiddleware = require("../middleware/adminMiddleware");
+const anyAuth = require("../middleware/anyAuth");
 const { sendEmail } = require("../utils/mail");
 
 /**
@@ -396,11 +397,16 @@ router.get("/my", authMiddleware, async (req, res) => {
 });
 
 // 8️⃣ GET BY ID
-router.get("/:id", authMiddleware, async (req, res) => {
+router.get("/:id", anyAuth, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ error: "Order not found" });
-    if (order.userId.toString() !== req.user._id.toString()) return res.status(403).json({ error: "Access denied" });
+    
+    // Allow if it's the user who placed it OR if it's an admin
+    if (req.user.role !== "admin" && order.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+    
     res.json(order);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch order" });

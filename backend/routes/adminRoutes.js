@@ -72,6 +72,8 @@ router.post("/login", async (req, res) => {
   }
 });
 
+const adminStatController = require("../controllers/adminStatController");
+
 // GET dashboard stats (Admin Protected)
 router.get("/dashboard-stats", adminMiddleware, async (req, res) => {
   try {
@@ -105,5 +107,8 @@ router.get("/dashboard-stats", adminMiddleware, async (req, res) => {
     res.status(500).json({ error: "Failed to fetch dashboard stats" });
   }
 });
+
+// GET advanced dashboard stats (Admin Protected) - New Analytics
+router.get("/analytics-stats", adminMiddleware, adminStatController.getDashboardStats);
 
 module.exports = router;

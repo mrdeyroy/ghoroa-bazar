@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import AdminLayout from "../components/AdminLayout";
 import { Link } from "react-router-dom";
 import {
@@ -9,261 +9,457 @@ import {
     ArrowUpRight,
     TrendingUp,
     Clock,
-    ArrowRight,
     ChevronRight,
-    TrendingDown
+    Download,
+    AlertTriangle,
+    RefreshCcw,
+    DollarSign,
+    Box,
+    ShoppingCart,
+    Filter
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import io from "socket.io-client";
+
+// Import custom components
+import MetricCard from "../components/admin/MetricCard";
+import SalesLineChart from "../components/admin/SalesLineChart";
+import OrderStatusPieChart from "../components/admin/OrderStatusPieChart";
+import TopProductsBarChart from "../components/admin/TopProductsBarChart";
+import RecentOrders from "../components/admin/RecentOrders";
 
 export default function AdminDashboard() {
-    const [stats, setStats] = useState({
-        totalOrders: 0,
-        totalProducts: 0,
-        totalUsers: 0,
-        totalRevenue: 0,
+    const [data, setData] = useState({
+        metrics: {
+            todayRevenue: 0,
+            yesterdayRevenue: 0,
+            totalRevenue: 0,
+            totalOrders: 0,
+            totalUsers: 0,
+            totalProducts: 0,
+            revenueGrowth: 0,
+            monthlyRevenue: 0,
+            monthlyOrders: 0,
+            newUsersThisMonth: 0
+        },
+        charts: {
+            monthlySales: [],
+            orderStatusCounts: []
+        },
+        topProducts: [],
+        lowStockProducts: [],
         recentOrders: []
     });
 
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const fetchAnalytics = useCallback(async (isRefresh = false) => {
+        if (isRefresh) setRefreshing(true);
+        else setLoading(true);
+
+        try {
+            const token = localStorage.getItem("adminToken");
+            const res = await fetch(
+                import.meta.env.VITE_API_URL + "/api/admin/analytics-stats",
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+
+            const result = await res.json();
+            setData(result);
+        } catch (err) {
+            console.error("Failed to load analytics", err);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    }, []);
 
     useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const token = localStorage.getItem("adminToken");
+        fetchAnalytics();
 
-                const res = await fetch(
-                    import.meta.env.VITE_API_URL + "/api/admin/dashboard-stats",
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    }
-                );
+        // Real-time updates via Socket.io
+        const socket = io(import.meta.env.VITE_API_URL, {
+            transports: ["websocket"],
+            withCredentials: true
+        });
 
-                // handle unauthorized
-                if (!res.ok) {
-                    throw new Error(`Request failed: ${res.status}`);
-                }
+        socket.on("connect", () => {
+            console.log("Connected to admin real-time stream");
+            socket.emit("joinAdminRoom");
+        });
 
-                const data = await res.json();
-
-                // safe fallback to prevent crashes
-                setStats({
-                    totalOrders: data.totalOrders || 0,
-                    totalProducts: data.totalProducts || 0,
-                    totalUsers: data.totalUsers || 0,
-                    totalRevenue: data.totalRevenue || 0,
-                    recentOrders: data.recentOrders || []
-                });
-
-            } catch (err) {
-                console.error("Failed to load stats", err);
-            } finally {
-                setLoading(false);
-            }
+        // Listen for events that should trigger a refresh
+        const handleUpdate = () => {
+            console.log("Real-time update received, refreshing dashboard...");
+            fetchAnalytics(true);
         };
 
-        fetchStats();
-    }, []);
+        socket.on("admin:notification", handleUpdate);
+        socket.on("stockUpdated", handleUpdate);
+        socket.on("orderStatusUpdate", handleUpdate);
+
+        return () => {
+            socket.disconnect();
+        };
+    }, [fetchAnalytics]);
+
+    const exportToCSV = () => {
+        const rows = [
+            ["Metric", "Value"],
+            ["Total Revenue", data.metrics.totalRevenue],
+            ["Today's Revenue", data.metrics.todayRevenue],
+            ["Total Orders", data.metrics.totalOrders],
+            ["Total Products", data.metrics.totalProducts],
+            ["Total Users", data.metrics.totalUsers],
+            ["Monthly Revenue", data.metrics.monthlyRevenue],
+            ["Revenue Growth", data.metrics.revenueGrowth + "%"]
+        ];
+
+        let csvContent = "data:text/csv;charset=utf-8," 
+            + rows.map(e => e.join(",")).join("\n");
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `analytics_report_${new Date().toLocaleDateString()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     if (loading) {
         return (
             <AdminLayout>
-                <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
-                    <div className="w-12 h-12 border-4 border-green-100 border-t-green-600 rounded-full animate-spin"></div>
-                    <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Analytics are coming together...</p>
+                <div className="space-y-8 animate-pulse">
+                    <div className="h-10 w-64 bg-gray-200 rounded-xl mb-8" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {[1, 2, 3, 4].map(i => (
+                            <div key={i} className="h-32 bg-gray-100 rounded-[32px]" />
+                        ))}
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div className="h-[400px] bg-gray-100 rounded-[32px]" />
+                        <div className="h-[400px] bg-gray-100 rounded-[32px]" />
+                    </div>
                 </div>
             </AdminLayout>
         );
     }
 
-    const statCards = [
+    const calculateDailyTrend = () => {
+        const today = data.metrics.todayRevenue;
+        const yesterday = data.metrics.yesterdayRevenue;
+        if (yesterday === 0) return today > 0 ? 100 : 0;
+        return (((today - yesterday) / yesterday) * 100).toFixed(1);
+    };
+
+    const metricCards = [
+        {
+            title: "Today's Revenue",
+            value: `₹${Number(data.metrics.todayRevenue || 0).toLocaleString()}`,
+            icon: DollarSign,
+            trend: calculateDailyTrend(),
+            trendUp: data.metrics.todayRevenue >= data.metrics.yesterdayRevenue,
+            color: "text-emerald-600",
+            bg: "bg-emerald-50"
+        },
         {
             title: "Total Revenue",
-            value: `₹${(stats.totalRevenue || 0).toLocaleString()}`,
+            value: `₹${Number(data.metrics.totalRevenue || 0).toLocaleString()}`,
             icon: CreditCard,
-            trend: "+12.5%",
-            trendUp: true,
-            color: "text-emerald-600",
-            bg: "bg-emerald-50",
-            border: "border-emerald-100"
+            trend: data.metrics.revenueGrowth,
+            trendUp: data.metrics.revenueGrowth >= 0,
+            color: "text-blue-600",
+            bg: "bg-blue-50"
         },
         {
             title: "Total Orders",
-            value: (stats.totalOrders || 0).toLocaleString(),
-            icon: ShoppingBag,
-            trend: "+5.4%",
-            trendUp: true,
-            color: "text-blue-600",
-            bg: "bg-blue-50",
-            border: "border-blue-100"
+            value: Number(data.metrics.totalOrders || 0).toLocaleString(),
+            icon: ShoppingCart,
+            color: "text-purple-600",
+            bg: "bg-purple-50"
         },
         {
             title: "Inventory Items",
-            value: (stats.totalProducts || 0).toLocaleString(),
-            icon: Package,
-            trend: "0.2%",
-            trendUp: false,
+            value: Number(data.metrics.totalProducts || 0).toLocaleString(),
+            icon: Box,
             color: "text-orange-600",
-            bg: "bg-orange-50",
-            border: "border-orange-100"
-        },
-        {
-            title: "Registered Users",
-            value: (stats.totalUsers || 0).toLocaleString(),
-            icon: Users,
-            trend: "+1.2%",
-            trendUp: true,
-            color: "text-purple-600",
-            bg: "bg-purple-50",
-            border: "border-purple-100"
+            bg: "bg-orange-50"
         }
     ];
 
     return (
         <AdminLayout>
-            <div className="mb-8 sm:mb-12">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="mb-8">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div>
-                        <h1 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">Executive Dashboard</h1>
-                        <p className="text-gray-400 font-medium mt-1 uppercase tracking-widest text-[8px] sm:text-[10px] pl-1">Operational Overview & System Metrics</p>
+                        <div className="flex items-center gap-3 mb-1">
+                            <h1 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">Executive Dashboard</h1>
+                            {refreshing && <RefreshCcw className="w-5 h-5 text-green-600 animate-spin" />}
+                        </div>
+                        <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px] sm:text-[11px] pl-1">Operational Overview & Real-time Analytics</p>
                     </div>
-                    <div className="flex items-center gap-2 text-[10px] font-black bg-white shadow-sm border border-gray-100 px-4 py-2 rounded-2xl text-gray-400 italic w-fit">
-                        <Clock className="w-3 h-3 text-green-600" />
-                        Live: {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    
+                    <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex items-center gap-2 text-[10px] font-black bg-white shadow-sm border border-gray-100 px-4 py-2.5 rounded-2xl text-gray-500 italic">
+                            <Clock className="w-3.5 h-3.5 text-green-600" />
+                            Live: {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                        
+                        <button 
+                            onClick={() => fetchAnalytics(true)}
+                            className="p-2.5 bg-white border border-gray-100 rounded-2xl text-gray-500 hover:bg-gray-50 transition-colors shadow-sm active:scale-90"
+                            title="Refresh Data"
+                        >
+                            <RefreshCcw className="w-4 h-4" />
+                        </button>
+
+                        <button 
+                            onClick={exportToCSV}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-[#064734] text-[#E0FFC2] text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-[#0a5c44] transition-all shadow-lg shadow-green-900/20 active:scale-95"
+                        >
+                            <Download className="w-4 h-4" />
+                            Export Data
+                        </button>
                     </div>
                 </div>
             </div>
 
-            {/* STATS GRID - RESPONSIVE 1->2->4 COLUMNS */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 sm:mb-12">
-                {statCards.map((card, idx) => (
-                    <div
+            {/* METRICS GRID */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+                {metricCards.map((card, idx) => (
+                    <motion.div
                         key={idx}
-                        className="bg-white p-6 sm:p-8 rounded-[28px] sm:rounded-[32px] shadow-sm border border-gray-100 relative overflow-hidden group transition-all hover:shadow-xl hover:-translate-y-1"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.1 }}
                     >
-                        <div className={`absolute -right-4 -top-4 w-24 h-24 ${card.bg} rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-500`} />
-
-                        <div className="relative z-10">
-                            <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl ${card.bg} ${card.color} flex items-center justify-center transition-transform group-hover:scale-110`}>
-                                    <card.icon className="w-5 h-5 sm:w-6 sm:h-6" />
-                                </div>
-                                <div className={`flex items-center gap-1 text-[9px] font-black px-2 py-1 rounded-lg ${card.trendUp ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"}`}>
-                                    {card.trendUp ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                                    {card.trend}
-                                </div>
-                            </div>
-
-                            <p className="text-[9px] sm:text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">{card.title}</p>
-                            <h3 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tighter">{card.value}</h3>
-                        </div>
-                    </div>
+                        <MetricCard {...card} />
+                    </motion.div>
                 ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-                {/* RECENT ORDERS TABLE - RESPONSIVE SCROLL */}
-                <div className="lg:col-span-2 bg-white rounded-[32px] sm:rounded-[40px] p-6 sm:p-8 shadow-sm border border-gray-100 flex flex-col">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 sm:mb-10 text-center sm:text-left">
-                        <div>
-                            <h3 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">Recent Activity</h3>
-                            <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mt-1">Direct link to last 5 transactions</p>
-                        </div>
-                        <Link
-                            to="/admin/orders"
-                            className="w-fit mx-auto sm:mx-0 text-[10px] font-black uppercase tracking-widest text-[#1F7A3B] bg-green-50 px-5 py-2.5 rounded-full hover:bg-green-100 transition-colors flex items-center gap-2"
-                        >
-                            Log History <ArrowUpRight className="w-3 h-3" />
-                        </Link>
-                    </div>
+            {/* CHARTS SECTION */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.4 }}
+                >
+                    <SalesLineChart data={data.charts.monthlySales} />
+                </motion.div>
 
-                    {!stats.recentOrders || stats.recentOrders.length === 0 ? (
-                        <div className="py-20 text-center border-2 border-dashed border-gray-50 rounded-[32px]">
-                            <p className="text-gray-400 font-medium">System reports zero recent transactions.</p>
-                        </div>
-                    ) : (
-                        <div className="overflow-x-auto -mx-6 sm:mx-0">
-                            <div className="min-w-[600px] px-6 sm:px-0">
-                                <table className="w-full border-separate border-spacing-y-4">
-                                    <thead>
-                                        <tr className="text-left">
-                                            <th className="px-6 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Order Ref</th>
-                                            <th className="px-6 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Date/Time</th>
-                                            <th className="px-6 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 text-right">Revenue</th>
-                                            <th className="px-6 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 text-center">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {stats.recentOrders.map((order) => (
-                                            <tr key={order._id} className="group hover:bg-gray-50 transition-colors rounded-3xl">
-                                                <td className="px-6 py-5 bg-white border-y border-l border-gray-50 rounded-l-3xl first:border-l-0">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 text-[10px] font-black">
-                                                            #{order._id.substring(order._id.length - 4).toUpperCase()}
-                                                        </div>
-                                                        <span className="text-sm font-black text-gray-900 font-mono">GB-{new Date(order.createdAt).getFullYear()}-{order._id.slice(-6).toUpperCase()}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-5 bg-white border-y border-gray-50">
-                                                    <p className="text-xs font-black text-gray-600">{new Date(order.createdAt).toLocaleDateString()}</p>
-                                                    <p className="text-[10px] text-gray-400 font-medium">{new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                                                </td>
-                                                <td className="px-6 py-5 bg-white border-y border-gray-50 text-right">
-                                                    <span className="text-sm font-black text-gray-900">₹{Number(order.totalAmount || 0).toFixed(2)}</span>
-                                                </td>
-                                                <td className="px-6 py-5 bg-white border-y border-r border-gray-50 rounded-r-3xl first:border-r-0 text-center">
-                                                    <span
-                                                        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${order.orderStatus === "Delivered" ? "bg-green-100 text-green-700" :
-                                                            order.orderStatus === "Cancelled" ? "bg-red-100 text-red-700" :
-                                                                "bg-blue-100 text-blue-700"
-                                                            }`}
-                                                    >
-                                                        {order.orderStatus || "Placed"}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    )}
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.5 }}
+                >
+                    <OrderStatusPieChart data={data.charts.orderStatusCounts} />
+                </motion.div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+                {/* LEFT COLUMN: TOP PRODUCTS BAR CHART & RECENT ORDERS (2/3) */}
+                <div className="lg:col-span-2 space-y-8">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.6 }}
+                    >
+                        <TopProductsBarChart data={data.topProducts} />
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.7 }}
+                    >
+                        <RecentOrders orders={data.recentOrders} />
+                    </motion.div>
                 </div>
 
-                {/* SIDE ACTIONS/SUMMARY */}
-                <div className="space-y-6 sm:space-y-8">
-                    <div className="bg-gray-900 rounded-[32px] sm:rounded-[40px] p-8 text-white relative overflow-hidden shadow-2xl">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-green-500 rounded-full blur-[100px] opacity-30" />
-                        <h4 className="text-xl font-black mb-2 relative z-10">Admin Access</h4>
-                        <p className="text-gray-400 text-sm mb-10 relative z-10 line-clamp-2 sm:line-clamp-none">Your operational control panel is active. Perform batch updates directly from order logs.</p>
-
-                        <div className="space-y-4 relative z-10">
-                            <Link to="/admin/products" className="flex items-center justify-between p-4 bg-white/10 rounded-2xl hover:bg-white/20 transition-all group">
-                                <span className="text-sm font-bold">Manage Products</span>
-                                <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                            </Link>
-                            <Link to="/admin/orders" className="flex items-center justify-between p-4 bg-green-600 rounded-2xl hover:bg-green-700 transition-all group shadow-lg shadow-green-900/40">
-                                <span className="text-sm font-bold">Process Orders</span>
-                                <Package className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                            </Link>
-                        </div>
-                    </div>
-
-                    <div className="bg-[#1F7A3B] rounded-[32px] sm:rounded-[40px] p-8 text-white shadow-xl">
-                        <div className="flex items-center gap-4 mb-6">
-                            <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
-                                <TrendingUp className="w-6 h-6" />
+                {/* RIGHT COLUMN: SUMMARY PANEL + INVENTORY ALERTS (1/3) */}
+                <div className="space-y-8">
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.7 }}
+                        className="bg-gray-900 rounded-[32px] p-6 sm:p-8 text-white relative overflow-hidden shadow-2xl"
+                    >
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-green-500 rounded-full blur-[100px] opacity-20" />
+                        <h4 className="text-xl font-black mb-4 relative z-10 flex items-center gap-2">
+                            Monthly Summary
+                            <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full font-black uppercase tracking-widest italic ml-auto">
+                                Active
+                            </span>
+                        </h4>
+                        
+                        <div className="space-y-6 relative z-10">
+                            <div className="flex justify-between items-end border-b border-white/5 pb-4">
+                                <div>
+                                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Monthly Revenue</p>
+                                    <h5 className="text-2xl font-black tracking-tighter text-white">₹{Number(data.metrics.monthlyRevenue).toLocaleString()}</h5>
+                                </div>
+                                <div className={`flex items-center gap-1 text-[10px] font-black px-2 py-1 rounded-lg ${data.metrics.revenueGrowth >= 0 ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"}`}>
+                                    {data.metrics.revenueGrowth >= 0 ? "+" : ""}{data.metrics.revenueGrowth}%
+                                </div>
                             </div>
-                            <div>
-                                <p className="text-[10px] font-black uppercase text-white/60 tracking-widest">Revenue Peak</p>
-                                <h5 className="text-xl font-black">Target Track</h5>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-white/5 p-4 rounded-2xl">
+                                    <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-1">Total Orders</p>
+                                    <p className="text-xl font-black text-white">{data.metrics.monthlyOrders}</p>
+                                </div>
+                                <div className="bg-white/5 p-4 rounded-2xl">
+                                    <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-1">New Customers</p>
+                                    <p className="text-xl font-black text-white">{data.metrics.newUsersThisMonth}</p>
+                                </div>
                             </div>
+
+                            {data.topProducts[0] && (
+                                <div className="bg-green-500/10 border border-green-500/20 p-5 rounded-3xl">
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <TrendingUp className="w-5 h-5 text-green-400" />
+                                        <p className="text-[10px] font-black text-green-400 uppercase tracking-widest">Top Selling Product</p>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <img 
+                                            src={data.topProducts[0].image} 
+                                            alt={data.topProducts[0].name} 
+                                            className="w-12 h-12 rounded-xl object-cover ring-2 ring-green-500/30"
+                                        />
+                                        <div>
+                                            <p className="text-sm font-black text-white line-clamp-1">{data.topProducts[0].name}</p>
+                                            <p className="text-[10px] font-bold text-gray-500">{data.topProducts[0].purchaseCount} units sold</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                        <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-4">
-                            <div className="h-full bg-white w-[75%] rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
+                    </motion.div>
+
+                    {/* LOW STOCK ALERTS */}
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.8 }}
+                        className="bg-white rounded-[32px] p-6 sm:p-8 border border-gray-100 shadow-sm"
+                    >
+                        <div className="flex items-center justify-between mb-6">
+                            <h4 className="text-xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+                                <AlertTriangle className="w-5 h-5 text-amber-500" />
+                                Inventory Alerts
+                            </h4>
+                            <span className="text-[10px] font-black bg-amber-50 text-amber-600 px-3 py-1 rounded-full uppercase tracking-widest">
+                                {data.lowStockProducts?.length} Low
+                            </span>
                         </div>
-                        <p className="text-xs font-medium text-white/80">Monthly revenue goal is 75% complete. Average order value is stable.</p>
+
+                        <div className="space-y-4">
+                            {data.lowStockProducts && data.lowStockProducts.length > 0 ? (
+                                data.lowStockProducts.map((prod, idx) => (
+                                    <div key={prod._id} className="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-2xl transition-colors group">
+                                        <img src={prod.image} className="w-10 h-10 rounded-lg object-cover bg-gray-50" />
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-black text-gray-900 line-clamp-1">{prod.name}</p>
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                <div className="h-1.5 flex-1 bg-gray-100 rounded-full overflow-hidden">
+                                                    <div 
+                                                        className={`h-full ${prod.stock < 5 ? 'bg-red-500' : 'bg-amber-500'}`} 
+                                                        style={{ width: `${(prod.stock / 10) * 100}%` }} 
+                                                    />
+                                                </div>
+                                                <span className="text-[10px] font-black text-gray-900">{prod.stock} left</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="py-6 text-center">
+                                    <p className="text-xs font-bold text-gray-400 italic">Inventory levels within safe range</p>
+                                </div>
+                            )}
+                            <Link 
+                                to="/admin/products"
+                                className="flex items-center justify-center gap-2 w-full py-3 mt-2 bg-gray-50 hover:bg-gray-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-500 transition-colors"
+                            >
+                                Restock Assets <ArrowUpRight className="w-3 h-3" />
+                            </Link>
+                        </div>
+                    </motion.div>
+                </div>
+            </div>
+
+            {/* TABLE SECTION (TOP PRODUCTS) */}
+            <div className="bg-white rounded-[40px] p-8 sm:p-10 shadow-sm border border-gray-100 overflow-hidden mb-10">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
+                    <div>
+                        <h3 className="text-2xl font-black text-gray-900 tracking-tight">Top Performance Assets</h3>
+                        <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mt-1">Direct sorted by market penetration</p>
                     </div>
+                    <div className="flex items-center gap-3">
+                        <Link 
+                            to="/admin/products"
+                            className="text-[10px] font-black uppercase tracking-widest text-[#1F7A3B] bg-green-50 px-6 py-3 rounded-full hover:bg-green-100 transition-colors flex items-center gap-2"
+                        >
+                            Catalog Manager <ChevronRight className="w-3.5 h-3.5" />
+                        </Link>
+                    </div>
+                </div>
+
+                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                    <table className="w-full border-separate border-spacing-y-4 px-8 sm:px-0">
+                        <thead>
+                            <tr className="text-left">
+                                <th className="px-6 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Product Line</th>
+                                <th className="px-6 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Category</th>
+                                <th className="px-6 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 text-center">Volume Sold</th>
+                                <th className="px-6 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 text-center">Market Rating</th>
+                                <th className="px-6 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 text-right">Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.topProducts.map((prod) => (
+                                <tr key={prod._id} className="group hover:bg-gray-50 transition-colors rounded-3xl">
+                                    <td className="px-6 py-5 bg-white border-y border-l border-gray-50 rounded-l-[32px]">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-14 h-14 rounded-2xl bg-gray-50 overflow-hidden p-1 flex-shrink-0 group-hover:scale-110 transition-transform shadow-sm">
+                                                <img src={prod.image} alt="" className="w-full h-full object-cover rounded-xl" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-black text-gray-900 line-clamp-1">{prod.name}</p>
+                                                <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest mt-0.5">Asset #{prod._id.slice(-6).toUpperCase()}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-5 bg-white border-y border-gray-50">
+                                        <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-gray-50 text-gray-500 rounded-lg">
+                                            {prod.category}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-5 bg-white border-y border-gray-50 text-center">
+                                        <span className="text-sm font-black text-gray-900">{prod.purchaseCount} <span className="text-[10px] text-gray-400 uppercase ml-1">Units</span></span>
+                                    </td>
+                                    <td className="px-6 py-5 bg-white border-y border-gray-50 text-center">
+                                        <div className="flex items-center justify-center gap-1.5">
+                                            <div className="w-2 h-2 rounded-full bg-amber-400" />
+                                            <span className="text-sm font-black text-gray-900">{prod.rating || 0}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-5 bg-white border-y border-r border-gray-50 rounded-r-[32px] text-right">
+                                        <span className="text-sm font-black text-[#1F7A3B]">₹{Number(prod.price).toLocaleString()}</span>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </AdminLayout>

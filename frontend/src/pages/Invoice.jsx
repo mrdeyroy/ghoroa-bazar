@@ -35,16 +35,25 @@ export default function Invoice() {
         "Authorization": `Bearer ${token}`
       }
     })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error("Order not found");
+        return res.json();
+      })
       .then(data => {
-        setOrder(data);
+        // Ensure data is the order object and not an error message
+        if (data && data._id) {
+          setOrder(data);
+        } else {
+          setOrder(null);
+        }
         setLoading(false);
       })
       .catch(err => {
         console.error("Failed to load invoice", err);
+        setOrder(null);
         setLoading(false);
       });
-  }, [orderId]);
+  }, [orderId, token]);
 
   const handleDownloadPDF = () => {
     if (!order) return;
@@ -190,7 +199,7 @@ export default function Invoice() {
 
   const customer = order.customerDetails;
   const customerName = customer?.firstName ? `${customer.firstName} ${customer.lastName}` : (customer?.name || "Valued Customer");
-  const invoiceId = `INV-${new Date(order.createdAt).getFullYear()}-${order._id.slice(-5).toUpperCase()}`;
+  const invoiceId = `INV-${new Date(order?.createdAt).getFullYear() || "2026"}-${order?._id?.slice(-5).toUpperCase() || "00000"}`;
 
   return (
     <div className="min-h-screen bg-[#fbfcfa] py-8 md:py-16 px-4">
@@ -252,7 +261,7 @@ export default function Invoice() {
                 <div className="mt-8">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Order Reference</p>
                     <p className="text-gray-900 font-extrabold text-sm font-mono mt-1">
-                      GB-{new Date(order.createdAt).getFullYear()}-{order._id.slice(-6).toUpperCase()}
+                      GB-{new Date(order?.createdAt || Date.now()).getFullYear()}-{order?._id?.slice(-6).toUpperCase() || "000000"}
                     </p>
                 </div>
              </div>
