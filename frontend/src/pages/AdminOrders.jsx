@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import socket from "../utils/socket";
+import { BASE_URL } from "../config/api";
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
@@ -44,7 +45,7 @@ export default function AdminOrders() {
     try {
       setLoading(true);
       const token = localStorage.getItem("adminToken");
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders?page=${currentPage}&limit=7`, {
+      const res = await fetch(`${BASE_URL}/api/orders?page=${currentPage}&limit=7`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -95,7 +96,7 @@ export default function AdminOrders() {
 
     try {
       const token = localStorage.getItem("adminToken");
-      await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${id}`, { credentials: "include",
+      await fetch(`${BASE_URL}/api/orders/${id}`, { credentials: "include",
         method: "PUT",
         headers: { 
           "Content-Type": "application/json",

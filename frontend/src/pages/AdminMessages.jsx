@@ -14,6 +14,7 @@ import {
   Search,
   Check
 } from "lucide-react";
+import { BASE_URL } from "../config/api";
 
 export default function AdminMessages() {
   const [messages, setMessages] = useState([]);
@@ -22,7 +23,7 @@ export default function AdminMessages() {
 
   const fetchMessages = () => {
     const token = localStorage.getItem("adminToken");
-    fetch(import.meta.env.VITE_API_URL + "/api/contact", {
+    fetch(BASE_URL + "/api/contact", {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -40,7 +41,7 @@ export default function AdminMessages() {
 
   const markAsRead = async (id, refreshUnread) => {
     const token = localStorage.getItem("adminToken");
-    await fetch(`${import.meta.env.VITE_API_URL}/api/contact/${id}/read`, { credentials: "include",
+    await fetch(`${BASE_URL}/api/contact/${id}/read`, { credentials: "include",
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${token}`
@@ -59,7 +60,7 @@ export default function AdminMessages() {
   const deleteMessage = async (id, refreshUnread) => {
     if (!window.confirm("Delete this message?")) return;
     const token = localStorage.getItem("adminToken");
-    await fetch(`${import.meta.env.VITE_API_URL}/api/contact/${id}`, { credentials: "include",
+    await fetch(`${BASE_URL}/api/contact/${id}`, { credentials: "include",
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`

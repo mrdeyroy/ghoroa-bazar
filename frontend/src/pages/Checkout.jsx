@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useCart } from "../context/CartContext";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { BASE_URL } from "../config/api";
 import { 
   User, 
   MapPin, 
@@ -54,7 +55,7 @@ export default function Checkout() {
         const token = localStorage.getItem("adminToken");
         if (!token) return;
 
-        const res = await fetch(import.meta.env.VITE_API_URL + "/api/users/me", { credentials: "include",
+        const res = await fetch(`${BASE_URL}/api/users/me`, { credentials: "include",
           headers: { "Authorization": `Bearer ${token}` }
         });
 

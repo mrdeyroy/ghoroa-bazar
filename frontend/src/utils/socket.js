@@ -1,4 +1,5 @@
 import { io } from "socket.io-client";
+import { SOCKET_URL } from "../config/api";
 
 
 /**
@@ -9,7 +10,7 @@ import { io } from "socket.io-client";
  * - reconnectionAttempts: 10 → don't retry forever in production
  * - No global listeners here — components manage their own lifecycle
  */
-const socket = io(import.meta.env.VITE_API_URL, {
+const socket = io(SOCKET_URL, {
   transports: ["websocket"]
 });
 

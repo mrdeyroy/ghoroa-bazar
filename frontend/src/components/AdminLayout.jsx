@@ -15,6 +15,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { useNotifications } from "../context/NotificationContext";
+import { BASE_URL } from "../config/api";
 
 // ── Notification Bell Component (local to AdminLayout) ──
 function NotificationBell() {
@@ -126,7 +127,7 @@ export default function AdminLayout({ children }) {
   const fetchUnreadCount = async () => {
     try {
       const token = localStorage.getItem("adminToken");
-      const res = await fetch(import.meta.env.VITE_API_URL + "/api/contact/unread-count", {
+      const res = await fetch(BASE_URL + "/api/contact/unread-count", {
         headers: {
           Authorization: `Bearer ${token}`
         }

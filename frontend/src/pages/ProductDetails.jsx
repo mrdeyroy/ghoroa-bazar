@@ -26,6 +26,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Skeleton from "../components/Skeleton";
 import ProductCard from "../components/ProductCard";
 import BackButton from "../components/BackButton";
+import { BASE_URL } from "../config/api";
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -54,7 +55,7 @@ export default function ProductDetails() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`${import.meta.env.VITE_API_URL}/api/products/${id}`)
+    fetch(`${BASE_URL}/api/products/${id}`)
       .then(res => res.json())
       .then(data => {
         setProduct(data);
@@ -69,7 +70,7 @@ export default function ProductDetails() {
         const wishlistProductIds = wishlist.map(item => item._id).join(",");
         const userId = user?.id || "guest";
 
-        fetch(`${import.meta.env.VITE_API_URL}/api/products/recommend/${id}/${userId}?cartProductIds=${cartProductIds}&wishlistProductIds=${wishlistProductIds}`)
+        fetch(`${BASE_URL}/api/products/recommend/${id}/${userId}?cartProductIds=${cartProductIds}&wishlistProductIds=${wishlistProductIds}`)
           .then(res => res.json())
           .then(list => {
             setRelated(list);
@@ -118,7 +119,7 @@ export default function ProductDetails() {
 
     setReviewLoading(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/products/${id}/reviews`, { credentials: "include",
+      const res = await fetch(`${BASE_URL}/api/products/${id}/reviews`, { credentials: "include",
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -132,7 +133,7 @@ export default function ProductDetails() {
         setToast("Review submitted successfully! ✅");
         setTimeout(() => setToast(""), 2500);
         setReviewForm({ rating: 5, comment: "" });
-        const prodRes = await fetch(`${import.meta.env.VITE_API_URL}/api/products/${id}`);
+        const prodRes = await fetch(`${BASE_URL}/api/products/${id}`);
         const prodData = await prodRes.json();
         setProduct(prodData);
       } else {

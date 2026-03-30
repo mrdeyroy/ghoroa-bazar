@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import io from "socket.io-client";
+import { BASE_URL, SOCKET_URL } from "../config/api";
 
 // Import custom components
 import MetricCard from "../components/admin/MetricCard";
@@ -61,7 +62,7 @@ export default function AdminDashboard() {
         try {
             const token = localStorage.getItem("adminToken");
             const res = await fetch(
-                import.meta.env.VITE_API_URL + "/api/admin/analytics-stats",
+                `${BASE_URL}/api/admin/analytics-stats`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -85,7 +86,7 @@ export default function AdminDashboard() {
         fetchAnalytics();
 
         // Real-time updates via Socket.io
-        const socket = io(import.meta.env.VITE_API_URL, {
+        const socket = io(SOCKET_URL, {
             transports: ["websocket"],
             withCredentials: true
         });

@@ -23,6 +23,7 @@ import { useNotifications } from "../context/NotificationContext";
 import BackButton from "../components/BackButton";
 import socket from "../utils/socket";
 import toast from "react-hot-toast";
+import { BASE_URL } from "../config/api";
 
 // Status message mapping for live tracking feel
 const STATUS_MESSAGES = {
@@ -66,7 +67,7 @@ export default function MyOrders() {
     }
 
     setLoading(true);
-    fetch(`${import.meta.env.VITE_API_URL}/api/orders/my?page=${currentPage}&limit=7`, { 
+    fetch(`${BASE_URL}/api/orders/my?page=${currentPage}&limit=7`, { 
       credentials: "include",
       headers: { "Authorization": `Bearer ${token}` }
     })
@@ -141,7 +142,7 @@ export default function MyOrders() {
   const executeCancelOrder = async (orderId) => {
     setCancellingId(orderId);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/cancel/${orderId}`, { credentials: "include",
+      const res = await fetch(`${BASE_URL}/api/orders/cancel/${orderId}`, { credentials: "include",
         method: "PUT",
         headers: {
           "Authorization": `Bearer ${token}`

@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useRef, useCallback, useEffect } from "react";
 import { useAuth } from "./AuthContext";
 import socket from "../utils/socket";
+import { BASE_URL } from "../config/api";
 
 const NotificationContext = createContext();
 
@@ -33,7 +34,7 @@ export const NotificationProvider = ({ children }) => {
       const adminToken = localStorage.getItem("adminToken");
       const activeToken = adminToken || token;
       
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notifications/${id}/read`, {
+      const res = await fetch(`${BASE_URL}/api/notifications/${id}/read`, {
         method: "PUT",
         headers: { "Authorization": `Bearer ${activeToken}` }
       });
@@ -54,7 +55,7 @@ export const NotificationProvider = ({ children }) => {
     const endpoint = isAdmin ? "/api/notifications/admin/read-all" : "/api/notifications/read-all";
     
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
+      const res = await fetch(`${BASE_URL}${endpoint}`, {
         method: "PUT",
         headers: { "Authorization": `Bearer ${activeToken}` }
       });
@@ -104,7 +105,7 @@ export const NotificationProvider = ({ children }) => {
     const endpoint = isAdminMode ? "/api/notifications/admin" : "/api/notifications";
 
     // 1. Fetch History
-    fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
+    fetch(`${BASE_URL}${endpoint}`, {
       headers: { "Authorization": `Bearer ${activeToken}` }
     })
       .then(res => {
@@ -187,7 +188,7 @@ export const NotificationProvider = ({ children }) => {
 
       if (!activeToken) return;
 
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notifications/${id}`, {
+      const res = await fetch(`${BASE_URL}/api/notifications/${id}`, {
         method: "DELETE",
         headers: { "Authorization": `Bearer ${activeToken}` }
       });

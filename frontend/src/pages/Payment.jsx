@@ -23,6 +23,7 @@ import {
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import BackButton from "../components/BackButton";
+import { BASE_URL } from "../config/api";
 
 export default function Payment() {
   const { cart, clearCart } = useCart();
@@ -63,7 +64,7 @@ export default function Payment() {
     const checkCodEligibility = async () => {
       if (!token) return;
       try {
-        const res = await fetch(import.meta.env.VITE_API_URL + "/api/orders/cod-eligibility", {
+        const res = await fetch(`${BASE_URL}/api/orders/cod-eligibility`, {
           credentials: "include",
           headers: { "Authorization": `Bearer ${token}` }
         });
@@ -122,7 +123,7 @@ export default function Payment() {
   // ============================================
   const handlePlaceOrder = async (finalMethod, finalStatus, txnId = null) => {
     try {
-      const res = await fetch(import.meta.env.VITE_API_URL + "/api/orders", { credentials: "include",
+      const res = await fetch(`${BASE_URL}/api/orders`, { credentials: "include",
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -154,7 +155,7 @@ export default function Payment() {
     setCodError("");
 
     try {
-      const res = await fetch(import.meta.env.VITE_API_URL + "/api/orders", {
+      const res = await fetch(`${BASE_URL}/api/orders`, {
         credentials: "include",
         method: "POST",
         headers: { 
@@ -206,7 +207,7 @@ export default function Payment() {
     setCodError("");
 
     try {
-      const res = await fetch(import.meta.env.VITE_API_URL + "/api/orders/verify-cod", {
+      const res = await fetch(`${BASE_URL}/api/orders/verify-cod`, {
         credentials: "include",
         method: "POST",
         headers: { 
@@ -246,7 +247,7 @@ export default function Payment() {
 
     setCodError("");
     try {
-      const res = await fetch(import.meta.env.VITE_API_URL + "/api/orders/resend-cod-otp", {
+      const res = await fetch(`${BASE_URL}/api/orders/resend-cod-otp`, {
         credentials: "include",
         method: "POST",
         headers: { 

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { BASE_URL } from "../config/api";
 
 export default function Profile() {
   const { user, token, logout, updateUser } = useAuth();
@@ -63,7 +64,7 @@ export default function Profile() {
 
   const fetchUserData = async () => {
     try {
-      const res = await fetch(import.meta.env.VITE_API_URL + "/api/users/me", { credentials: "include",
+      const res = await fetch(`${BASE_URL}/api/users/me`, { credentials: "include",
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to fetch user data");
@@ -99,7 +100,7 @@ export default function Profile() {
 
     try {
       showToast("Uploading Image...");
-      const res = await fetch(import.meta.env.VITE_API_URL + "/api/upload", { credentials: "include",
+      const res = await fetch(`${BASE_URL}/api/upload`, { credentials: "include",
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`
@@ -111,7 +112,7 @@ export default function Profile() {
         setEditFormData({ ...editFormData, avatar: data[0].url });
         // Auto save after upload if not in edit mode, or just update form
         if (!isEditing) {
-          const updateRes = await fetch(import.meta.env.VITE_API_URL + "/api/users/profile", { credentials: "include",
+          const updateRes = await fetch(`${BASE_URL}/api/users/profile`, { credentials: "include",
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
@@ -136,7 +137,7 @@ export default function Profile() {
 
   const fetchRecentOrders = async () => {
     try {
-      const res = await fetch(import.meta.env.VITE_API_URL + "/api/orders/my", { credentials: "include",
+      const res = await fetch(`${BASE_URL}/api/orders/my`, { credentials: "include",
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (!res.ok) return;
@@ -155,7 +156,7 @@ export default function Profile() {
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(import.meta.env.VITE_API_URL + "/api/users/profile", { credentials: "include",
+      const res = await fetch(`${BASE_URL}/api/users/profile`, { credentials: "include",
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -181,8 +182,8 @@ export default function Profile() {
   const handleAddressAction = async (e) => {
     e.preventDefault();
     const url = addressForm.editId
-      ? `${import.meta.env.VITE_API_URL}/api/users/address/${addressForm.editId}`
-      : import.meta.env.VITE_API_URL + "/api/users/address";
+      ? `${BASE_URL}/api/users/address/${addressForm.editId}`
+      : `${BASE_URL}/api/users/address`;
     const method = addressForm.editId ? "PUT" : "POST";
 
     try {
@@ -211,7 +212,7 @@ export default function Profile() {
   const handleDeleteAddress = async (id) => {
     if (!window.confirm("Delete this address?")) return;
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/address/${id}`, { credentials: "include",
+      const res = await fetch(`${BASE_URL}/api/users/address/${id}`, { credentials: "include",
         method: "DELETE",
         headers: { "Authorization": `Bearer ${token}` }
       });

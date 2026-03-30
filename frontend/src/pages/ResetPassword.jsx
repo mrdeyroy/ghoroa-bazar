@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Lock, Eye, EyeOff, Loader2, Save } from "lucide-react";
 import axios from "axios";
+import { BASE_URL } from "../config/api";
 
 export default function ResetPassword() {
   const [password, setPassword] = useState("");
@@ -25,7 +26,7 @@ export default function ResetPassword() {
     setSuccess("");
 
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/users/reset-password/${token}`, { password });
+      await axios.post(`${BASE_URL}/api/users/reset-password/${token}`, { password });
       setSuccess("Password reset successfully! You can now login.");
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {

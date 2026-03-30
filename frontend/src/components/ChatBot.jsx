@@ -13,6 +13,7 @@ import {
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
+import { BASE_URL } from "../config/api";
 
 export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -50,7 +51,7 @@ export default function ChatBot() {
 
     try {
       let res, data;
-      const baseUrl = import.meta.env.VITE_API_URL + "/api/products";
+      const baseUrl = BASE_URL + "/api/products";
       
       if (option === "Show best products") {
         res = await fetch(`${baseUrl}?featured=true&limit=4`);

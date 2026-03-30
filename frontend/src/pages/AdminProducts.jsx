@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import AdminLayout from "../components/AdminLayout";
+import { BASE_URL } from "../config/api";
 import { 
   Plus, 
   Search, 
@@ -57,7 +58,7 @@ export default function AdminProducts() {
 
   const fetchProducts = () => {
     const token = localStorage.getItem("adminToken");
-    fetch(`${import.meta.env.VITE_API_URL}/api/products?page=${currentPage}&limit=10`, {
+    fetch(`${BASE_URL}/api/products?page=${currentPage}&limit=10`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -141,7 +142,7 @@ export default function AdminProducts() {
         selectedFiles.forEach(file => formData.append("images", file));
 
         const token = localStorage.getItem("adminToken");
-        const uploadRes = await fetch(import.meta.env.VITE_API_URL + "/api/upload", { credentials: "include",
+        const uploadRes = await fetch(`${BASE_URL}/api/upload`, { credentials: "include",
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`
@@ -176,8 +177,8 @@ export default function AdminProducts() {
 
       console.log("FINAL PAYLOAD:", payload);
       const url = editingId
-        ? `${import.meta.env.VITE_API_URL}/api/products/${editingId}`
-        : import.meta.env.VITE_API_URL + "/api/products";
+        ? `${BASE_URL}/api/products/${editingId}`
+        : `${BASE_URL}/api/products`;
 
       const method = editingId ? "PUT" : "POST";
       console.log("Sending request:", method, url);
@@ -246,7 +247,7 @@ export default function AdminProducts() {
   const deleteProduct = async (id) => {
     if (!window.confirm("Delete this product?")) return;
     const token = localStorage.getItem("adminToken");
-    await fetch(`${import.meta.env.VITE_API_URL}/api/products/${id}`, { credentials: "include",
+    await fetch(`${BASE_URL}/api/products/${id}`, { credentials: "include",
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`

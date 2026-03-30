@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import { Search, Filter, X, ChevronRight, SlidersHorizontal } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { BASE_URL } from "../config/api";
 
 import { CATEGORIES } from "../constants";
 
@@ -55,7 +56,7 @@ export default function Products() {
       params.append("page", currentPage);
       params.append("limit", 9);
 
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/products?${params.toString()}`);
+      const res = await fetch(`${BASE_URL}/api/products?${params.toString()}`);
       const result = await res.json();
       
       if (result && result.data) {

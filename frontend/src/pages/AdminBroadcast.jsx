@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import AdminLayout from "../components/AdminLayout";
 import { Megaphone, Trash2, Send, Clock, AlertCircle, CheckCircle } from "lucide-react";
 import toast from "react-hot-toast";
+import { BASE_URL } from "../config/api";
 
 export default function AdminBroadcast() {
   const [message, setMessage] = useState("");
@@ -10,7 +11,7 @@ export default function AdminBroadcast() {
   const [sending, setSending] = useState(false);
 
   const token = localStorage.getItem("adminToken");
-  const API = import.meta.env.VITE_API_URL;
+  const API = BASE_URL;
 
   // Fetch all broadcasts
   const fetchBroadcasts = async () => {

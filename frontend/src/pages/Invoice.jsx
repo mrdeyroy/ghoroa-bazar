@@ -19,6 +19,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import BackButton from "../components/BackButton";
 import { useAuth } from "../context/AuthContext";
+import { BASE_URL } from "../config/api";
 
 export default function Invoice() {
   const { orderId } = useParams();
@@ -30,7 +31,7 @@ export default function Invoice() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`${import.meta.env.VITE_API_URL}/api/orders/${orderId}`, {
+    fetch(`${BASE_URL}/api/orders/${orderId}`, {
       headers: {
         "Authorization": `Bearer ${token}`
       }

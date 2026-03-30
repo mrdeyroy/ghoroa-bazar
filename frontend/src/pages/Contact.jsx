@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
+import { BASE_URL } from "../config/api";
 
 export default function Contact() {
   const { user } = useAuth();
@@ -56,7 +57,7 @@ export default function Contact() {
 
     setLoading(true);
     try {
-      const res = await fetch(import.meta.env.VITE_API_URL + "/api/contact", { credentials: "include",
+      const res = await fetch(`${BASE_URL}/api/contact`, { credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form)

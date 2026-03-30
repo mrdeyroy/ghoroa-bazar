@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight, Package } from "lucide-react";
 import ProductCard from "./ProductCard";
+import { BASE_URL } from "../config/api";
 
 export default function FeaturedProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(import.meta.env.VITE_API_URL + "/api/products?featured=true&limit=4")
+    fetch(BASE_URL + "/api/products?featured=true&limit=4")
       .then((res) => res.json())
       .then((result) => {
         setProducts(result.data || (Array.isArray(result) ? result : []));

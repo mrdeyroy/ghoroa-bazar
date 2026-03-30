@@ -4,6 +4,7 @@ import { Mail, Lock, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { motion } from "framer-motion";
+import { BASE_URL } from "../config/api";
 
 // Assets
 import groceryFavicon from "../assets/grocery_favicon.jpg";
@@ -27,8 +28,8 @@ export default function Login() {
 
     try {
       const endpoint = isAdmin
-        ? import.meta.env.VITE_API_URL + "/api/admin/login"
-        : import.meta.env.VITE_API_URL + "/api/users/login";
+        ? `${BASE_URL}/api/admin/login`
+        : `${BASE_URL}/api/users/login`;
 
       const res = await axios.post(endpoint, { email, password });
 

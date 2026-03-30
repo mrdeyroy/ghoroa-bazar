@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { X, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ProductCard from "./ProductCard";
+import { BASE_URL } from "../config/api";
 
 const RECENT_KEY = "gb_recent_searches";
 
@@ -34,7 +35,7 @@ export default function SearchModal({ open, onClose }) {
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/products?search=${encodeURIComponent(query)}&limit=8`);
+        const res = await fetch(`${BASE_URL}/api/products?search=${encodeURIComponent(query)}&limit=8`);
         const result = await res.json();
         setResults(result.data || (Array.isArray(result) ? result : []));
       } catch (err) {
