@@ -96,12 +96,6 @@ export default function App() {
           <Route path="/return-policy" element={<RefundPolicy />} />
 
           <Route path="/product/:id" element={<ProductDetails />} />
-          <Route 
-            path="/invoice/:orderId" 
-            element={
-              localStorage.getItem("adminLoggedIn") ? <Invoice /> : <ProtectedRoute><Invoice /></ProtectedRoute>
-            } 
-          />
           <Route path="/order-success" element={<OrderSuccess />} />
 
           {/* Protected Customer Routes */}
@@ -113,6 +107,12 @@ export default function App() {
         </Route>
 
         {/* Pages WITHOUT Navbar + Footer */}
+        <Route 
+          path="/invoice/:orderId" 
+          element={
+            localStorage.getItem("adminLoggedIn") ? <Invoice /> : <ProtectedRoute><Invoice /></ProtectedRoute>
+          } 
+        />
 
 
         {/* ---------- AUTH ---------- */}
