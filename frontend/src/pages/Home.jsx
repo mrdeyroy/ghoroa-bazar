@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
+import { History, MapPin, Users, Globe } from "lucide-react";
 
 import Hero from "../components/Hero";
 import CategorySection from "../components/CategorySection";
@@ -344,14 +345,14 @@ return (
   {/* Stats Row */}
   <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 max-w-5xl mx-auto mb-10 md:mb-16">
     {[
-      { icon: "/assets/vector.svg", num: "8+", label: "Year of Experience" },
-      { icon: "/assets/city.svg", num: "45+", label: "City" },
-      { icon: "/assets/happy.svg", num: "120+", label: "Happy Families" },
-      { icon: "/assets/export.svg", num: "8+", label: "Export Country" }
+      { icon: <History className="w-6 h-6 md:w-8 md:h-8 text-[#1f7a3b]" />, num: "8+", label: "Year of Experience" },
+      { icon: <MapPin className="w-6 h-6 md:w-8 md:h-8 text-[#1f7a3b]" />, num: "45+", label: "City" },
+      { icon: <Users className="w-6 h-6 md:w-8 md:h-8 text-[#1f7a3b]" />, num: "120+", label: "Happy Families" },
+      { icon: <Globe className="w-6 h-6 md:w-8 md:h-8 text-[#1f7a3b]" />, num: "8+", label: "Export Country" }
     ].map((s, i) => (
       <div key={i} className="flex flex-col items-center">
         <div className="w-12 h-12 md:w-16 md:h-16 bg-green-50 rounded-2xl flex items-center justify-center mb-4">
-          <img src={s.icon} alt={s.label} className="w-6 h-6 md:w-8 md:h-8" />
+          {s.icon}
         </div>
         <h2 className="text-2xl md:text-3xl font-extrabold text-[#1f7a3b] mb-1">{s.num}</h2>
         <p className="text-gray-500 text-xs md:text-sm font-medium">{s.label}</p>
