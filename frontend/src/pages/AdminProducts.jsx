@@ -151,7 +151,17 @@ export default function AdminProducts() {
         });
         const uploadData = await uploadRes.json();
         console.log("Upload response:", uploadData);
-        uploadedImages = [...uploadedImages, ...uploadData];
+
+        if (!uploadRes.ok) {
+          throw new Error(uploadData.error || uploadData.message || "Upload failed");
+        }
+        
+        if (Array.isArray(uploadData)) {
+          uploadedImages = [...uploadedImages, ...uploadData];
+        } else {
+          console.error("Unexpected upload response format:", uploadData);
+          throw new Error("Upload failed: Invalid response format");
+        }
         setUploading(false);
       }
 

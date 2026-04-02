@@ -5,8 +5,14 @@ const cloudinary = require("../utils/cloudinary");
 const fs = require("fs");
 
 const router = express.Router();
-const authMiddleware = require("../middleware/authMiddleware");
+const anyAuth = require("../middleware/anyAuth");
 const path = require("path");
+
+// Ensure upload directory exists
+const uploadDir = "uploads/";
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
 
 // Multer config for security
 const storage = multer.diskStorage({
@@ -34,7 +40,7 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
-router.post("/", authMiddleware, (req, res, next) => {
+router.post("/", anyAuth, (req, res, next) => {
   upload.array("images", 5)(req, res, (err) => {
     if (err instanceof multer.MulterError) {
       if (err.code === "LIMIT_FILE_SIZE") {
