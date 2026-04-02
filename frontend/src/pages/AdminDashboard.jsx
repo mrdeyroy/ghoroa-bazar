@@ -19,8 +19,8 @@ import {
     Filter
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import io from "socket.io-client";
-import { BASE_URL, SOCKET_URL } from "../config/api";
+import socket from "../utils/socket";
+import { BASE_URL } from "../config/api";
 
 // Import custom components
 import MetricCard from "../components/admin/MetricCard";
@@ -61,6 +61,8 @@ export default function AdminDashboard() {
 
         try {
             const token = localStorage.getItem("adminToken");
+            if (!token) return; // Silent return if not auth yet
+
             const res = await fetch(
                 `${BASE_URL}/api/admin/analytics-stats`,
                 {
@@ -85,16 +87,15 @@ export default function AdminDashboard() {
     useEffect(() => {
         fetchAnalytics();
 
-        // Real-time updates via Socket.io
-        const socket = io(SOCKET_URL, {
-            transports: ["websocket"],
-            withCredentials: true
-        });
+        // Real-time updates via singleton Socket.io
+        if (!socket.connected) {
+          socket.connect();
+        }
 
-        socket.on("connect", () => {
+        const onConnect = () => {
             console.log("Connected to admin real-time stream");
             socket.emit("joinAdminRoom");
-        });
+        };
 
         // Listen for events that should trigger a refresh
         const handleUpdate = () => {
@@ -102,12 +103,20 @@ export default function AdminDashboard() {
             fetchAnalytics(true);
         };
 
+        if (socket.connected) {
+          onConnect();
+        }
+
+        socket.on("connect", onConnect);
         socket.on("admin:notification", handleUpdate);
         socket.on("stockUpdated", handleUpdate);
         socket.on("orderStatusUpdate", handleUpdate);
 
         return () => {
-            socket.disconnect();
+            socket.off("connect", onConnect);
+            socket.off("admin:notification", handleUpdate);
+            socket.off("stockUpdated", handleUpdate);
+            socket.off("orderStatusUpdate", handleUpdate);
         };
     }, [fetchAnalytics]);
 

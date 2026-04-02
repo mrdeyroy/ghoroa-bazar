@@ -1,22 +1,29 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { io } from "socket.io-client";
-import { SOCKET_URL } from "../config/api";
+import socket from "../utils/socket";
 
 const SocketContext = createContext();
 
 export const SocketProvider = ({ children }) => {
-  const [socket, setSocket] = useState(null);
+  const [isConnected, setIsConnected] = useState(socket.connected);
 
   useEffect(() => {
-    const socketUrl = SOCKET_URL;
-    const newSocket = io(socketUrl, {
-      transports: ["websocket"],
-      reconnectionAttempts: 5,
-    });
+    // If not connected, connect it (it's a singleton, so this is safe)
+    if (!socket.connected) {
+      socket.connect();
+    }
 
-    setSocket(newSocket);
+    const onConnect = () => setIsConnected(true);
+    const onDisconnect = () => setIsConnected(false);
 
-    return () => newSocket.close();
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+
+    setIsConnected(socket.connected);
+
+    return () => {
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
+    };
   }, []);
 
   return (
