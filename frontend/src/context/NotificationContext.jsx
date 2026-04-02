@@ -138,7 +138,16 @@ export const NotificationProvider = ({ children }) => {
     // 2. Setup Socket
     if (!socket.connected) socket.connect();
 
-    const onConnect = () => setIsConnected(true);
+    const onConnect = () => {
+      setIsConnected(true);
+      // Re-join rooms on every connection/reconnection
+      if (isAdminMode && adminToken) {
+        socket.emit("join", { role: "admin" });
+      } else if (user) {
+        socket.emit("join", { userId: user?._id || user?.id, role: "user" });
+      }
+    };
+
     const onDisconnect = () => setIsConnected(false);
 
     const onNewNotification = (notification) => {
@@ -163,13 +172,17 @@ export const NotificationProvider = ({ children }) => {
 
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
-    setIsConnected(socket.connected);
+    
+    // If already connected, trigger onConnect manually to ensure rooms are joined
+    if (socket.connected) {
+      onConnect();
+    } else {
+      socket.connect();
+    }
 
     if (isAdminMode && adminToken) {
-      socket.emit("join", { role: "admin" });
       socket.on("admin:notification", onNewNotification);
     } else if (user) {
-      socket.emit("join", { userId: user?._id || user?.id, role: "user" });
       socket.on("user:notification", onNewNotification);
       socket.on("orderNotification", onNewNotification); // Legacy fallback
       socket.on("broadcast:new", onNewNotification);

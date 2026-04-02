@@ -362,7 +362,9 @@ router.put("/:id", adminMiddleware, async (req, res) => {
       });
 
       // Real-time update for MyOrders page
-      io.to(`user_${order.userId.toString()}`).emit("orderStatusUpdate", order);
+      const userRoom = `user_${order.userId.toString()}`;
+      logger.info(`📢 Emitting orderStatusUpdate (status: ${orderStatus}) to room: ${userRoom}`);
+      io.to(userRoom).emit("orderStatusUpdate", order);
     }
 
     res.json(order);
