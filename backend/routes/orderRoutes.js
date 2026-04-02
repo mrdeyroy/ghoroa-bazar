@@ -8,6 +8,7 @@ const authMiddleware = require("../middleware/authMiddleware");
 const adminMiddleware = require("../middleware/adminMiddleware");
 const anyAuth = require("../middleware/anyAuth");
 const { sendEmail } = require("../utils/mail");
+const logger = require("../utils/logger");
 
 /**
  * @desc    COD OTP Email Template
@@ -361,10 +362,12 @@ router.put("/:id", adminMiddleware, async (req, res) => {
         status: orderStatus
       });
 
-      // Real-time update for MyOrders page
-      const userRoom = `user_${order.userId.toString()}`;
-      logger.info(`📢 Emitting orderStatusUpdate (status: ${orderStatus}) to room: ${userRoom}`);
-      io.to(userRoom).emit("orderStatusUpdate", order);
+      // Real-time update for MyOrders page — ensure userId exists (Guest orders won't have a room)
+      if (order.userId) {
+        const userRoom = `user_${order.userId.toString()}`;
+        logger.info(`📢 Emitting orderStatusUpdate (status: ${orderStatus}) to room: ${userRoom}`);
+        io.to(userRoom).emit("orderStatusUpdate", order);
+      }
     }
 
     res.json(order);
@@ -465,8 +468,10 @@ router.put("/cancel/:orderId", authMiddleware, async (req, res) => {
         createdAt: notification.createdAt
       });
 
-      // Real-time update for MyOrders page
-      io.to(`user_${order.userId.toString()}`).emit("orderStatusUpdate", order);
+      // Real-time update for MyOrders page — ensure userId exists (Guest orders won't have a room)
+      if (order.userId) {
+        io.to(`user_${order.userId.toString()}`).emit("orderStatusUpdate", order);
+      }
       // Ensure Admin Orders page refreshes
       io.to("admin_room").emit("orderCancelled", order);
     }
