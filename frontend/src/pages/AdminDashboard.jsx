@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import AdminLayout from "../components/AdminLayout";
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import {
     ShoppingBag,
     Users,
@@ -30,6 +31,7 @@ import TopProductsBarChart from "../components/admin/TopProductsBarChart";
 import RecentOrders from "../components/admin/RecentOrders";
 
 export default function AdminDashboard() {
+    const { logout } = useAuth();
     const [data, setData] = useState({
         metrics: {
             todayRevenue: 0,
@@ -71,6 +73,12 @@ export default function AdminDashboard() {
                     }
                 }
             );
+
+            if (res.status === 401) {
+              console.warn("Session expired. Logging out...");
+              if (logout) logout();
+              return;
+            }
 
             if (!res.ok) throw new Error(`Request failed: ${res.status}`);
 

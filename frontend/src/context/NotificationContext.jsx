@@ -110,13 +110,15 @@ export const NotificationProvider = ({ children }) => {
     })
       .then(res => {
         if (res.status === 401) {
-          console.warn("Invalid/Expired session. Logging out...");
-          logout();
+          console.warn("Invalid/Expired session. Redirecting to logout...");
+          // We need a stable way to logout. NotificationContext doesn't have useAuth's logout?
+          // Actually, it was imported as { user, token, logout } from useAuth();
+          if (typeof logout === "function") logout();
           return null;
         }
         if (res.status === 429) {
           console.warn("Notifications fetch rate limited (429)");
-          return null; // Don't return [] as it wipes notifications state
+          return null; 
         }
         return res.json();
       })
