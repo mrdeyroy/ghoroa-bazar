@@ -18,7 +18,7 @@ export default function CategorySection() {
         </div>
 
         {/* Categories Container */}
-        <div className="flex flex-nowrap overflow-x-auto pb-6 no-scrollbar gap-6 sm:justify-center md:grid md:grid-cols-5 md:gap-8 justify-items-center">
+        <div className="flex flex-nowrap overflow-x-auto pb-6 scrollbar-hide gap-6 sm:justify-center md:grid md:grid-cols-5 md:gap-8 justify-items-center">
           {CATEGORIES.map((cat) => (
             <div
               key={cat.slug}
@@ -39,16 +39,6 @@ export default function CategorySection() {
           ))}
         </div>
       </div>
-
-      <style jsx>{`
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .no-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
     </section>
   );
 }

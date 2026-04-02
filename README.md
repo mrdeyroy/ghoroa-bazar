@@ -178,7 +178,7 @@ The platform leverages **Socket.io** for:
 
 | Home Page | Admin Dashboard |
 | :---: | :---: |
-| ![Hero](https://via.placeholder.com/600x400?text=Hero+Page+Preview) | ![Dashboard](https://via.placeholder.com/600x400?text=Admin+Dashboard+Preview) |
+| ![Hero](./admin_gb.png) | ![Dashboard](./hero_gb.png) |
 
 ---
 
@@ -195,7 +195,7 @@ The platform leverages **Socket.io** for:
 **Shibam Dey Roy**
 - 🐙 [GitHub](https://github.com/mrdeyroy)
 - 💼 [LinkedIn](https://linkedin.com/in/shibamdeyroy)
-- 📧 [Email](mailto:mrdeyroy@gmail.com)
+- 📧 [Email](mailto:shibamdeyroy02@gmail.com)
 
 ---
 

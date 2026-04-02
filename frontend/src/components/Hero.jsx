@@ -51,7 +51,7 @@ export default function Hero() {
   const floatTranslateY = useTransform(smoothMouseY, [-1, 1], [-50, 50]);
 
   return (
-    <section className="relative w-full min-h-[60vh] md:min-h-[75vh] flex items-center justify-center overflow-hidden bg-white selection:bg-[#1f7a3b] selection:text-white pb-8 pt-24 lg:py-12">
+    <section className="relative w-full min-h-[60vh] md:min-h-[75vh] flex items-center justify-center overflow-hidden bg-white selection:bg-[#1f7a3b] selection:text-white pb-8 pt-6 lg:py-12">
       
       {/* 1. SEAMLESS BACKGROUND & GRADIENT BLOBS */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">

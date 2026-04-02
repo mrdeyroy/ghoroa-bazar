@@ -11,7 +11,7 @@ import { SOCKET_URL } from "../config/api";
  * - No global listeners here — components manage their own lifecycle
  */
 const socket = io(SOCKET_URL, {
-  transports: ["websocket"]
+  transports: ["websocket", "polling"]
 });
 
 

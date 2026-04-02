@@ -141,8 +141,11 @@ export default function Profile() {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (!res.ok) return;
-      const data = await res.json();
-      setRecentOrders(Array.isArray(data) ? data.slice(0, 3) : []);
+      const result = await res.json();
+      
+      // Handle both paginated { data: [] } and direct [] formats
+      const ordersArray = result.data || (Array.isArray(result) ? result : []);
+      setRecentOrders(ordersArray.slice(0, 3));
     } catch (err) {
       console.error("Fetch Orders Error:", err);
     }

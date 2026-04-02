@@ -42,7 +42,7 @@ function NotificationBell() {
         }}
         className="relative group p-2 text-green-800 hover:bg-green-100 rounded-full transition-all"
       >
-        <Bell size={24} className="group-hover:scale-110 group-active:scale-95 transition-transform" />
+        <Bell size={20} className="md:w-6 md:h-6 group-hover:scale-110 group-active:scale-95 transition-transform" />
         <AnimatePresence>
           {notifCount > 0 && (
             <motion.span
@@ -59,7 +59,7 @@ function NotificationBell() {
       {isOpen && (
         <>
           <div className="fixed inset-0 z-[190]" onClick={() => setIsOpen(false)} />
-          <div className="absolute right-0 mt-3 w-80 bg-white rounded-3xl shadow-2xl border border-green-100 z-[200] overflow-hidden animate-in fade-in slide-in-from-top-4 duration-200">
+          <div className="fixed sm:absolute inset-x-4 sm:inset-auto sm:right-0 top-[70px] sm:top-full mt-2 w-auto sm:w-80 bg-white rounded-3xl shadow-2xl border border-green-100 z-[200] overflow-hidden animate-in fade-in slide-in-from-top-4 duration-200">
             <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between">
               <div>
                 <h4 className="text-sm font-black text-gray-900">Notifications</h4>
@@ -179,7 +179,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className={`sticky top-0 z-[100] w-full transition-all duration-500 ${scrolled ? 'bg-white/70 backdrop-blur-xl shadow-lg border-b border-green-100/30' : 'bg-white'}`}>
+      <header className={`fixed top-0 left-0 right-0 z-[100] w-full transition-all duration-500 ${scrolled ? 'bg-white/70 backdrop-blur-xl shadow-lg border-b border-green-100/30' : 'bg-white'}`}>
         {/* --- TOP ANNOUNCEMENT BAR --- */}
         <div className={`transition-all duration-500 overflow-hidden ${scrolled ? 'h-0 opacity-0' : 'h-9 bg-orange-50/80 border-b border-orange-100'}`}>
           <div className="max-w-7xl mx-auto h-full flex justify-between items-center px-4 text-[10px] md:text-[11px] font-bold uppercase tracking-widest text-orange-900/80">
@@ -294,7 +294,7 @@ export default function Navbar() {
               </button>
 
               {/* Notification Bell — DESKTOP ONLY (hidden on mobile, moved to user dropdown) */}
-              <div className="hidden md:block">
+              <div className="block">
                 {user && <NotificationBell />}
               </div>
 
@@ -406,20 +406,7 @@ export default function Navbar() {
                         )}
                       </Link>
 
-                      {/* Notifications — mobile only */}
-                      <Link
-                        to="/my-orders"
-                        onClick={() => setUserDropdown(false)}
-                        className="w-full md:hidden flex items-center gap-3 px-5 py-3.5 text-[13px] font-bold text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors"
-                      >
-                        <Bell size={18} />
-                        Notifications
-                        {notifCount > 0 && (
-                          <span className="ml-auto bg-red-100 text-red-600 text-[10px] font-black px-2 py-0.5 rounded-full">{notifCount}</span>
-                        )}
-                      </Link>
 
-                      <div className="h-px bg-gray-50 mx-4 md:hidden" />
 
                       {/* Profile */}
                       <Link

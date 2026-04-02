@@ -20,8 +20,10 @@ export default function MainLayout() {
     <>
       <Navbar />
 
-      {/* Page content */}
-      <Outlet />
+      {/* Page content — with padding-top to offset fixed navbar */}
+      <main className="pt-[105px] md:pt-[175px]">
+        <Outlet />
+      </main>
 
       {/* ================================
           🟢 FOOTER

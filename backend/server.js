@@ -95,7 +95,7 @@ const io = new Server(server, {
 
   pingTimeout: 60000,
   pingInterval: 25000,
-  transports: ["websocket"],
+  transports: ["polling", "websocket"],
 });
 
 app.set("io", io);

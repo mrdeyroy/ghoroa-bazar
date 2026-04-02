@@ -21,17 +21,14 @@
 }
 
 html {
-  overflow-x: auto;
-  overflow-y: auto;
-  height: auto;
+  height: 100%;
   -webkit-text-size-adjust: 100%;
 }
 
 body {
   font-family: var(--font);
-  overflow-x: auto;
-  overflow-y: auto;
-  height: auto;
+  overflow-x: hidden;
+  min-height: 100%;
   -webkit-font-smoothing: antialiased;
 }
 

@@ -10,7 +10,7 @@ export const NotificationProvider = ({ children }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [toast, setToast] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
-  const { user, token } = useAuth();
+  const { user, token, logout } = useAuth();
 
   const toastTimerRef = useRef(null);
   const processedIdsRef = useRef(new Set()); 
@@ -109,6 +109,11 @@ export const NotificationProvider = ({ children }) => {
       headers: { "Authorization": `Bearer ${activeToken}` }
     })
       .then(res => {
+        if (res.status === 401) {
+          console.warn("Invalid/Expired session. Logging out...");
+          logout();
+          return null;
+        }
         if (res.status === 429) {
           console.warn("Notifications fetch rate limited (429)");
           return null; // Don't return [] as it wipes notifications state
