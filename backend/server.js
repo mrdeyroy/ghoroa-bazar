@@ -45,17 +45,18 @@ const allowedOrigins = [
   process.env.CLIENT_URL
 ].filter(Boolean);
 
+// CORS dynamic origin check
+const isOriginAllowed = (origin) => {
+  if (!origin) return true;
+  return allowedOrigins.indexOf(origin) !== -1 || origin.endsWith(".vercel.app");
+};
+
 app.use(cors({
   origin: function (origin, callback) {
-    // allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    if (isOriginAllowed(origin)) {
       callback(null, true);
     } else {
       console.warn(`⚠️ CORS blocked for origin: ${origin}`);
-      // Don't pass an error to callback, just say 'false' to allow the 
-      // CORS middleware to handle the rejection properly.
       callback(null, false);
     }
   },
@@ -63,7 +64,6 @@ app.use(cors({
   credentials: true,
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
 }));
-
 app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
 
@@ -83,12 +83,16 @@ app.use("/api/users/signup", authLimiter);
 app.use("/api/users/verify-email", authLimiter);
 app.use("/api/admin/login", authLimiter);
 
-// ──────────────────────────────────────────────
 // ⚡ Socket.IO — production-ready config
-// ──────────────────────────────────────────────
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      if (isOriginAllowed(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST", "PUT"],
     credentials: true
   },
