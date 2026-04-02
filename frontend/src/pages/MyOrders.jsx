@@ -96,13 +96,21 @@ export default function MyOrders() {
     if (!token || !user) return;
 
     const onOrderStatusUpdate = (updatedOrder) => {
+      console.log("⚡ [MyOrders] Order status update received:", updatedOrder);
       if (!updatedOrder?._id) return;
 
-      setOrders(prevOrders =>
-        prevOrders.map(order =>
-          order._id === updatedOrder._id ? { ...order, ...updatedOrder } : order
-        )
-      );
+      setOrders(prevOrders => {
+        const index = prevOrders.findIndex(o => String(o._id) === String(updatedOrder._id));
+        if (index === -1) {
+          console.warn("⚠️ [MyOrders] Received update for order not in current list:", updatedOrder._id);
+          return prevOrders;
+        }
+
+        console.log(`✅ [MyOrders] Updating order ${updatedOrder._id} to status: ${updatedOrder.orderStatus}`);
+        const newOrders = [...prevOrders];
+        newOrders[index] = { ...newOrders[index], ...updatedOrder };
+        return newOrders;
+      });
 
       triggerFlash(updatedOrder._id);
     };
@@ -114,7 +122,7 @@ export default function MyOrders() {
       if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
       joinedRoomsRef.current.clear();
     };
-  }, [token, user, triggerFlash]);
+  }, [token, user, triggerFlash, socket]);
 
   // ═══════════════════════════════════════
   // 3. JOIN ORDER ROOM — only on expand, once per orderId
