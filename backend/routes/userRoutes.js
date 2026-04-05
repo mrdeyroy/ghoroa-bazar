@@ -19,42 +19,57 @@ router.post("/signup", registerLimiter, captchaVerify, emailValidator, async (re
     const { name, email, password } = req.body;
 
     const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ error: "Email already registered" });
-    }
-
+    
+    // Create new hashed password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-
+    
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-    const user = new User({
-      name,
-      email,
-      password: hashedPassword,
-      verificationOTP: otp,
-      otpExpires,
-      isVerified: false
-    });
-
-    await user.save();
+    if (existingUser) {
+      if (existingUser.isVerified) {
+        return res.status(400).json({ error: "Email already registered and verified. Please sign in." });
+      }
+      
+      // Update the existing unverified user with new name, password and OTP
+      existingUser.name = name;
+      existingUser.password = hashedPassword;
+      existingUser.verificationOTP = otp;
+      existingUser.otpExpires = otpExpires;
+      await existingUser.save();
+    } else {
+      // Create a new user
+      const user = new User({
+        name,
+        email,
+        password: hashedPassword,
+        verificationOTP: otp,
+        otpExpires,
+        isVerified: false
+      });
+      await user.save();
+    }
 
     const emailHtml = otpTemplate.replace("{{OTP}}", otp);
     try {
       await sendEmail(email, "Verify your email - Ghoroa Bazar", emailHtml);
     } catch (mailErr) {
       console.error("Mail sending failed:", mailErr);
-      throw new Error("Failed to send email");
+      throw new Error(`Email failed: ${mailErr.message || "Unknown error"}`);
     }
 
     res.status(201).json({ message: "Verification OTP sent to your email" });
   } catch (err) {
     console.error("Signup error details:", err);
-    if (err.message === "Failed to send email") {
-      return res.status(500).json({ error: "Email service configuration error. Please check backend .env variables." });
+    if (err.message.startsWith("Email failed")) {
+      return res.status(500).json({ error: `Verification email could not be sent. Please check your email configuration.` });
     }
-    res.status(500).json({ error: "Internal server error" });
+    if (err.name === 'ValidationError') {
+      const messages = Object.values(err.errors).map(val => val.message);
+      return res.status(400).json({ error: messages.join(', ') });
+    }
+    res.status(500).json({ error: "Internal server error during registration." });
   }
 });
 
