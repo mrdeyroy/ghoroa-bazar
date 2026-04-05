@@ -34,15 +34,18 @@ if (!isProduction) {
 // =======================
 
 const sendEmail = async (to, subject, html) => {
-  // 🚀 PRODUCTION → Brevo API
-  if (isProduction) {
+  // Check if we should use Brevo (Production) or Nodemailer (Development)
+  // We also check for BREVO_API_KEY explicitly to avoid cryptic axios errors
+  const useBrevo = isProduction && process.env.BREVO_API_KEY;
+
+  if (useBrevo) {
     try {
       await axios.post(
         "https://api.brevo.com/v3/smtp/email",
         {
           sender: {
             name: "Ghoroa Bazar",
-            email: process.env.EMAIL_USER,
+            email: process.env.EMAIL_USER || "noreply@ghoroabazar.com",
           },
           to: [{ email: to }],
           subject: subject,
@@ -56,18 +59,25 @@ const sendEmail = async (to, subject, html) => {
         }
       );
 
-      console.log("✅ Email sent via Brevo API");
+      console.log(`✅ Email sent to ${to} via Brevo API`);
     } catch (error) {
-      console.error(
-        "❌ Brevo API ERROR:",
-        error.response?.data || error.message
-      );
-      throw new Error("Email failed");
+      const errorMsg = error.response?.data?.message || error.message;
+      console.error("❌ Brevo API ERROR:", errorMsg);
+      throw new Error(`Email failed: Brevo service error - ${errorMsg}`);
     }
   }
-
-  // 🧪 LOCAL → Nodemailer
+  // Fallback to Nodemailer if not in production OR if Brevo key is missing
   else {
+    if (!transporter) {
+       // Re-initialize transporter if it was skipped during start
+       transporter = nodemailer.createTransport({
+         service: "gmail",
+         auth: {
+           user: process.env.EMAIL_USER,
+           pass: process.env.EMAIL_PASS,
+         },
+       });
+    }
     try {
       await transporter.sendMail({
         from: `"Ghoroa Bazar" <${process.env.EMAIL_USER}>`,
@@ -76,10 +86,10 @@ const sendEmail = async (to, subject, html) => {
         html,
       });
 
-      console.log("✅ Email sent via Nodemailer (local)");
+      console.log(`✅ Email sent to ${to} via Nodemailer`);
     } catch (error) {
-      console.error("❌ LOCAL EMAIL ERROR:", error);
-      throw new Error("Email failed");
+      console.error("❌ SMTP EMAIL ERROR:", error.message);
+      throw new Error(`Email failed: SMTP service error - ${error.message}`);
     }
   }
 };

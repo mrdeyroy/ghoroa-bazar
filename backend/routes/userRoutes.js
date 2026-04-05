@@ -56,20 +56,24 @@ router.post("/signup", registerLimiter, captchaVerify, emailValidator, async (re
       await sendEmail(email, "Verify your email - Ghoroa Bazar", emailHtml);
     } catch (mailErr) {
       console.error("Mail sending failed:", mailErr);
-      throw new Error(`Email failed: ${mailErr.message || "Unknown error"}`);
+      throw new Error(mailErr.message || "Failed to send email");
     }
 
     res.status(201).json({ message: "Verification OTP sent to your email" });
   } catch (err) {
     console.error("Signup error details:", err);
-    if (err.message.startsWith("Email failed")) {
-      return res.status(500).json({ error: `Verification email could not be sent. Please check your email configuration.` });
+    
+    // Check for specific email failure
+    if (err.message && err.message.includes("Email failed")) {
+      return res.status(500).json({ error: `Verification email could not be sent. ${err.message}` });
     }
+    
     if (err.name === 'ValidationError') {
       const messages = Object.values(err.errors).map(val => val.message);
       return res.status(400).json({ error: messages.join(', ') });
     }
-    res.status(500).json({ error: "Internal server error during registration." });
+    
+    res.status(500).json({ error: `Internal server error during registration: ${err.message || "Unknown error"}` });
   }
 });
 

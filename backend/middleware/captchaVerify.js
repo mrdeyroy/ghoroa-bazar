@@ -12,8 +12,8 @@ const captchaVerify = async (req, res, next) => {
 
   const secretKey = process.env.TURNSTILE_SECRET_KEY;
   if (!secretKey) {
-    console.error("TURNSTILE_SECRET_KEY is not defined in environment variables");
-    throw new Error("Missing TURNSTILE_SECRET_KEY - Check your backend .env file");
+    console.error("❌ TURNSTILE_SECRET_KEY is not defined in environment variables");
+    return res.status(500).json({ error: "CAPTCHA configuration error on server. Please check backend environment variables." });
   }
 
   try {
